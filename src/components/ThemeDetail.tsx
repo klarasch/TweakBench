@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../store.ts';
 import { CodeEditor } from './CodeEditor.tsx';
-import { ArrowLeft } from 'lucide-react';
+import { SnippetLibrary } from './SnippetLibrary.tsx';
+import { ArrowLeft, Trash2, Box, Play, Pause, Plus } from 'lucide-react';
 
 interface ThemeDetailProps {
     themeId: string;
@@ -9,53 +10,248 @@ interface ThemeDetailProps {
 }
 
 export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => {
-    const { themes, snippets, updateTheme, updateSnippet } = useStore();
+    const { themes, snippets, updateTheme, updateSnippet, addSnippetToTheme, toggleThemeItem, updateThemeItem } = useStore();
     const theme = themes.find(t => t.id === themeId);
 
-    // Find the first snippet (Main CSS)
-    const activeItem = theme?.items[0];
-    const snippet = activeItem ? snippets.find(s => s.id === activeItem.snippetId) : null;
-
+    // State
+    const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+    const [showLibrary, setShowLibrary] = useState(false);
     const [localName, setLocalName] = useState('');
 
     useEffect(() => {
         if (theme) {
             setLocalName(theme.name);
+            // Select first item by default if nothing selected
+            if (!selectedItemId && theme.items.length > 0) {
+                setSelectedItemId(theme.items[0].id);
+            }
         }
-    }, [theme]);
+    }, [theme, selectedItemId]);
 
     if (!theme) return <div>Theme not found</div>;
 
+    const activeItem = theme.items.find(i => i.id === selectedItemId);
+    const activeSnippet = activeItem ? snippets.find(s => s.id === activeItem.snippetId) : null;
+
+    const handleAddSnippet = (snippetId: string) => {
+        addSnippetToTheme(themeId, snippetId);
+        // We'll need to select it, but we don't have the new Item ID easily. 
+        // User will see it in list.
+        setShowLibrary(false);
+    };
+
     return (
-        <div className="flex flex-col h-full bg-slate-900">
-            <div className="flex-none flex items-center gap-2 p-4 border-b border-slate-800 bg-slate-900">
+        <div className="flex flex-col h-full bg-slate-900 relative">
+            {/* Header */}
+            <div className="flex-none flex items-center gap-2 p-4 border-b border-slate-800 bg-slate-900 z-10">
                 <button onClick={onBack} className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white">
-                    <ArrowLeft size={20} />
+                    <ArrowLeft size={18} />
                 </button>
-                <input
-                    className="bg-transparent font-bold text-lg outline-none w-full text-white placeholder-slate-600"
-                    value={localName}
-                    onChange={(e) => {
-                        setLocalName(e.target.value);
-                        updateTheme(themeId, { name: e.target.value });
-                    }}
-                    placeholder="Theme Name"
-                />
+                <div className="flex-1">
+                    <input
+                        className="bg-transparent font-bold text-lg outline-none w-full text-white placeholder-slate-600"
+                        value={localName}
+                        onChange={(e) => {
+                            setLocalName(e.target.value);
+                            updateTheme(themeId, { name: e.target.value });
+                        }}
+                        placeholder="Theme Name"
+                    />
+                </div>
+                <button
+                    onClick={() => updateTheme(themeId, { isActive: !theme.isActive })}
+                    className={`p-1.5 rounded mr-1 ${theme.isActive ? 'text-green-500 hover:bg-slate-800' : 'text-slate-500 hover:bg-slate-800'}`}
+                    title={theme.isActive ? "Disable Theme" : "Enable Theme"}
+                >
+                    {theme.isActive ? <Pause size={18} /> : <Play size={18} />}
+                </button>
+                <button
+                    onClick={() => setShowLibrary(!showLibrary)}
+                    className={`p-1.5 rounded ${showLibrary ? 'bg-blue-600 text-white' : 'bg-slate-800 text-blue-400'}`}
+                    title="Add Snippet"
+                >
+                    <Plus size={18} />
+                </button>
             </div>
 
-            <div className="flex-1 flex flex-col overflow-hidden relative">
-                {snippet ? (
-                    <CodeEditor
-                        value={snippet.content}
-                        onChange={(val) => updateSnippet(snippet.id, { content: val })}
-                        className="h-full border-none rounded-none"
-                    />
-                ) : (
-                    <div className="flex-1 flex items-center justify-center text-slate-500">
-                        <p>No default snippet found. Create a new theme to test Editor.</p>
+            <div className="flex-1 flex overflow-hidden">
+                {/* Sidebar: Applied Snippets */}
+                <div className="w-1/3 min-w-[150px] border-r border-slate-800 flex flex-col bg-slate-900">
+                    <div className="p-2 text-xs font-semibold text-slate-500 uppercase">Applied Snippets</div>
+                    <div className="flex-1 overflow-y-auto">
+                        {theme.items.map(item => {
+                            const s = snippets.find(sn => sn.id === item.snippetId);
+                            if (!s) return null;
+                            return (
+                                <div
+                                    key={item.id}
+                                    className={`p-2 border-l-2 cursor-pointer hover:bg-slate-800 group ${selectedItemId === item.id ? 'border-blue-500 bg-slate-800' : 'border-transparent'}`}
+                                    onClick={() => setSelectedItemId(item.id)}
+                                >
+                                    <div className="flex justify-between items-center mb-1">
+                                        <span className={`text-sm font-medium truncate ${selectedItemId === item.id ? 'text-white' : 'text-slate-400'}`}>
+                                            {s.name}
+                                        </span>
+                                        <span className="text-[10px] bg-slate-700 px-1 rounded text-slate-400 uppercase">{s.type}</span>
+                                    </div>
+                                    <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button
+                                            className={`p-0.5 rounded ${item.isEnabled ? 'text-green-500' : 'text-slate-500'}`}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                toggleThemeItem(theme.id, item.id);
+                                            }}
+                                        >
+                                            {item.isEnabled ? <Pause size={12} /> : <Play size={12} />}
+                                        </button>
+                                        <button
+                                            className="p-0.5 text-slate-500 hover:text-red-400"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (confirm('Remove snippet from theme?')) {
+                                                    useStore.getState().removeSnippetFromTheme(theme.id, item.id);
+                                                    if (selectedItemId === item.id) setSelectedItemId(null);
+                                                }
+                                            }}
+                                        >
+                                            <Trash2 size={12} />
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                        {theme.items.length === 0 && (
+                            <div className="p-4 text-center text-xs text-slate-500">
+                                No snippets applied. Click + to add one.
+                            </div>
+                        )}
                     </div>
-                )}
+                </div>
+
+                {/* Main: Editor */}
+                <div className="flex-1 flex flex-col bg-slate-900">
+                    {activeSnippet ? (
+                        <>
+                            <div className="flex-none p-2 bg-slate-950 border-b border-slate-800 flex flex-col gap-2">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-xs text-slate-400 font-mono flex items-center gap-2">
+                                        {activeSnippet.type === 'css' ? 'CSS Source' : 'HTML Source'}
+                                        {activeItem?.overrides?.content !== undefined && (
+                                            <span className="text-[10px] bg-yellow-500/20 text-yellow-500 px-1 rounded uppercase">Override</span>
+                                        )}
+                                    </span>
+
+                                    <div className="flex gap-2 text-xs items-center h-6"> {/* Fixed height container */}
+                                        {/* GHOST SNIPPET LOGIC */}
+                                        {activeSnippet.isLibraryItem === false && (
+                                            <button
+                                                onClick={() => {
+                                                    const newName = prompt('Enter name for Library:', activeSnippet.name);
+                                                    if (newName) {
+                                                        updateSnippet(activeSnippet.id, { name: newName, isLibraryItem: true });
+                                                    }
+                                                }}
+                                                className="text-purple-400 hover:text-purple-300 px-2 py-0.5 rounded border border-purple-900 bg-purple-900/20 hover:bg-purple-900/40 text-xs flex items-center gap-1"
+                                            >
+                                                Publish
+                                            </button>
+                                        )}
+
+                                        {/* OVERRIDE LOGIC (Only for Library Snippets) */}
+                                        {activeSnippet.isLibraryItem !== false && activeItem?.overrides?.content !== undefined && (
+                                            <>
+                                                <button
+                                                    onClick={() => {
+                                                        if (confirm('Revert to Master Snippet? Local changes will be lost.')) {
+                                                            const { content, ...rest } = activeItem.overrides || {};
+                                                            updateThemeItem(themeId, activeItem.id, { overrides: rest.selector || rest.position ? rest : undefined });
+                                                        }
+                                                    }}
+                                                    className="text-slate-400 hover:text-white px-2 py-0.5 rounded border border-slate-700 hover:bg-slate-800"
+                                                >
+                                                    Reset
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        if (confirm('Push changes to Master Snippet? This will affect all themes using this snippet.')) {
+                                                            const newContent = activeItem.overrides?.content;
+                                                            if (newContent) {
+                                                                updateSnippet(activeSnippet.id, { content: newContent });
+                                                                // Clear local override after promotion
+                                                                const { content, ...rest } = activeItem.overrides || {};
+                                                                updateThemeItem(themeId, activeItem.id, { overrides: rest.selector || rest.position ? rest : undefined });
+                                                            }
+                                                        }
+                                                    }}
+                                                    className="text-blue-400 hover:text-blue-300 px-2 py-0.5 rounded border border-blue-900 bg-blue-900/20 hover:bg-blue-900/40 text-xs"
+                                                >
+                                                    Push to Master
+                                                </button>
+                                            </>
+                                        )}
+
+                                        {activeSnippet.type === 'html' && activeItem && (
+                                            <>
+                                                <input
+                                                    className="bg-slate-800 text-slate-200 border border-slate-700 rounded px-1 w-32 outline-none"
+                                                    placeholder="Selector (e.g. body)"
+                                                    value={activeItem.overrides?.selector ?? activeSnippet.selector ?? ''}
+                                                    onChange={(e) => updateThemeItem(themeId, activeItem.id, {
+                                                        overrides: { ...activeItem.overrides, selector: e.target.value }
+                                                    })}
+                                                />
+                                                <select
+                                                    className="bg-slate-800 text-slate-200 border border-slate-700 rounded px-1 outline-none"
+                                                    value={activeItem.overrides?.position ?? activeSnippet.position ?? 'beforeend'}
+                                                    onChange={(e) => updateThemeItem(themeId, activeItem.id, {
+                                                        overrides: { ...activeItem.overrides, position: e.target.value as any }
+                                                    })}
+                                                >
+                                                    <option value="append">Append</option>
+                                                    <option value="prepend">Prepend</option>
+                                                    <option value="before">Before</option>
+                                                    <option value="after">After</option>
+                                                </select>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                            <CodeEditor
+                                value={activeItem?.overrides?.content ?? activeSnippet.content}
+                                onChange={(val) => {
+                                    // If Ghost Snippet, update directly
+                                    if (activeSnippet.isLibraryItem === false) {
+                                        updateSnippet(activeSnippet.id, { content: val });
+                                    } else {
+                                        // If Library Snippet, use Override
+                                        updateThemeItem(themeId, activeItem!.id, {
+                                            overrides: { ...activeItem!.overrides, content: val }
+                                        });
+                                    }
+                                }}
+                                className="flex-1"
+                                mode={activeSnippet.type}
+                            />
+                        </>
+                    ) : (
+                        <div className="flex-1 flex items-center justify-center text-slate-600 flex-col gap-2">
+                            <Box size={40} />
+                            <p>Select a snippet to edit</p>
+                        </div>
+                    )}
+                </div>
             </div>
+
+            {/* Library Overlay */}
+            {showLibrary && (
+                <div className="absolute top-[60px] bottom-0 right-0 z-30 flex">
+                    <SnippetLibrary
+                        onSelectSnippet={handleAddSnippet}
+                        onClose={() => setShowLibrary(false)}
+                    />
+                </div>
+            )}
         </div>
     );
 };

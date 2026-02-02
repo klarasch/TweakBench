@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TweakBench Injection Test</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            background: #f0f0f0;
+        }
+
+        .target-box {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            min-height: 100px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        code {
+            background: #e0e0e0;
+            padding: 2px 4px;
+            rounded;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>TweakBench Test Page</h1>
+    <p>Use this page to test your HTML and CSS snippets.</p>
+
+    <div id="target-1" class="target-box">
+        <h3>Target 1 (ID: #target-1)</h3>
+        <p>Try injecting HTML here using selector: <code>#target-1</code></p>
+    </div>
+
+    <div id="target-2" class="target-box">
+        <h3>Target 2 (ID: #target-2)</h3>
+        <p>Try injecting HTML here using selector: <code>#target-2</code></p>
+    </div>
+
+    <div class="class-target target-box">
+        <h3>Class Target (Class: .class-target)</h3>
+        <p>Try injecting HTML here using selector: <code>.class-target</code></p>
+    </div>
+</body>
+
+</html>

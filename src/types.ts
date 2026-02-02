@@ -12,6 +12,7 @@ export interface Snippet {
 
     // For linking related snippets (e.g. Button HTML + Button CSS)
     relatedSnippetIds: string[];
+    isLibraryItem?: boolean; // If false, it's a "Ghost" snippet (private to a theme)
 
     createdAt: number;
     updatedAt: number;
@@ -26,6 +27,7 @@ export interface ThemeItem {
     overrides?: {
         content?: string;
         selector?: string;
+        position?: 'append' | 'prepend' | 'before' | 'after';
     };
 }
 
@@ -43,4 +45,5 @@ export interface AppState {
     themes: Theme[];
     snippets: Snippet[];
     activeThemeId: string | null;
+    globalEnabled: boolean;
 }
