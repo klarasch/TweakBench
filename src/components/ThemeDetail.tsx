@@ -34,6 +34,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     const [editingSnippetId, setEditingSnippetId] = useState<string | null>(null); // Added editing state
     const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
     const sidebarItemRefs = useRef<Record<string, HTMLDivElement | null>>({});
+    const editorRefs = useRef<Record<string, any>>({});
 
     // Responsive & Popover State
     const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
@@ -379,7 +380,15 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                 activeTab={activeTab}
                                 theme={theme}
                                 selectedItemId={selectedItemId}
-                                onSelect={setSelectedItemId}
+                                onSelect={(id) => {
+                                    setSelectedItemId(id);
+                                    // Focus editor on sidebar click
+                                    requestAnimationFrame(() => {
+                                        if (editorRefs.current[id]) {
+                                            editorRefs.current[id]?.focus();
+                                        }
+                                    });
+                                }}
                                 onReorder={handleReorder}
                                 onContextMenu={handleContextMenu}
                                 itemRefs={sidebarItemRefs}
@@ -482,6 +491,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                     isEditing={editingSnippetId === item.id}
                                     onSetEditing={(isEditing) => setEditingSnippetId(isEditing ? item.id : null)}
                                     onSelect={() => setSelectedItemId(item.id)}
+                                    editorRef={(el) => { editorRefs.current[item.id] = el; }}
                                 />
                             ))}
 
