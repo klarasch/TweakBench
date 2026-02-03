@@ -22,8 +22,8 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     // State
     const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
     const [showLibrary, setShowLibrary] = useState(false);
+    const [libraryFilter, setLibraryFilter] = useState<'css' | 'html' | null>(null);
     const [localName, setLocalName] = useState('');
-    const [sidebarMode, setSidebarMode] = useState<'snippets' | 'domains'>('snippets');
     const [activeTab, setActiveTab] = useState<'css' | 'html'>('css'); // Added activeTab state
     const [newDomain, setNewDomain] = useState('');
 
@@ -126,6 +126,18 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
 
     if (!theme) return <div>Theme not found</div>;
 
+    const scrollToItem = (itemId: string) => {
+        // Need to wait for render
+        setTimeout(() => {
+            const el = itemRefs.current[itemId];
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Optional: Flash highlight? 
+                // We are already setting selectedItemId which highlights it.
+            }
+        }, 100);
+    };
+
     const handleAddDomain = () => {
         if (!newDomain.trim()) return;
         const current = theme.domainPatterns || ['<all_urls>'];
@@ -145,8 +157,10 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     };
 
     const handleAddSnippet = (snippetId: string) => {
-        addSnippetToTheme(themeId, snippetId);
+        const itemId = addSnippetToTheme(themeId, snippetId);
         setShowLibrary(false);
+        setSelectedItemId(itemId);
+        scrollToItem(itemId);
     };
 
     const filteredItems = theme ? theme.items.filter(item => {
@@ -175,15 +189,11 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
             relatedSnippetIds: [],
             isLibraryItem: false
         });
-        addSnippetToTheme(themeId, id);
+        const itemId = addSnippetToTheme(themeId, id);
 
-        // Auto-select the new item
-        // Access store directly to get the updated theme items immediately
-        setTimeout(() => {
-            const updatedTheme = useStore.getState().themes.find(t => t.id === themeId);
-            const newItem = updatedTheme?.items.find(i => i.snippetId === id);
-            if (newItem) setSelectedItemId(newItem.id);
-        }, 50);
+        // Auto-select and scroll
+        setSelectedItemId(itemId);
+        scrollToItem(itemId);
     };
 
     const handleContextMenu = (e: React.MouseEvent, itemId: string) => {
@@ -354,6 +364,16 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                         title="Theme Options"
                     >
                         <MoreVertical size={18} />
+                        <MoreVertical size={18} />
+                    </button>
+                    <div className="w-px h-6 bg-slate-800 mx-1"></div>
+                    <button
+                        onClick={() => { setShowLibrary(!showLibrary); setLibraryFilter(null); }}
+                        className={`p-1.5 rounded flex items-center gap-1.5 px-3 transition-colors ${showLibrary && !libraryFilter ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'}`}
+                        title="Snippet Library"
+                    >
+                        <BookOpen size={16} />
+                        <span className="text-xs font-bold uppercase">Library</span>
                     </button>
                 </div>
             </div>
@@ -378,6 +398,24 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
             </div>
 
             <div className="flex-1 flex overflow-hidden relative">
+                {/* Mega Menu Library Drawer */}
+                {showLibrary && (
+                    <div className="absolute top-0 left-0 right-0 h-[50vh] bg-slate-900/95 backdrop-blur-xl border-b border-slate-700 shadow-2xl z-40 flex flex-col transition-all animate-in slide-in-from-top-4 duration-200">
+                        <div className="flex justify-between items-center p-2 border-b border-slate-800 bg-slate-900">
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider pl-2">
+                                {libraryFilter ? `Select ${libraryFilter.toUpperCase()} Snippet` : 'Snippet Library'}
+                            </span>
+                            <button onClick={() => setShowLibrary(false)} className="p-1 hover:bg-slate-800 rounded"><X size={14} /></button>
+                        </div>
+                        <div className="flex-1 overflow-hidden">
+                            <SnippetLibrary
+                                onSelectSnippet={handleAddSnippet}
+                                filterType={libraryFilter}
+                            />
+                        </div>
+                    </div>
+                )}
+
                 {/* Sidebar */}
                 <div className="flex-1 flex overflow-hidden relative">
                     {/* Sidebar - Only show if viewportWidth > 720 */}
@@ -394,31 +432,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                 <div className="w-px h-full bg-slate-800 group-hover:bg-blue-500 mx-auto"></div>
                             </div>
                             {/* Toolbar */}
-                            <div className="flex p-3 gap-1 border-b border-slate-800">
-                                {/* Snippets Buttons */}
-                                <button
-                                    onClick={() => { setSidebarMode('snippets'); handleCreateLocal('css'); }}
-                                    className={`flex-1 hover:bg-slate-700 text-xs py-1.5 rounded flex items-center justify-center gap-1 border border-slate-700 transition-colors ${sidebarMode === 'snippets' ? 'bg-slate-800 text-blue-400' : 'bg-transparent text-slate-500'}`}
-                                    title="Add CSS"
-                                >
-                                    <Plus size={12} /> CSS
-                                </button>
-                                <button
-                                    onClick={() => { setSidebarMode('snippets'); handleCreateLocal('html'); }}
-                                    className={`flex-1 hover:bg-slate-700 text-xs py-1.5 rounded flex items-center justify-center gap-1 border border-slate-700 transition-colors ${sidebarMode === 'snippets' ? 'bg-slate-800 text-orange-400' : 'bg-transparent text-slate-500'}`}
-                                    title="Add HTML"
-                                >
-                                    <Plus size={12} /> HTML
-                                </button>
-                                <div className="w-px bg-slate-800 mx-0.5"></div>
-                                <button
-                                    onClick={() => { setSidebarMode('snippets'); setShowLibrary(!showLibrary); }}
-                                    className={`px-3 py-1.5 rounded border border-slate-700 flex items-center justify-center transition-colors ml-1 ${showLibrary ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
-                                    title="Open Library"
-                                >
-                                    <BookOpen size={16} />
-                                </button>
-                            </div>
+                            {/* Toolbar Removed - Quick Add now in Subheader */}
 
                             {/* Content */}
                             <div className="flex-1 overflow-y-auto p-4">
@@ -621,11 +635,30 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                     </button>
                                 </div>
                                 <button
-                                    onClick={() => handleCreateLocal(activeTab)}
-                                    className="flex items-center gap-1 bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1.5 rounded transition-colors shadow-sm"
+                                    onClick={() => {
+                                        // Toggle with filter
+                                        if (showLibrary && libraryFilter === activeTab) {
+                                            setShowLibrary(false);
+                                            setLibraryFilter(null);
+                                        } else {
+                                            setShowLibrary(true);
+                                            setLibraryFilter(activeTab);
+                                        }
+                                    }}
+                                    className={`px-2 py-1 text-[10px] border border-dashed border-slate-700 rounded flex items-center gap-1 transition-colors ${showLibrary && libraryFilter === activeTab ? 'bg-blue-600 border-blue-600 text-white' : 'text-slate-400 hover:text-white hover:border-slate-500'}`}
+                                    title={`Quick Add from ${activeTab.toUpperCase()} Library`}
                                 >
-                                    <Plus size={14} /> Add {activeTab.toUpperCase()}
+                                    <BookOpen size={10} />
+                                    <span>From Library</span>
                                 </button>
+                                <button
+                                    onClick={() => handleCreateLocal(activeTab)}
+                                    className={`px-2 py-1 text-[10px] bg-slate-800 border border-slate-700 rounded flex items-center gap-1 hover:border-slate-500 hover:text-white transition-colors ${activeTab === 'css' ? 'text-blue-400' : 'text-orange-400'}`}
+                                >
+                                    <Plus size={10} />
+                                    <span>Add {activeTab.toUpperCase()}</span>
+                                </button>
+
                             </div>
 
                             {filteredItems.map(item => {
@@ -806,6 +839,6 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 };

@@ -14,7 +14,7 @@ interface Store extends AppState {
     updateTheme: (id: string, updates: Partial<Theme>) => void;
     deleteTheme: (id: string) => void;
 
-    addSnippetToTheme: (themeId: string, snippetId: string) => void;
+    addSnippetToTheme: (themeId: string, snippetId: string) => string;
     toggleThemeItem: (themeId: string, itemId: string) => void;
     removeSnippetFromTheme: (themeId: string, itemId: string) => void;
     updateThemeItem: (themeId: string, itemId: string, updates: Partial<import('./types.ts').ThemeItem>) => void;
@@ -161,12 +161,13 @@ export const useStore = create<Store>((set) => ({
     },
 
     addSnippetToTheme: (themeId, snippetId) => {
+        const itemId = uuidv4();
         set((state) => {
             const theme = state.themes.find(t => t.id === themeId);
             if (!theme) return state;
 
             const newItem = {
-                id: uuidv4(),
+                id: itemId,
                 snippetId,
                 isEnabled: true,
             };
@@ -180,6 +181,7 @@ export const useStore = create<Store>((set) => ({
             storageService.save(newState);
             return newState;
         });
+        return itemId;
     },
 
     toggleThemeItem: (themeId, itemId) => {

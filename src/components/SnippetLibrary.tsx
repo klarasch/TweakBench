@@ -5,11 +5,13 @@ import type { SnippetType } from '../types.ts';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
 
 interface SnippetLibraryProps {
-    onSelectSnippet: (id: string) => void;
-    onClose: () => void;
+    onSelectSnippet?: (id: string) => void;
+    onClose?: () => void;
+    onSelect?: (snippet: any) => void;
+    filterType?: 'css' | 'html' | null;
 }
 
-export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet }) => {
+export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet, onSelect, filterType }) => {
     const { snippets, addSnippet, themes, deleteSnippet } = useStore();
     const [filter, setFilter] = useState('');
     const [isCreating, setIsCreating] = useState(false);
@@ -61,7 +63,10 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet 
             {
                 label: 'Add to Theme',
                 icon: <Plus size={14} />,
-                onClick: () => onSelectSnippet(snippetId)
+                onClick: () => {
+                    if (onSelect) onSelect(snippet);
+                    else if (onSelectSnippet) onSelectSnippet(snippetId);
+                }
             },
             { separator: true },
             {
@@ -82,6 +87,7 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet 
 
     const filteredSnippets = snippets.filter(s =>
         (s.isLibraryItem !== false) &&
+        (filterType ? s.type === filterType : true) &&
         s.name.toLowerCase().includes(filter.toLowerCase())
     );
 
@@ -171,7 +177,10 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet 
                         <div
                             key={snippet.id}
                             className="p-2 mb-1 rounded hover:bg-slate-800 cursor-pointer group flex items-center justify-between relative"
-                            onClick={() => onSelectSnippet(snippet.id)}
+                            onClick={() => {
+                                if (onSelect) onSelect(snippet);
+                                else if (onSelectSnippet) onSelectSnippet(snippet.id);
+                            }}
                             onContextMenu={(e) => handleContextMenu(e, snippet.id)}
                         >
                             <div className="flex items-center gap-2 overflow-hidden flex-1">
@@ -203,7 +212,8 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet 
                                         className="p-1 hover:bg-slate-700 rounded text-slate-500 hover:text-white"
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            onSelectSnippet(snippet.id);
+                                            if (onSelect) onSelect(snippet);
+                                            else if (onSelectSnippet) onSelectSnippet(snippet.id);
                                         }}
                                         title="Add to Theme"
                                     >
