@@ -646,18 +646,27 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                             {/* Sticky Subheader - Refreshed */}
                             <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-800 p-2 flex items-center justify-between">
                                 <div className="flex gap-2">
-                                    <button
-                                        onClick={() => setCollapsedItems(new Set())}
-                                        className="px-2 py-1 text-[10px] bg-slate-800 text-slate-400 rounded hover:text-white"
-                                    >
-                                        Expand All
-                                    </button>
-                                    <button
-                                        onClick={() => setCollapsedItems(new Set(filteredItems.map(i => i.id)))}
-                                        className="px-2 py-1 text-[10px] bg-slate-800 text-slate-400 rounded hover:text-white"
-                                    >
-                                        Collapse All
-                                    </button>
+                                    {(() => {
+                                        const isAllCollapsed = filteredItems.length > 0 && filteredItems.every(i => collapsedItems.has(i.id));
+                                        return (
+                                            <button
+                                                onClick={() => {
+                                                    const next = new Set(collapsedItems);
+                                                    if (isAllCollapsed) {
+                                                        // Expand All: Remove current items from collapsed set
+                                                        filteredItems.forEach(i => next.delete(i.id));
+                                                    } else {
+                                                        // Collapse All: Add current items to collapsed set
+                                                        filteredItems.forEach(i => next.add(i.id));
+                                                    }
+                                                    setCollapsedItems(next);
+                                                }}
+                                                className="px-2 py-1 text-[10px] bg-slate-800 text-slate-400 rounded hover:text-white min-w-[70px]"
+                                            >
+                                                {isAllCollapsed ? 'Expand All' : 'Collapse All'}
+                                            </button>
+                                        );
+                                    })()}
                                 </div>
 
                                 <button
