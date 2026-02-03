@@ -2,10 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useStore } from '../store.ts';
 import { CodeEditor } from './CodeEditor.tsx';
 import { SnippetLibrary } from './SnippetLibrary.tsx';
-import { ArrowLeft, Trash2, Box, Play, Pause, Code, FileCode, Book, Plus } from 'lucide-react';
+import { ArrowLeft, Trash2, Box, Play, Pause, Code, FileCode, BookOpen, Plus, Globe, Monitor } from 'lucide-react';
 import type { SnippetType } from '../types.ts';
-
-
 
 interface ThemeDetailProps {
     themeId: string;
@@ -38,8 +36,6 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
 
     const handleAddSnippet = (snippetId: string) => {
         addSnippetToTheme(themeId, snippetId);
-        // We'll need to select it, but we don't have the new Item ID easily. 
-        // User will see it in list.
         setShowLibrary(false);
     };
 
@@ -84,7 +80,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
             <div className="flex-1 flex overflow-hidden relative">
                 {/* Sidebar: Applied Snippets */}
                 <div className="w-1/3 min-w-[150px] border-r border-slate-800 flex flex-col bg-slate-900 z-20">
-                    <div className="flex p-3 gap-2 border-b border-slate-800">
+                    <div className="flex p-3 gap-1 border-b border-slate-800">
                         <button
                             onClick={() => handleCreateLocal('css')}
                             className="flex-1 bg-slate-800 hover:bg-slate-700 text-blue-400 text-xs py-1.5 rounded flex items-center justify-center gap-1.5 border border-slate-700 transition-colors"
@@ -101,10 +97,10 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                         </button>
                         <button
                             onClick={() => setShowLibrary(!showLibrary)}
-                            className={`px-3 py-1.5 rounded border border-slate-700 flex items-center justify-center transition-colors ${showLibrary ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                            className={`px-3 py-1.5 rounded border border-slate-700 flex items-center justify-center transition-colors ml-1 ${showLibrary ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
                             title="Open Library"
                         >
-                            <Book size={16} />
+                            <BookOpen size={16} />
                         </button>
                     </div>
                     <div className="p-2 text-xs font-semibold text-slate-500 uppercase">Applied Snippets</div>
@@ -126,11 +122,24 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                             {!item.isEnabled && (
                                                 <span className="text-[10px] bg-red-900/50 text-red-400 px-1 rounded uppercase">Disabled</span>
                                             )}
+                                            {s.isLibraryItem !== false && (
+                                                <div className="relative flex items-center justify-center">
+                                                    <span className="text-blue-400" title="Library Snippet">
+                                                        <BookOpen size={12} />
+                                                    </span>
+                                                    {item.overrides?.content !== undefined && (
+                                                        <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-yellow-500 rounded-full border border-slate-900" title="Has Overrides" />
+                                                    )}
+                                                </div>
+                                            )}
                                             <span className="text-[10px] bg-slate-700 px-1 rounded text-slate-400 uppercase w-[32px] text-center">{s.type}</span>
                                         </div>
                                     </div>
                                     <div className="flex justify-end gap-2 items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <label className="relative inline-flex items-center cursor-pointer">
+                                        <label
+                                            className="relative inline-flex items-center cursor-pointer"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
                                             <input
                                                 type="checkbox"
                                                 className="sr-only peer"
@@ -193,9 +202,15 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                             <div className="flex-none p-2 bg-slate-950 border-b border-slate-800 flex flex-col gap-2">
                                 <div className="flex justify-between items-center">
                                     <span className="text-xs text-slate-400 font-mono flex items-center gap-2">
-                                        {activeSnippet.type === 'css' ? 'CSS Source' : 'HTML Source'}
+                                        {activeSnippet.isLibraryItem !== false ? (
+                                            <span className="flex items-center gap-1 text-blue-400"><Globe size={12} /> Library</span>
+                                        ) : (
+                                            <span className="flex items-center gap-1 text-slate-500"><Monitor size={12} /> Local</span>
+                                        )}
+                                        <span className="text-slate-600">/</span>
+                                        {activeSnippet.type === 'css' ? 'CSS' : 'HTML'}
                                         {activeItem?.overrides?.content !== undefined && (
-                                            <span className="text-[10px] bg-yellow-500/20 text-yellow-500 px-1 rounded uppercase">Override</span>
+                                            <span className="text-[10px] bg-yellow-500/20 text-yellow-500 px-1 rounded uppercase ml-1">Override</span>
                                         )}
                                     </span>
 
@@ -301,6 +316,6 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     );
 };

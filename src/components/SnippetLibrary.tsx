@@ -40,37 +40,70 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet 
         s.name.toLowerCase().includes(filter.toLowerCase())
     );
 
+    // Cancel creation on Esc
+    React.useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && isCreating) {
+                setIsCreating(false);
+                setNewItemName('');
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isCreating]);
+
     return (
         <div className="flex flex-col h-full bg-slate-900 border-l border-slate-700 w-64 absolute right-0 top-0 z-20 shadow-xl">
             <div className="p-3 border-b border-slate-800 bg-slate-900">
                 <div className="flex justify-between items-center mb-1">
                     <h3 className="font-bold text-slate-200">Library</h3>
-                    <button onClick={() => setIsCreating(true)} className="text-slate-400 hover:text-white" title="New Library Item">
+                    <button
+                        onClick={() => setIsCreating(true)}
+                        className={`text-slate-400 hover:text-white transition-colors p-1 rounded hover:bg-slate-800 ${isCreating ? 'text-white bg-slate-800' : ''}`}
+                        title="New Library Item"
+                    >
                         <Plus size={16} />
                     </button>
                 </div>
             </div>
 
             {isCreating && (
-                <div className="p-3 bg-slate-800 border-b border-slate-700">
+                <div className="p-3 bg-slate-950 border-b border-slate-800 animate-in slide-in-from-top-2 duration-200">
                     <input
-                        className="w-full bg-slate-900 border border-slate-700 rounded p-1 text-sm text-white mb-2"
+                        className="w-full bg-slate-900 border border-slate-700 focus:border-blue-500 rounded p-1.5 text-sm text-white mb-2 outline-none transition-colors"
                         placeholder="Snippet Name"
                         value={newItemName}
                         onChange={e => setNewItemName(e.target.value)}
                         autoFocus
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleCreateLibrary();
+                        }}
                     />
-                    <div className="flex gap-2 mb-2">
+                    <div className="flex bg-slate-900 p-0.5 rounded border border-slate-800 mb-2">
                         <button
                             onClick={() => setNewItemType('css')}
-                            className={`flex-1 text-xs py-1 rounded ${newItemType === 'css' ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-400'}`}
+                            className={`flex-1 text-xs py-1 rounded transition-colors ${newItemType === 'css' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
                         >CSS</button>
                         <button
                             onClick={() => setNewItemType('html')}
-                            className={`flex-1 text-xs py-1 rounded ${newItemType === 'html' ? 'bg-orange-600 text-white' : 'bg-slate-700 text-slate-400'}`}
+                            className={`flex-1 text-xs py-1 rounded transition-colors ${newItemType === 'html' ? 'bg-orange-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
                         >HTML</button>
                     </div>
-                    <button onClick={handleCreateLibrary} className="w-full bg-blue-600 text-white text-xs py-1 rounded">Create</button>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => setIsCreating(false)}
+                            className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs py-1.5 rounded transition-colors border border-slate-700"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleCreateLibrary}
+                            disabled={!newItemName.trim()}
+                            className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs py-1.5 rounded transition-colors shadow-sm font-medium"
+                        >
+                            Create
+                        </button>
+                    </div>
                 </div>
             )}
 
