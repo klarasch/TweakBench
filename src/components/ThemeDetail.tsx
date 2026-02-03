@@ -20,6 +20,10 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
     const [showLibrary, setShowLibrary] = useState(false);
     const [localName, setLocalName] = useState('');
+    const [sidebarMode, setSidebarMode] = useState<'snippets' | 'domains'>('snippets');
+    const [newDomain, setNewDomain] = useState('');
+    const [editingDomainIdx, setEditingDomainIdx] = useState<number | null>(null);
+    const [editingDomainValue, setEditingDomainValue] = useState('');
 
     // Context Menu State
     const [menuState, setMenuState] = useState<{ x: number; y: number; itemId: string | null }>({ x: 0, y: 0, itemId: null });
@@ -38,6 +42,24 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
 
     const activeItem = theme.items.find(i => i.id === selectedItemId);
     const activeSnippet = activeItem ? snippets.find(s => s.id === activeItem.snippetId) : null;
+
+    const handleAddDomain = () => {
+        if (!newDomain.trim()) return;
+        const current = theme.domainPatterns || ['<all_urls>'];
+        // If adding first specific domain, maybe remove <all_urls>? 
+        // Logic: if <all_urls> is present, it overrides everything.
+        // User workflow: Add "google.com" -> Remove "<all_urls>".
+        // Let's just append for now and let user remove <all_urls>.
+        const updated = [...current, newDomain.trim()];
+        updateTheme(themeId, { domainPatterns: updated });
+        setNewDomain('');
+    };
+
+    const handleRemoveDomain = (pattern: string) => {
+        const current = theme.domainPatterns || ['<all_urls>'];
+        const updated = current.filter(p => p !== pattern);
+        updateTheme(themeId, { domainPatterns: updated.length === 0 ? [] : updated });
+    };
 
     const handleAddSnippet = (snippetId: string) => {
         addSnippetToTheme(themeId, snippetId);
@@ -151,6 +173,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     return (
         <div className="flex flex-col h-full bg-slate-900 relative">
             {/* Header */}
+            {/* ... (Existing Header Helper) ... */}
             <div className="flex-none flex items-center gap-2 p-4 border-b border-slate-800 bg-slate-900 z-10">
                 <button onClick={onBack} className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white">
                     <ArrowLeft size={18} />
@@ -187,7 +210,6 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                         className="p-1.5 rounded text-slate-500 hover:text-white hover:bg-slate-800"
                         onClick={(e) => {
                             e.stopPropagation();
-                            // Use a specific ID format for theme header menu
                             setMenuState({ x: e.currentTarget.getBoundingClientRect().left, y: e.currentTarget.getBoundingClientRect().bottom, itemId: 'THEME_HEADER_MENU' });
                         }}
                         title="Theme Options"
@@ -198,27 +220,36 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
             </div>
 
             <div className="flex-1 flex overflow-hidden relative">
-                {/* Sidebar: Applied Snippets */}
+                {/* Sidebar */}
                 <div className="w-1/3 min-w-[150px] border-r border-slate-800 flex flex-col bg-slate-900 z-20">
-                    {/* ... toolbar buttons ... */}
+                    {/* Toolbar */}
                     <div className="flex p-3 gap-1 border-b border-slate-800">
-                        {/* ... existing buttons ... */}
+                        {/* Snippets Buttons */}
                         <button
-                            onClick={() => handleCreateLocal('css')}
-                            className="flex-1 bg-slate-800 hover:bg-slate-700 text-blue-400 text-xs py-1.5 rounded flex items-center justify-center gap-1.5 border border-slate-700 transition-colors"
-                            title="Add Local CSS"
+                            onClick={() => { setSidebarMode('snippets'); handleCreateLocal('css'); }}
+                            className={`flex-1 hover:bg-slate-700 text-xs py-1.5 rounded flex items-center justify-center gap-1 border border-slate-700 transition-colors ${sidebarMode === 'snippets' ? 'bg-slate-800 text-blue-400' : 'bg-transparent text-slate-500'}`}
+                            title="Add CSS"
                         >
-                            <Plus size={12} /> <Code size={14} /> <span>CSS</span>
+                            <Plus size={12} /> <Code size={14} />
                         </button>
                         <button
-                            onClick={() => handleCreateLocal('html')}
-                            className="flex-1 bg-slate-800 hover:bg-slate-700 text-orange-400 text-xs py-1.5 rounded flex items-center justify-center gap-1.5 border border-slate-700 transition-colors"
-                            title="Add Local HTML"
+                            onClick={() => { setSidebarMode('snippets'); handleCreateLocal('html'); }}
+                            className={`flex-1 hover:bg-slate-700 text-xs py-1.5 rounded flex items-center justify-center gap-1 border border-slate-700 transition-colors ${sidebarMode === 'snippets' ? 'bg-slate-800 text-orange-400' : 'bg-transparent text-slate-500'}`}
+                            title="Add HTML"
                         >
-                            <Plus size={12} /> <FileCode size={14} /> <span>HTML</span>
+                            <Plus size={12} /> <FileCode size={14} />
+                        </button>
+                        <div className="w-px bg-slate-800 mx-0.5"></div>
+                        {/* Toggle Modes */}
+                        <button
+                            onClick={() => setSidebarMode(sidebarMode === 'domains' ? 'snippets' : 'domains')}
+                            className={`px-3 py-1.5 rounded border border-slate-700 flex items-center justify-center transition-colors ${sidebarMode === 'domains' ? 'bg-blue-600/20 text-blue-400 border-blue-500/50' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                            title="Configure Domains"
+                        >
+                            <Globe size={16} />
                         </button>
                         <button
-                            onClick={() => setShowLibrary(!showLibrary)}
+                            onClick={() => { setSidebarMode('snippets'); setShowLibrary(!showLibrary); }}
                             className={`px-3 py-1.5 rounded border border-slate-700 flex items-center justify-center transition-colors ml-1 ${showLibrary ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
                             title="Open Library"
                         >
@@ -226,88 +257,185 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                         </button>
                     </div>
 
-                    <div className="p-2 text-xs font-semibold text-slate-500 uppercase">Applied Snippets</div>
-                    <div className="flex-1 overflow-y-auto">
-                        {theme.items.map(item => {
-                            const s = snippets.find(sn => sn.id === item.snippetId);
-                            if (!s) return null;
-                            return (
-                                <div
-                                    key={item.id}
-                                    className={`p-2 border-l-2 cursor-pointer hover:bg-slate-800 group relative ${selectedItemId === item.id ? 'border-blue-500 bg-slate-800' : 'border-transparent'} ${!item.isEnabled ? 'opacity-50 grayscale-[0.5]' : ''}`}
-                                    onClick={() => setSelectedItemId(item.id)}
-                                    onContextMenu={(e) => handleContextMenu(e, item.id)}
+                    {/* CONTENT: SNIPPETS or DOMAINS */}
+                    {sidebarMode === 'domains' ? (
+                        <div className="flex-1 flex flex-col overflow-hidden">
+                            <div className="p-2 text-xs font-semibold text-slate-500 uppercase bg-slate-900/50 flex justify-between items-center">
+                                <span>Run on Domains</span>
+                                <button
+                                    onClick={() => setSidebarMode('snippets')}
+                                    className="hover:text-slate-300"
+                                    title="Close Domain Editor"
                                 >
-                                    <div className="flex justify-between items-center mb-1">
-                                        <span className={`text-sm font-medium truncate ${selectedItemId === item.id ? 'text-white' : 'text-slate-400'}`}>
-                                            {s.name}
-                                        </span>
-                                        <div className="flex items-center gap-1">
-                                            {!item.isEnabled && (
-                                                <span className="text-[10px] bg-red-900/50 text-red-400 px-1 rounded uppercase">Disabled</span>
-                                            )}
-                                            {s.isLibraryItem !== false && (
-                                                <div className="relative flex items-center justify-center">
-                                                    <span className="text-blue-400" title="Library Snippet">
-                                                        <BookOpen size={12} />
-                                                    </span>
-                                                    {item.overrides?.content !== undefined && (
-                                                        <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-yellow-500 rounded-full border border-slate-900" title="Has Overrides" />
-                                                    )}
-                                                </div>
-                                            )}
-                                            <span className="text-[10px] bg-slate-700 px-1 rounded text-slate-400 uppercase w-[32px] text-center">{s.type}</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex justify-end gap-2 items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <div
-                                            className="relative inline-flex items-center"
-                                            title={!theme.isActive ? "Enable theme to toggle snippets" : "Toggle Snippet"}
-                                            onClick={(e) => !theme.isActive && e.stopPropagation()}
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                className={`sr-only peer ${!theme.isActive ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-                                                checked={item.isEnabled}
-                                                disabled={!theme.isActive}
-                                                onChange={(e) => {
-                                                    e.stopPropagation();
-                                                    toggleThemeItem(theme.id, item.id);
-                                                }}
-                                                onClick={(e) => e.stopPropagation()}
-                                            />
-                                            <div className={`w-7 h-4 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all ${theme.isActive ? 'peer-checked:bg-green-500 cursor-pointer' : 'peer-checked:bg-slate-600 opacity-50 cursor-not-allowed'}`}></div>
-                                        </div>
-                                        <button
-                                            className="p-0.5 text-slate-500 hover:text-red-400"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                if (confirm('Remove snippet from theme?')) {
-                                                    useStore.getState().removeSnippetFromTheme(theme.id, item.id);
-                                                    if (selectedItemId === item.id) setSelectedItemId(null);
-                                                }
-                                            }}
-                                            title="Remove Snippet"
-                                        >
-                                            <Trash2 size={12} />
-                                        </button>
-                                        <button
-                                            className="p-0.5 text-slate-500 hover:text-white"
-                                            onClick={(e) => handleKebabClick(e, item.id)}
-                                            title="More options"
-                                        >
-                                            <MoreVertical size={12} />
-                                        </button>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                        {theme.items.length === 0 && (
-                            <div className="p-4 text-center text-xs text-slate-500">
-                                No snippets applied. Use controls above.
+                                    <Trash2 size={12} className="rotate-45" /> {/* Using Trash2 rotated as X, or could import X icon. Let's assume X icon is cleaner if available, or just rotate Plus? Trash2 is odd. Let's use rotate-45 on Plus if available or just text 'x' if icon is missing. Wait, I imported Plus earlier. Let's check imports. X is not imported. Plus rotated 45deg is X. */}
+                                    {/* Actually, let's just use text "Close" or implicit X via rotated Plus. */}
+                                    <Plus size={14} className="rotate-45" />
+                                </button>
                             </div>
-                        )}
-                    </div>
+                            <div className="p-2 border-b border-slate-800 flex gap-1">
+                                <input
+                                    className="bg-slate-950 border border-slate-700 rounded text-xs px-2 py-1 flex-1 text-white outline-none focus:border-blue-500"
+                                    placeholder="e.g. *.google.com"
+                                    value={newDomain}
+                                    onChange={(e) => setNewDomain(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleAddDomain()}
+                                />
+                                <button
+                                    onClick={handleAddDomain}
+                                    className="bg-slate-800 hover:bg-slate-700 text-slate-300 rounded px-2 flex items-center justify-center"
+                                >
+                                    <Plus size={14} />
+                                </button>
+                            </div>
+                            <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-1">
+                                {(theme.domainPatterns || ['<all_urls>']).map((pattern, idx) => (
+                                    <div key={idx} className="flex justify-between items-center bg-slate-800/50 rounded px-2 py-1 group min-h-[28px]">
+                                        {editingDomainIdx === idx ? (
+                                            <input
+                                                className="bg-slate-950 text-xs text-white px-1 py-0.5 rounded outline-none border border-blue-500 flex-1 mr-2"
+                                                value={editingDomainValue}
+                                                onChange={(e) => setEditingDomainValue(e.target.value)}
+                                                autoFocus
+                                                onBlur={() => {
+                                                    // Save on blurred
+                                                    if (editingDomainValue.trim() && editingDomainValue !== pattern) {
+                                                        const current = [...(theme.domainPatterns || ['<all_urls>'])];
+                                                        current[idx] = editingDomainValue.trim();
+                                                        updateTheme(themeId, { domainPatterns: current });
+                                                    }
+                                                    setEditingDomainIdx(null);
+                                                }}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.currentTarget.blur(); // Trigger blur logic
+                                                    }
+                                                    if (e.key === 'Escape') {
+                                                        setEditingDomainIdx(null);
+                                                    }
+                                                }}
+                                            />
+                                        ) : (
+                                            <span
+                                                className={`text-xs font-mono truncate cursor-pointer hover:underline ${pattern === '<all_urls>' ? 'text-yellow-400' : 'text-slate-300'}`}
+                                                onClick={() => {
+                                                    setEditingDomainIdx(idx);
+                                                    setEditingDomainValue(pattern);
+                                                }}
+                                                title="Click to edit"
+                                            >
+                                                {pattern}
+                                            </span>
+                                        )}
+
+                                        {/* Only show delete if NOT editing */}
+                                        {editingDomainIdx !== idx && (
+                                            <button
+                                                onClick={() => handleRemoveDomain(pattern)}
+                                                className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                <Trash2 size={12} />
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                                {(theme.domainPatterns || []).length === 0 && (
+                                    <div className="text-[10px] text-slate-500 text-center mt-4">
+                                        No domains configured.<br />Theme will run nowhere.
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="p-2 text-xs font-semibold text-slate-500 uppercase">Applied Snippets</div>
+                            <div className="flex-1 overflow-y-auto">
+                                {theme.items.map(item => {
+                                    // ... (Snippet List logic unchanged, copying logic from view to ensure no regression)
+                                    const s = snippets.find(sn => sn.id === item.snippetId);
+                                    if (!s) return null;
+                                    return (
+                                        <div
+                                            key={item.id}
+                                            className={`p-2 border-l-2 cursor-pointer hover:bg-slate-800 group relative ${selectedItemId === item.id ? 'border-blue-500 bg-slate-800' : 'border-transparent'} ${!item.isEnabled ? 'opacity-50 grayscale-[0.5]' : ''}`}
+                                            onClick={() => setSelectedItemId(item.id)}
+                                            onContextMenu={(e) => handleContextMenu(e, item.id)}
+                                        >
+                                            {/* ... Snippet Item Content ... */}
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className={`text-sm font-medium truncate ${selectedItemId === item.id ? 'text-white' : 'text-slate-400'}`}>
+                                                    {s.name}
+                                                </span>
+                                                {/* ... Icons ... */}
+                                                <div className="flex items-center gap-1">
+                                                    {!item.isEnabled && (
+                                                        <span className="text-[10px] bg-red-900/50 text-red-400 px-1 rounded uppercase">Disabled</span>
+                                                    )}
+                                                    {s.isLibraryItem !== false && (
+                                                        <div className="relative flex items-center justify-center">
+                                                            <span className="text-blue-400" title="Library Snippet">
+                                                                <BookOpen size={12} />
+                                                            </span>
+                                                            {item.overrides?.content !== undefined && (
+                                                                <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-yellow-500 rounded-full border border-slate-900" title="Has Overrides" />
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                    <span className="text-[10px] bg-slate-700 px-1 rounded text-slate-400 uppercase w-[32px] text-center">{s.type}</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Hover Controls */}
+                                            <div className="flex justify-end gap-2 items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <div
+                                                    className="relative inline-flex items-center"
+                                                    title={!theme.isActive ? "Enable theme to toggle snippets" : "Toggle Snippet"}
+                                                    onClick={(e) => !theme.isActive && e.stopPropagation()}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        className={`sr-only peer ${!theme.isActive ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                                                        checked={item.isEnabled}
+                                                        disabled={!theme.isActive}
+                                                        onChange={(e) => {
+                                                            e.stopPropagation();
+                                                            toggleThemeItem(theme.id, item.id);
+                                                        }}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    />
+                                                    <div className={`w-7 h-4 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all ${theme.isActive ? 'peer-checked:bg-green-500 cursor-pointer' : 'peer-checked:bg-slate-600 opacity-50 cursor-not-allowed'}`}></div>
+                                                </div>
+                                                <button
+                                                    className="p-0.5 text-slate-500 hover:text-red-400"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        if (confirm('Remove snippet from theme?')) {
+                                                            useStore.getState().removeSnippetFromTheme(theme.id, item.id);
+                                                            if (selectedItemId === item.id) setSelectedItemId(null);
+                                                        }
+                                                    }}
+                                                    title="Remove Snippet"
+                                                >
+                                                    <Trash2 size={12} />
+                                                </button>
+                                                <button
+                                                    className="p-0.5 text-slate-500 hover:text-white"
+                                                    onClick={(e) => handleKebabClick(e, item.id)}
+                                                    title="More options"
+                                                >
+                                                    <MoreVertical size={12} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                                {theme.items.length === 0 && (
+                                    <div className="p-4 text-center text-xs text-slate-500">
+                                        No snippets applied. Use controls above.
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 {/* Context Menu Render */}

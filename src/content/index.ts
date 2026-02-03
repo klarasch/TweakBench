@@ -14,6 +14,46 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
     }
 });
 
+// Helper: Simple Glob Matching
+// Helper: Simple Glob Matching
+// Helper: Simple Glob Matching
+function isDomainMatch(patterns: string[], url: string): boolean {
+    if (!patterns || patterns.length === 0) return true;
+    if (patterns.includes('<all_urls>')) return true;
+
+    const u = new URL(url);
+    const hostname = u.hostname;
+
+    return patterns.some(pattern => {
+        let p = pattern.trim();
+
+        // CASE 1: Simple Domain Suffix Match (e.g. "google.com")
+        // No wildcards, no scheme, no path. Handles "google.com" -> "www.google.com" and "google.com"
+        if (!p.includes('*') && !p.includes('://') && !p.includes('/')) {
+            return hostname === p || hostname.endsWith('.' + p);
+        }
+
+        // CASE 2: Advanced/Glob Match
+        // Auto-handle missing scheme
+        if (!p.includes('://')) {
+            p = `*://${p}`;
+        }
+        // Auto-handle missing path
+        if (p.split('://')[1] && !p.split('://')[1].includes('/')) {
+            {/* Logic: if no slash after scheme, assume /* */ }
+            p = `${p}/*`;
+        }
+
+        // Escape regex characters except *
+        // Improvement: *.domain.com should match domain.com? Use (?:.*\.)? for *.
+        // Ideally we'd replace `*.` with `(?:.*\.)?` and `*` with `.*`
+        // But let's stick to standard Glob `*` = `.*` logic for predictability if they use wildcards.
+
+        const regexBody = p.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
+        return new RegExp(`^${regexBody}$`).test(url);
+    });
+}
+
 function updateStyles(state: AppState) {
     console.log('TweakBench: Updating Styles/HTML', state);
     const activeSnippetIds = new Set<string>();
@@ -22,6 +62,7 @@ function updateStyles(state: AppState) {
     const themes = state.themes || [];
     const snippets = state.snippets || [];
     const globalEnabled = state.globalEnabled ?? true;
+    const currentUrl = window.location.href;
 
     if (!globalEnabled) {
         console.log('TweakBench: Global Disabled');
@@ -29,6 +70,10 @@ function updateStyles(state: AppState) {
     } else {
         themes.forEach(theme => {
             if (!theme.isActive) return;
+            // Check Domain Patterns
+            if (theme.domainPatterns && theme.domainPatterns.length > 0 && !isDomainMatch(theme.domainPatterns, currentUrl)) {
+                return;
+            }
 
             theme.items.forEach(item => {
                 if (!item.isEnabled) return;
