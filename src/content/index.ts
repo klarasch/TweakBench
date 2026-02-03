@@ -161,7 +161,7 @@ function injectOrUpdateHTML(id: string, snippet: any) {
     // Find target
     const target = document.querySelector(selector);
     if (!target) {
-        console.warn(`TweakBench: Target not found for HTML snippet ${id} (${selector})`);
+        console.debug(`TweakBench: Target not found for HTML snippet ${id} (${selector}) - This is normal if the element isn't on the page.`);
         return;
     }
 

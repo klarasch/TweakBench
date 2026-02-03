@@ -11,6 +11,7 @@ interface CodeEditorProps {
     placeholder?: string;
     className?: string;
     autoHeight?: boolean;
+    onFocus?: () => void;
 }
 
 export const CodeEditor: React.FC<CodeEditorProps> = ({
@@ -19,7 +20,8 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
     mode = 'css',
     placeholder,
     className,
-    autoHeight = false
+    autoHeight = false,
+    onFocus
 }) => {
     const extensions = [
         mode === 'css' ? css() : html(),
@@ -65,6 +67,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
                 onChange={handleChange}
                 theme="dark"
                 placeholder={placeholder}
+                onFocus={onFocus}
                 basicSetup={{
                     lineNumbers: true,
                     foldGutter: true,

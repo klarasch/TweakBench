@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../store.ts';
 import { CodeEditor } from './CodeEditor.tsx';
 import { SnippetLibrary } from './SnippetLibrary.tsx';
@@ -28,7 +28,8 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     const [newDomain, setNewDomain] = useState('');
 
     const [collapsedItems, setCollapsedItems] = useState<Set<string>>(new Set());
-    const [itemRefs] = useState(() => ({ current: {} as { [key: string]: HTMLDivElement | null } })); // Fix ref types
+    const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
+    const sidebarItemRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
     // Responsive & Popover State
     const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
@@ -132,11 +133,15 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
             const el = itemRefs.current[itemId];
             if (el) {
                 el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                // Optional: Flash highlight? 
-                // We are already setting selectedItemId which highlights it.
+            }
+            const sideEl = sidebarItemRefs.current[itemId];
+            if (sideEl) {
+                sideEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
         }, 100);
     };
+
+
 
     const handleAddDomain = () => {
         if (!newDomain.trim()) return;
@@ -157,8 +162,14 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     };
 
     const handleAddSnippet = (snippetId: string) => {
+        const snippet = snippets.find(s => s.id === snippetId);
+        if (snippet) {
+            setActiveTab(snippet.type);
+        }
+
         const itemId = addSnippetToTheme(themeId, snippetId);
         setShowLibrary(false);
+        setLibraryFilter(null);
         setSelectedItemId(itemId);
         scrollToItem(itemId);
     };
@@ -364,7 +375,6 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                         title="Theme Options"
                     >
                         <MoreVertical size={18} />
-                        <MoreVertical size={18} />
                     </button>
                     <div className="w-px h-6 bg-slate-800 mx-1"></div>
                     <button
@@ -377,6 +387,28 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                     </button>
                 </div>
             </div>
+
+            {/* Mega Menu Library Drawer */}
+            {/* Position: If generic (header), top after header. If filtered (tab), top after tabs. */}
+            {showLibrary && (
+                <div
+                    className={`absolute left-0 right-0 h-[50vh] bg-slate-900/95 backdrop-blur-xl border-b border-slate-700 shadow-2xl z-40 flex flex-col transition-all animate-in slide-in-from-top-4 duration-200`}
+                    style={{ top: libraryFilter ? '98px' : '61px' }}
+                >
+                    <div className="flex justify-between items-center p-2 border-b border-slate-800 bg-slate-900">
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider pl-2">
+                            {libraryFilter ? `Select ${libraryFilter.toUpperCase()} Snippet` : 'Snippet Library'}
+                        </span>
+                        <button onClick={() => setShowLibrary(false)} className="p-1 hover:bg-slate-800 rounded"><X size={14} /></button>
+                    </div>
+                    <div className="flex-1 overflow-hidden">
+                        <SnippetLibrary
+                            onSelectSnippet={handleAddSnippet}
+                            filterType={libraryFilter}
+                        />
+                    </div>
+                </div>
+            )}
 
             {/* Tab Bar (New) */}
             <div className="flex border-b border-slate-800 bg-slate-900">
@@ -398,23 +430,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
             </div>
 
             <div className="flex-1 flex overflow-hidden relative">
-                {/* Mega Menu Library Drawer */}
-                {showLibrary && (
-                    <div className="absolute top-0 left-0 right-0 h-[50vh] bg-slate-900/95 backdrop-blur-xl border-b border-slate-700 shadow-2xl z-40 flex flex-col transition-all animate-in slide-in-from-top-4 duration-200">
-                        <div className="flex justify-between items-center p-2 border-b border-slate-800 bg-slate-900">
-                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider pl-2">
-                                {libraryFilter ? `Select ${libraryFilter.toUpperCase()} Snippet` : 'Snippet Library'}
-                            </span>
-                            <button onClick={() => setShowLibrary(false)} className="p-1 hover:bg-slate-800 rounded"><X size={14} /></button>
-                        </div>
-                        <div className="flex-1 overflow-hidden">
-                            <SnippetLibrary
-                                onSelectSnippet={handleAddSnippet}
-                                filterType={libraryFilter}
-                            />
-                        </div>
-                    </div>
-                )}
+
 
                 {/* Sidebar */}
                 <div className="flex-1 flex overflow-hidden relative">
@@ -454,72 +470,75 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                                         onClick={() => setSelectedItemId(item.id)}
                                                         onContextMenu={(e) => handleContextMenu(e, item.id)}
                                                     >
-                                                        {/* Drag Handle */}
-                                                        <div className="pl-2 text-slate-600 cursor-grab active:cursor-grabbing hover:text-slate-400">
-                                                            <GripVertical size={14} />
-                                                        </div>
+                                                        {/* Render Logic Ref Wrapper because Reorder.Item might not accept ref or interfere */}
+                                                        <div ref={el => { sidebarItemRefs.current[item.id] = el; }} className="contents">
+                                                            {/* Drag Handle */}
+                                                            <div className="pl-2 text-slate-600 cursor-grab active:cursor-grabbing hover:text-slate-400">
+                                                                <GripVertical size={14} />
+                                                            </div>
 
-                                                        <div className="flex-1 min-w-0 p-2 pl-2">
-                                                            <div className="flex justify-between items-center mb-0.5">
-                                                                <span className={`text-sm font-medium truncate ${selectedItemId === item.id ? 'text-white' : 'text-slate-400'}`}>
-                                                                    {s.name}
-                                                                </span>
-                                                                <div className="flex items-center gap-1">
-                                                                    {!item.isEnabled && (
-                                                                        <span className="text-[10px] bg-red-900/50 text-red-400 px-1 rounded uppercase">Disabled</span>
-                                                                    )}
-                                                                    {s.isLibraryItem !== false && (
-                                                                        <div className="relative flex items-center justify-center">
-                                                                            <span className="text-blue-400" title="Library Snippet">
-                                                                                <BookOpen size={12} />
-                                                                            </span>
-                                                                            {item.overrides?.content !== undefined && (
-                                                                                <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-yellow-500 rounded-full border border-slate-900" title="Has Overrides" />
-                                                                            )}
-                                                                        </div>
-                                                                    )}
-                                                                    <span className="text-[10px] bg-slate-700 px-1 rounded text-slate-400 uppercase w-[32px] text-center">{s.type}</span>
+                                                            <div className="flex-1 min-w-0 p-2 pl-2">
+                                                                <div className="flex justify-between items-center mb-0.5">
+                                                                    <span className={`text-sm font-medium truncate ${selectedItemId === item.id ? 'text-white' : 'text-slate-400'}`}>
+                                                                        {s.name}
+                                                                    </span>
+                                                                    <div className="flex items-center gap-1">
+                                                                        {!item.isEnabled && (
+                                                                            <span className="text-[10px] bg-red-900/50 text-red-400 px-1 rounded uppercase">Disabled</span>
+                                                                        )}
+                                                                        {s.isLibraryItem !== false && (
+                                                                            <div className="relative flex items-center justify-center">
+                                                                                <span className="text-blue-400" title="Library Snippet">
+                                                                                    <BookOpen size={12} />
+                                                                                </span>
+                                                                                {item.overrides?.content !== undefined && (
+                                                                                    <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-yellow-500 rounded-full border border-slate-900" title="Has Overrides" />
+                                                                                )}
+                                                                            </div>
+                                                                        )}
+
+                                                                    </div>
                                                                 </div>
                                                             </div>
-                                                        </div>
 
-                                                        <div className="absolute right-2 flex gap-1 items-center opacity-0 group-hover:opacity-100 transition-opacity bg-slate-800/80 backdrop-blur pl-2 rounded">
-                                                            <label
-                                                                className="relative inline-flex items-center cursor-pointer"
-                                                                title={!theme.isActive ? "Enable theme to toggle snippets" : "Toggle Snippet"}
-                                                                onClick={(e) => e.stopPropagation()}
-                                                            >
-                                                                <input
-                                                                    type="checkbox"
-                                                                    className={`sr-only peer ${!theme.isActive ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-                                                                    checked={item.isEnabled}
-                                                                    disabled={!theme.isActive}
-                                                                    onChange={() => {
-                                                                        toggleThemeItem(theme.id, item.id);
+                                                            <div className="absolute right-2 flex gap-1 items-center opacity-0 group-hover:opacity-100 transition-opacity bg-slate-800/80 backdrop-blur pl-2 rounded">
+                                                                <label
+                                                                    className="relative inline-flex items-center cursor-pointer"
+                                                                    title={!theme.isActive ? "Enable theme to toggle snippets" : "Toggle Snippet"}
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                >
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        className={`sr-only peer ${!theme.isActive ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                                                                        checked={item.isEnabled}
+                                                                        disabled={!theme.isActive}
+                                                                        onChange={() => {
+                                                                            toggleThemeItem(theme.id, item.id);
+                                                                        }}
+                                                                    />
+                                                                    <div className={`w-7 h-4 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all ${theme.isActive ? 'peer-checked:bg-green-500 cursor-pointer' : 'peer-checked:bg-slate-600 opacity-50 cursor-not-allowed'}`}></div>
+                                                                </label>
+                                                                <button
+                                                                    className="p-1 text-slate-500 hover:text-red-400 rounded hover:bg-slate-700"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        if (confirm('Remove snippet from theme?')) {
+                                                                            useStore.getState().removeSnippetFromTheme(theme.id, item.id);
+                                                                            if (selectedItemId === item.id) setSelectedItemId(null);
+                                                                        }
                                                                     }}
-                                                                />
-                                                                <div className={`w-7 h-4 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all ${theme.isActive ? 'peer-checked:bg-green-500 cursor-pointer' : 'peer-checked:bg-slate-600 opacity-50 cursor-not-allowed'}`}></div>
-                                                            </label>
-                                                            <button
-                                                                className="p-1 text-slate-500 hover:text-red-400 rounded hover:bg-slate-700"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    if (confirm('Remove snippet from theme?')) {
-                                                                        useStore.getState().removeSnippetFromTheme(theme.id, item.id);
-                                                                        if (selectedItemId === item.id) setSelectedItemId(null);
-                                                                    }
-                                                                }}
-                                                                title="Remove Snippet"
-                                                            >
-                                                                <Trash2 size={12} />
-                                                            </button>
-                                                            <button
-                                                                className="p-1 text-slate-500 hover:text-white rounded hover:bg-slate-700"
-                                                                onClick={(e) => handleKebabClick(e, item.id)}
-                                                                title="More options"
-                                                            >
-                                                                <MoreVertical size={12} />
-                                                            </button>
+                                                                    title="Remove Snippet"
+                                                                >
+                                                                    <Trash2 size={12} />
+                                                                </button>
+                                                                <button
+                                                                    className="p-1 text-slate-500 hover:text-white rounded hover:bg-slate-700"
+                                                                    onClick={(e) => handleKebabClick(e, item.id)}
+                                                                    title="More options"
+                                                                >
+                                                                    <MoreVertical size={12} />
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                     </Reorder.Item>
                                                 );
@@ -618,7 +637,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                 </>
                             )}
 
-                            {/* Sticky Subheader */}
+                            {/* Sticky Subheader - Refreshed */}
                             <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-800 p-2 flex items-center justify-between">
                                 <div className="flex gap-2">
                                     <button
@@ -634,23 +653,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                         Collapse All
                                     </button>
                                 </div>
-                                <button
-                                    onClick={() => {
-                                        // Toggle with filter
-                                        if (showLibrary && libraryFilter === activeTab) {
-                                            setShowLibrary(false);
-                                            setLibraryFilter(null);
-                                        } else {
-                                            setShowLibrary(true);
-                                            setLibraryFilter(activeTab);
-                                        }
-                                    }}
-                                    className={`px-2 py-1 text-[10px] border border-dashed border-slate-700 rounded flex items-center gap-1 transition-colors ${showLibrary && libraryFilter === activeTab ? 'bg-blue-600 border-blue-600 text-white' : 'text-slate-400 hover:text-white hover:border-slate-500'}`}
-                                    title={`Quick Add from ${activeTab.toUpperCase()} Library`}
-                                >
-                                    <BookOpen size={10} />
-                                    <span>From Library</span>
-                                </button>
+
                                 <button
                                     onClick={() => handleCreateLocal(activeTab)}
                                     className={`px-2 py-1 text-[10px] bg-slate-800 border border-slate-700 rounded flex items-center gap-1 hover:border-slate-500 hover:text-white transition-colors ${activeTab === 'css' ? 'text-blue-400' : 'text-orange-400'}`}
@@ -817,6 +820,14 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                                     className="flex-1 rounded-none border-x-0 border-b-0 border-t-0"
                                                     mode={s.type}
                                                     autoHeight={true}
+                                                    onFocus={() => {
+                                                        if (selectedItemId !== item.id) {
+                                                            setSelectedItemId(item.id);
+                                                            // Optional: Scroll sidebar to it? 
+                                                            // Let's rely on user action or auto-scroll. 
+                                                            // Ideally if focusing via click, it's fine.
+                                                        }
+                                                    }}
                                                 />
                                             </div>
                                         )}
@@ -838,7 +849,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                         </div>
                     </div>
                 </div>
-            </div>
+            </div >
         </div >
     );
 };
