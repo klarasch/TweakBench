@@ -3,7 +3,7 @@ import { useStore } from '../store.ts';
 import { CodeEditor } from './CodeEditor.tsx';
 import { SnippetLibrary } from './SnippetLibrary.tsx';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
-import { ArrowLeft, Trash2, BookOpen, Plus, Globe, MoreVertical, Box, Play, Pause, Download, X, GripVertical, ChevronDown, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Trash2, BookOpen, Plus, Globe, MoreVertical, Box, Play, Pause, Download, X, GripVertical, ChevronDown, ChevronRight, Edit } from 'lucide-react';
 import { Reorder } from "framer-motion";
 import type { SnippetType } from '../types.ts';
 import { exportThemeToJS, exportThemeToCSS } from '../utils/impexp.ts';
@@ -28,6 +28,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     const [newDomain, setNewDomain] = useState('');
 
     const [collapsedItems, setCollapsedItems] = useState<Set<string>>(new Set());
+    const [editingSnippetId, setEditingSnippetId] = useState<string | null>(null); // Added editing state
     const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
     const sidebarItemRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -281,6 +282,11 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
         if (!item) return [];
 
         return [
+            {
+                label: 'Rename',
+                icon: <Edit size={14} />,
+                onClick: () => setEditingSnippetId(itemId)
+            },
             {
                 label: item.isEnabled ? 'Disable Snippet' : 'Enable Snippet',
                 onClick: () => toggleThemeItem(theme.id, itemId)
@@ -691,9 +697,42 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
 
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2">
-                                                    <span className={`font-medium text-sm truncate ${!item.isEnabled ? 'text-slate-500 line-through decoration-slate-600' : 'text-slate-200'}`}>
-                                                        {s.name}
-                                                    </span>
+                                                    {editingSnippetId === item.id ? (
+                                                        <input
+                                                            autoFocus
+                                                            className="bg-slate-900 text-slate-200 text-sm font-medium border border-blue-500 rounded px-1 py-0.5 outline-none w-full"
+                                                            defaultValue={s.name}
+                                                            onClick={e => e.stopPropagation()}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter') {
+                                                                    e.stopPropagation();
+                                                                    e.preventDefault();
+                                                                    const val = (e.target as HTMLInputElement).value;
+                                                                    if (val.trim()) updateSnippet(s.id, { name: val.trim() });
+                                                                    setEditingSnippetId(null);
+                                                                } else if (e.key === 'Escape') {
+                                                                    e.stopPropagation();
+                                                                    setEditingSnippetId(null);
+                                                                }
+                                                            }}
+                                                            onBlur={(e) => {
+                                                                const val = e.target.value;
+                                                                if (val.trim()) updateSnippet(s.id, { name: val.trim() });
+                                                                setEditingSnippetId(null);
+                                                            }}
+                                                        />
+                                                    ) : (
+                                                        <span
+                                                            className={`font-medium text-sm truncate cursor-text hover:border-b hover:border-slate-500 ${!item.isEnabled ? 'text-slate-500 line-through decoration-slate-600' : 'text-slate-200'}`}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setEditingSnippetId(item.id);
+                                                            }}
+                                                            title="Click to rename"
+                                                        >
+                                                            {s.name}
+                                                        </span>
+                                                    )}
                                                     {item.overrides?.content !== undefined && (
                                                         <span className="text-[10px] bg-yellow-500/10 text-yellow-500 px-1.5 py-0.5 rounded uppercase tracking-wider font-bold">Modified</span>
                                                     )}
@@ -770,6 +809,12 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                                 <MoreVertical size={16} />
                                             </button>
 
+                                            {/* Context Menu / Kebab Menu Implementation - We need to add Rename here or handle via Kebab click */}
+                                            {/* Since we use handleKebabClick which opens ContextMenu, we should verify ContextMenu has Rename. */}
+                                            {/* We will add a Rename option to ContextMenu.tsx separately. */}
+                                            {/* But we can also set editing state if we passed a callback? */}
+                                            {/* Actually, ContextMenu is decoupled. We might need to listen to a "RENAME" action from context menu? */}
+                                            {/* For now, just double click is implemented here. */}
                                         </div>
 
                                         {/* HTML Controls Row (Expanded Only) */}
