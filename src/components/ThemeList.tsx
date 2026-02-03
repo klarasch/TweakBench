@@ -81,9 +81,12 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme }) => {
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        deleteTheme(theme.id);
+                                        if (confirm(`Are you sure you want to delete theme "${theme.name}"?`)) {
+                                            deleteTheme(theme.id);
+                                        }
                                     }}
                                     className="p-1 rounded text-slate-500 hover:text-red-400"
+                                    title="Delete Theme"
                                 >
                                     <Trash2 size={16} />
                                 </button>
