@@ -4,6 +4,7 @@ import { SnippetLibrary } from './SnippetLibrary.tsx';
 import { SnippetStackItem } from './ThemeDetail/SnippetStackItem.tsx';
 import { StructureSidebar } from './ThemeDetail/StructureSidebar.tsx';
 import { ThemeHeader } from './ThemeDetail/ThemeHeader.tsx';
+import { Button } from './ui/Button';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
 import { Trash2, Plus, Box, Play, Pause, Download, X, Edit } from 'lucide-react';
 import type { SnippetType } from '../types.ts';
@@ -426,33 +427,39 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                     {(() => {
                                         const isAllCollapsed = filteredItems.length > 0 && filteredItems.every(i => collapsedItems.has(i.id));
                                         return (
-                                            <button
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
                                                 onClick={() => {
                                                     const next = new Set(collapsedItems);
                                                     if (isAllCollapsed) {
-                                                        // Expand All: Remove current items from collapsed set
                                                         filteredItems.forEach(i => next.delete(i.id));
                                                     } else {
-                                                        // Collapse All: Add current items to collapsed set
                                                         filteredItems.forEach(i => next.add(i.id));
                                                     }
                                                     setCollapsedItems(next);
                                                 }}
-                                                className="px-2 py-1 text-[10px] bg-slate-800 text-slate-400 rounded hover:text-white min-w-[70px]"
+                                                className="text-slate-500 hover:text-white"
                                             >
                                                 {isAllCollapsed ? 'Expand All' : 'Collapse All'}
-                                            </button>
+                                            </Button>
                                         );
                                     })()}
                                 </div>
 
-                                <button
+                                <Button
+                                    variant="filled"
+                                    size="sm"
                                     onClick={() => handleCreateLocal(activeTab)}
-                                    className={`px-2 py-1 text-[10px] bg-slate-800 border border-slate-700 rounded flex items-center gap-1 hover:border-slate-500 hover:text-white transition-colors ${activeTab === 'css' ? 'text-blue-400' : 'text-orange-400'}`}
+                                    // Make HTML orange button use black text for better contrast against orange-600? Or go darker orange?
+                                    // User said "make everything slightly darker". 
+                                    // text-slate-900 on orange-500 might be best? Or bg-orange-700 with white text?
+                                    // User said "I don't believe the white against the orange is visible." -> Dark text on orange is readable.
+                                    className={activeTab === 'css' ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-orange-500 hover:bg-orange-400 text-slate-900 font-bold'}
+                                    icon={<Plus size={10} />}
                                 >
-                                    <Plus size={10} />
-                                    <span>Add {activeTab.toUpperCase()}</span>
-                                </button>
+                                    Add {activeTab === 'css' ? 'CSS' : 'HTML'}
+                                </Button>
 
                             </div>
 

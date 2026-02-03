@@ -1,8 +1,10 @@
 import React from 'react';
 import { useStore } from '../../store.ts';
 import { CodeEditor } from '../CodeEditor.tsx';
-import { MoreVertical, ChevronDown, ChevronRight } from 'lucide-react';
+import { MoreVertical, ChevronDown, ChevronRight, Terminal, FileCode, Upload } from 'lucide-react';
 import type { ThemeItem } from '../../types.ts';
+import { Button } from '../ui/Button';
+import { Toggle } from '../ui/Toggle';
 
 interface SnippetStackItemProps {
     item: ThemeItem;
@@ -43,11 +45,22 @@ export const SnippetStackItem: React.FC<SnippetStackItemProps> = ({
     return (
         <div
             ref={itemRef}
-            className={`border transition-all ${isSelected ? 'border-blue-500/50 shadow-lg shadow-blue-500/5' : 'border-slate-800 bg-slate-900'}`}
+            className={`
+                group relative border transition-all rounded-lg mb-4 overflow-hidden
+                ${isSelected
+                    ? 'bg-slate-900 border-blue-500/50 shadow-[0_0_15px_-3px_rgba(59,130,246,0.15)] ring-1 ring-blue-500/20'
+                    : item.isEnabled
+                        ? 'bg-slate-900 border-slate-700 shadow-sm'
+                        : 'bg-slate-900/50 border-slate-800 opacity-75 grayscale-[0.3]'
+                }
+            `}
         >
             {/* Snippet Header */}
             <div
-                className={`flex items-center gap-2 p-3 cursor-pointer select-none ${isCollapsed ? 'bg-slate-800/20' : 'bg-slate-950/50 border-b border-slate-800'}`}
+                className={`
+                    flex items-center gap-3 px-3 py-2 cursor-pointer select-none transition-colors
+                    ${isCollapsed ? 'hover:bg-slate-800' : 'bg-slate-800/30 border-b border-slate-800/50'}
+                `}
                 onClick={onToggleCollapse}
             >
                 <button className="text-slate-500 hover:text-white transition-colors">
@@ -56,13 +69,25 @@ export const SnippetStackItem: React.FC<SnippetStackItemProps> = ({
 
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
+                        {/* Icon based on Type */}
+                        <div className="relative flex-none">
+                            {/* Cast to string to avoid strict enum mismatch if types differ */}
+                            {(s.type as string) === 'js' ? <Terminal size={14} className="text-yellow-500" /> : <FileCode size={14} className="text-blue-400" />}
+                            {item.overrides?.content && (
+                                <div className="absolute -top-1 -right-1 w-2 h-2 bg-purple-500 rounded-full border border-slate-900" title="Has Local Override"></div>
+                            )}
+                            {s.isLibraryItem === false && (
+                                <div className="absolute -top-1 -right-1 w-2 h-2 bg-slate-500 rounded-full border border-slate-900" title="Ghost Snippet (Local Only)"></div>
+                            )}
+                        </div>
+
                         {isEditing ? (
                             <input
                                 autoFocus
-                                className="bg-slate-900 text-slate-200 text-sm font-medium border border-blue-500 rounded px-1 py-0.5 outline-none w-full"
+                                className="bg-slate-950 text-white text-sm font-medium border border-blue-500 rounded px-1.5 py-0.5 outline-none flex-1 min-w-0"
                                 defaultValue={s.name}
-                                onClick={e => e.stopPropagation()}
-                                onKeyDown={(e) => {
+                                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                                onKeyDown={(e: React.KeyboardEvent) => {
                                     if (e.key === 'Enter') {
                                         e.stopPropagation();
                                         e.preventDefault();
@@ -76,93 +101,86 @@ export const SnippetStackItem: React.FC<SnippetStackItemProps> = ({
                             />
                         ) : (
                             <span
-                                className={`font-medium text-sm truncate cursor-text hover:border-b hover:border-slate-500 ${!item.isEnabled ? 'text-slate-500 line-through decoration-slate-600' : 'text-slate-200'}`}
-                                onClick={(e) => {
+                                className={`font-semibold text-xs truncate cursor-text hover:text-white transition-colors ${!item.isEnabled ? 'text-slate-500 line-through decoration-slate-600' : 'text-slate-300'}`}
+                                onDoubleClick={(e: React.MouseEvent) => {
                                     e.stopPropagation();
                                     onSetEditing(true);
                                 }}
-                                title="Click to rename"
+                                title="Double-click to rename"
                             >
                                 {s.name}
                             </span>
                         )}
+
                         {item.overrides?.content !== undefined && (
-                            <span className="text-[10px] bg-yellow-500/10 text-yellow-500 px-1.5 py-0.5 rounded uppercase tracking-wider font-bold">Modified</span>
+                            <span className="text-[9px] font-bold text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded border border-purple-500/20 uppercase tracking-wider">
+                                Override
+                            </span>
                         )}
                     </div>
                 </div>
 
-                {/* Publish / Reset Controls */}
-                {!isCollapsed && (
-                    <div className="flex items-center gap-2 mr-2">
-                        {s.isLibraryItem === false ? (
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    const newName = prompt('Enter name for Library:', s.name);
-                                    if (newName) updateSnippet(s.id, { name: newName, isLibraryItem: true });
-                                }}
-                                className="text-purple-400 hover:text-purple-300 text-xs px-2 py-1 rounded border border-purple-900/50 hover:bg-purple-900/20"
-                            >
-                                Publish
-                            </button>
-                        ) : (
-                            item.overrides?.content !== undefined && (
-                                <>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (confirm('Revert to Master Snippet? Local changes will be lost.')) {
-                                                const { content, ...rest } = item.overrides || {};
-                                                updateThemeItem(themeId, item.id, { overrides: rest.selector || rest.position ? rest : undefined });
-                                            }
-                                        }}
-                                        className="text-slate-400 hover:text-white text-xs px-2 py-1 rounded border border-slate-700 hover:bg-slate-800"
-                                    >
-                                        Reset
-                                    </button>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (confirm('Publish changes to Master Snippet?')) {
-                                                const newContent = item.overrides?.content;
-                                                if (newContent) {
-                                                    updateSnippet(s.id, { content: newContent });
+                {/* Controls - Hidden until hover */}
+                <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    {/* Publish / Reset */}
+                    {!isCollapsed && (
+                        <div className="flex items-center gap-2">
+                            {s.isLibraryItem === false ? (
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        const newName = prompt('Enter name for Library:', s.name);
+                                        if (newName) updateSnippet(s.id, { name: newName, isLibraryItem: true });
+                                    }}
+                                    className="h-5 text-[10px] px-1.5 border-slate-700 text-slate-400 hover:text-purple-300 hover:border-purple-500/50"
+                                    title="Save to Library"
+                                    icon={<Upload size={10} />}
+                                >
+                                    Save
+                                </Button>
+                            ) : (
+                                item.overrides?.content !== undefined && (
+                                    <>
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (confirm('Revert to Master Snippet? Local changes will be lost.')) {
                                                     const { content, ...rest } = item.overrides || {};
                                                     updateThemeItem(themeId, item.id, { overrides: rest.selector || rest.position ? rest : undefined });
                                                 }
-                                            }
-                                        }}
-                                        className="text-blue-400 hover:text-blue-300 text-xs px-2 py-1 rounded border border-blue-900/50 hover:bg-blue-900/20"
-                                    >
-                                        Publish Changes
-                                    </button>
-                                </>
-                            )
-                        )}
-                    </div>
-                )}
+                                            }}
+                                            className="h-5 text-[10px] px-1.5 text-slate-500 hover:text-slate-300"
+                                        >
+                                            Reset
+                                        </Button>
+                                    </>
+                                )
+                            )}
+                        </div>
+                    )}
 
-                <div className="flex items-center gap-2 border-l border-slate-800 pl-2">
+                    <div className="h-4 w-px bg-slate-800"></div>
+
                     {/* Toggle Switch */}
-                    <label className="relative inline-flex items-center cursor-pointer" onClick={e => e.stopPropagation()}>
-                        <input
-                            type="checkbox"
-                            className="sr-only peer"
-                            checked={item.isEnabled}
-                            onChange={() => {
-                                toggleThemeItem(themeId, item.id);
-                            }}
-                        />
-                        <div className="w-8 h-4 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[0px] after:left-[0px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600/20 peer-checked:after:bg-blue-400 peer-checked:after:border-blue-300"></div>
-                    </label>
+                    <Toggle
+                        checked={item.isEnabled}
+                        onChange={() => toggleThemeItem(themeId, item.id)}
+                        size="sm"
+                    />
 
-                    <button
-                        className="p-1 text-slate-500 hover:text-white rounded hover:bg-slate-800 ml-1"
+                    {/* Kebab Menu */}
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-slate-600 hover:text-slate-200"
                         onClick={(e) => onKebabClick(e, item.id)}
                     >
-                        <MoreVertical size={16} />
-                    </button>
+                        <MoreVertical size={14} />
+                    </Button>
                 </div>
             </div>
 

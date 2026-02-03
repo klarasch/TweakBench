@@ -1,7 +1,9 @@
 import React from 'react';
 import { useStore } from '../store.ts';
 import { isDomainMatch } from '../utils/domains.ts';
-import { Network, Check, X, Power, Globe } from 'lucide-react';
+import { Network, Check, X, Globe } from 'lucide-react';
+import { Button } from './ui/Button';
+import { Toggle } from './ui/Toggle';
 
 interface StatusBarProps {
     activeUrl: string | null;
@@ -60,53 +62,49 @@ export const StatusBar: React.FC<StatusBarProps> = ({ activeUrl }) => {
 
             {/* Right Side: Controls */}
             <div className="flex items-center gap-2 shrink-0">
-                {/* Page-Specific Actions (Only if system enabled and safe page) */}
-                {globalEnabled && !isInternal && activeUrl && (
-                    <div className="flex items-center gap-1 border-r border-slate-800 pr-2 mr-0">
-                        {hasMatchingTheme ? (
-                            <button
-                                onClick={() => matchingThemes.forEach(t => updateTheme(t.id, { isActive: false }))}
-                                className="flex items-center gap-1 px-2 py-1 rounded bg-slate-800 hover:bg-red-900/30 text-slate-400 hover:text-red-400 transition-colors border border-slate-700"
-                                title="Disable Matching Themes"
-                            >
-                                <X size={10} />
-                                <span className="font-bold uppercase text-[10px]">Disable Url</span>
-                            </button>
-                        ) : (
-                            (() => {
-                                // Check for disabled matches
-                                const disabledMatches = themes.filter(t => !t.isActive && isDomainMatch(t.domainPatterns, activeUrl));
-                                if (disabledMatches.length > 0) {
-                                    return (
-                                        <button
-                                            onClick={() => disabledMatches.forEach(t => updateTheme(t.id, { isActive: true }))}
-                                            className="flex items-center gap-1 px-2 py-1 rounded bg-slate-800 hover:bg-green-900/30 text-slate-400 hover:text-green-400 transition-colors border border-slate-700"
-                                            title={`Enable ${disabledMatches.length} Matching Theme(s)`}
-                                        >
-                                            <Check size={10} />
-                                            <span className="font-bold uppercase text-[10px]">Enable Url</span>
-                                        </button>
-                                    );
-                                }
-                                return null;
-                            })()
-                        )}
-                    </div>
-                )}
+                <div className="flex items-center gap-2">
+                    {/* Page Actions */}
+                    {globalEnabled && !isInternal && activeUrl && (
+                        <>
+                            {hasMatchingTheme ? (
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => matchingThemes.forEach(t => updateTheme(t.id, { isActive: false }))}
+                                    className="h-6 text-[10px] px-2 border-slate-700 text-slate-400 hover:text-red-400 hover:border-red-900/50 hover:bg-red-900/10"
+                                    icon={<X size={10} />}
+                                >
+                                    Disable URL
+                                </Button>
+                            ) : (
+                                (() => {
+                                    const disabledMatches = themes.filter(t => !t.isActive && isDomainMatch(t.domainPatterns, activeUrl));
+                                    if (disabledMatches.length > 0) {
+                                        return (
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => disabledMatches.forEach(t => updateTheme(t.id, { isActive: true }))}
+                                                className="h-6 text-[10px] px-2 border-slate-700 text-slate-400 hover:text-green-400 hover:border-green-900/50 hover:bg-green-900/10"
+                                                icon={<Check size={10} />}
+                                            >
+                                                Enable URL
+                                            </Button>
+                                        );
+                                    }
+                                    return null;
+                                })()
+                            )}
+                            <div className="w-px h-4 bg-slate-800 mx-1"></div>
+                        </>
+                    )}
 
-                {/* Global Master Switch */}
-                <button
-                    onClick={toggleGlobal}
-                    className={`flex items-center gap-1.5 pl-2 pr-2 py-1 rounded-full transition-all border ${globalEnabled
-                            ? 'bg-green-500/10 text-green-400 border-green-500/20 hover:bg-green-500/20'
-                            : 'bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20'
-                        }`}
-                    title={globalEnabled ? "Turn System OFF (Stops all injections)" : "Turn System ON"}
-                >
-                    <div className={`w-1.5 h-1.5 rounded-full ${globalEnabled ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`}></div>
-                    <span className="font-bold uppercase text-[10px]">{globalEnabled ? 'ON' : 'OFF'}</span>
-                    <Power size={10} strokeWidth={3} className={globalEnabled ? "opacity-50" : ""} />
-                </button>
+                    <Toggle
+                        checked={globalEnabled}
+                        onChange={toggleGlobal}
+                        size="sm"
+                    />
+                </div>
             </div>
         </div>
     );

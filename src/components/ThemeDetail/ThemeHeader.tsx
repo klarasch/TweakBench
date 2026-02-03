@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft, Globe, MoreVertical, BookOpen, X, Plus, Wifi, WifiOff, Edit2 } from 'lucide-react';
+import { ArrowLeft, Globe, MoreVertical, BookOpen, X, Plus, Edit2 } from 'lucide-react';
+import { Button } from '../ui/Button';
+import { Toggle } from '../ui/Toggle';
 import type { Theme } from '../../types.ts';
 import { useActiveTab } from '../../hooks/useActiveTab.ts';
 import { isDomainMatch } from '../../utils/domains.ts';
@@ -24,7 +26,7 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
     updateTheme,
     showLibrary,
     setShowLibrary,
-    libraryFilter,
+    // libraryFilter,
     setLibraryFilter,
     globalEnabled,
     toggleGlobal,
@@ -99,21 +101,33 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                     }}
                     placeholder="Theme Name"
                 />
-                <div className="flex items-center gap-2 mt-1">
-                    <div className="flex items-center gap-1 text-[10px] text-slate-500 uppercase tracking-wider bg-slate-800/50 px-1.5 py-0.5 rounded cursor-pointer hover:bg-slate-800 hover:text-slate-300 transition-colors" onClick={() => setShowDomainSettings(true)}>
-                        <Globe size={10} />
+                <div className="flex items-center gap-2 mt-2">
+                    {/* Domain Config Button - Interactive */}
+                    <button
+                        className="flex items-center gap-1.5 text-[10px] font-medium text-slate-400 bg-slate-800/50 border border-slate-700/50 px-2 py-1 rounded-md cursor-pointer hover:bg-slate-800 hover:text-slate-200 hover:border-slate-600 transition-all select-none active:scale-95"
+                        onClick={() => setShowDomainSettings(true)}
+                        title="Configure Domains"
+                    >
+                        <Globe size={11} />
                         {theme.domainPatterns && theme.domainPatterns.includes('<all_urls>')
                             ? "Runs Everywhere"
                             : theme.domainPatterns && theme.domainPatterns.length > 0
                                 ? `${theme.domainPatterns.length} Domain${theme.domainPatterns.length > 1 ? 's' : ''}`
-                                : "No Configured Domains"
+                                : "No Domains"
                         }
-                    </div>
-                    {/* Active Match Status */}
+                    </button>
+
+                    {/* Active Match Status - Passive Badge */}
                     {activeUrl && (
-                        <div className={`flex items-center gap-1 text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border ${isMatch ? 'text-green-400 border-green-900/50 bg-green-900/20' : 'text-slate-500 border-transparent'}`} title={isMatch ? "Theme matches this tab" : "Theme does not run on this tab"}>
-                            {isMatch ? <Wifi size={10} /> : <WifiOff size={10} />}
-                            {isMatch ? "Active Tab" : "Inactive"}
+                        <div
+                            className={`flex items-center gap-1.5 text-[10px] font-medium px-2 py-1 rounded-full ${isMatch
+                                ? 'text-green-400/90 bg-green-500/5'
+                                : 'text-slate-500'
+                                }`}
+                            title={isMatch ? "Theme matches this tab" : "Theme does not run on this tab"}
+                        >
+                            <div className={`w-1.5 h-1.5 rounded-full ${isMatch ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-slate-600'}`}></div>
+                            {isMatch ? "Active on this tab" : "Inactive"}
                         </div>
                     )}
                 </div>
@@ -136,40 +150,37 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                 )}
 
                 {!globalEnabled ? (
-                    <button
-                        disabled
-                        className="p-1 rounded flex items-center gap-1.5 px-2 transition-colors bg-slate-800/50 text-slate-600 cursor-not-allowed opacity-50"
-                        title="System Disabled"
-                    >
-                        <div className="w-1.5 h-1.5 rounded-full bg-slate-600"></div>
-                        <span className="text-[10px] font-bold uppercase">OFF</span>
-                    </button>
+                    <Toggle checked={false} onChange={() => { }} disabled labelOff="OFF" title="System Disabled via Master Switch" />
                 ) : (
-                    <button
-                        onClick={() => updateTheme(theme.id, { isActive: !theme.isActive })}
-                        className={`p-1 rounded flex items-center gap-1.5 px-2 transition-colors ${theme.isActive ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20 shadow-[0_0_0_1px_rgba(74,222,128,0.2)]' : 'bg-slate-700/50 text-slate-500 hover:bg-slate-700 hover:text-slate-300'}`}
+                    <Toggle
+                        checked={theme.isActive}
+                        onChange={() => updateTheme(theme.id, { isActive: !theme.isActive })}
+                        labelOn="ON"
+                        labelOff="OFF"
                         title={theme.isActive ? "Disable Theme" : "Enable Theme"}
-                    >
-                        <div className={`w-1.5 h-1.5 rounded-full ${theme.isActive ? 'bg-green-400 animate-pulse' : 'bg-slate-500'}`}></div>
-                        <span className="text-[10px] font-bold uppercase">{theme.isActive ? 'ON' : 'OFF'}</span>
-                    </button>
+                    />
                 )}
-                <button
-                    className="p-1.5 rounded text-slate-500 hover:text-white hover:bg-slate-800"
+
+                <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={onContextMenu}
                     title="Theme Options"
                 >
                     <MoreVertical size={18} />
-                </button>
+                </Button>
+
                 <div className="w-px h-6 bg-slate-800 mx-1"></div>
-                <button
+
+                <Button
+                    variant={showLibrary ? "filled" : "outline"}
+                    size="sm"
                     onClick={() => { setShowLibrary(!showLibrary); setLibraryFilter(null); }}
-                    className={`p-1.5 rounded flex items-center gap-1.5 px-3 transition-colors ${showLibrary && !libraryFilter ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'}`}
-                    title="Snippet Library"
+                    icon={<BookOpen size={14} />}
+                    title="Toggle Snippet Library"
                 >
-                    <BookOpen size={16} />
-                    <span className="text-xs font-bold uppercase">Library</span>
-                </button>
+                    Library
+                </Button>
             </div>
 
             {/* Domain Settings Modal */}
