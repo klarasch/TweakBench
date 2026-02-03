@@ -45,7 +45,7 @@ const Panel: React.FC = () => {
     return (
         <div className="w-full h-screen bg-slate-900 text-slate-200 flex flex-col overflow-hidden">
             {!isConnected && (
-                <div className="flex-none bg-amber-600 text-white text-xs p-2 text-center font-bold flex items-center justify-center gap-2 z-50">
+                <div className="flex-none bg-amber-800 text-white text-xs p-2 text-center font-bold flex items-center justify-center gap-2 z-50">
                     <AlertTriangle size={14} />
                     <span>Connection Lost: Reload Page</span>
                 </div>
