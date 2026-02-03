@@ -4,10 +4,10 @@ import { ThemeList } from '../components/ThemeList.tsx';
 import { ThemeDetail } from '../components/ThemeDetail.tsx';
 import { StatusBar } from '../components/StatusBar.tsx';
 import { useActiveTab } from '../hooks/useActiveTab.ts';
-import { AlertTriangle, Power } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 
 const Panel: React.FC = () => {
-    const { loadFromStorage, globalEnabled, toggleGlobal } = useStore();
+    const { loadFromStorage, globalEnabled } = useStore();
     const activeUrl = useActiveTab();
     const [view, setView] = useState<'list' | 'detail'>('list');
     const [selectedThemeId, setSelectedThemeId] = useState<string | null>(null);
@@ -19,8 +19,15 @@ const Panel: React.FC = () => {
         const checkConnection = () => {
             if (typeof chrome !== 'undefined' && chrome.tabs) {
                 chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-                    if (tabs[0]?.id) {
-                        chrome.tabs.sendMessage(tabs[0].id, { type: 'PING' })
+                    const tab = tabs[0];
+                    if (tab?.id && tab.url) {
+                        // Ignore internal browser pages for connection check
+                        if (tab.url.startsWith('chrome://') || tab.url.startsWith('edge://') || tab.url.startsWith('about:')) {
+                            setIsConnected(true); // Treat as connected (suppress warning)
+                            return;
+                        }
+
+                        chrome.tabs.sendMessage(tab.id, { type: 'PING' })
                             .then(() => setIsConnected(true))
                             .catch(() => setIsConnected(false));
                     }
@@ -59,31 +66,14 @@ const Panel: React.FC = () => {
             <StatusBar activeUrl={activeUrl} />
 
             {view === 'list' ? (
-                <>
-                    <div className="flex-none p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900 z-10 shadow-sm">
-                        {/* ... Header Content ... */}
-                        <div className="flex items-center gap-2">
-                            <h1 className="text-xl font-bold text-slate-100 tracking-tight">TweakBench</h1>
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                            <span className={`text-[10px] font-bold uppercase tracking-wider ${globalEnabled ? 'text-green-400' : 'text-slate-600'}`}>
-                                {globalEnabled ? 'Plugin Active' : 'Plugin Inactive'}
-                            </span>
-                            <button
-                                onClick={toggleGlobal}
-                                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 shadow-md ${globalEnabled ? 'bg-green-500 text-white shadow-green-900/20 hover:bg-green-400' : 'bg-slate-800 text-slate-600 shadow-inner hover:bg-slate-700'}`}
-                                title={globalEnabled ? "Turn System OFF" : "Turn System ON"}
-                            >
-                                <Power size={16} strokeWidth={3} />
-                            </button>
-                        </div>
+                // List View
+                <div className={`flex-1 overflow-y-auto p-4 pt-4 transition-all duration-300 ${!globalEnabled ? 'opacity-90 grayscale-[0.5]' : ''}`}>
+                    <div className="mb-4 pl-1">
+                        <h1 className="text-2xl font-bold text-slate-100 tracking-tight">TweakBench</h1>
+                        <p className="text-xs text-slate-500">Theme & Snippet Manager</p>
                     </div>
-                    {/* Dimming adjusted: less aggressive grayscale, just slightly dimmed */}
-                    <div className={`flex-1 overflow-y-auto p-4 pt-4 transition-all duration-300 ${!globalEnabled ? 'opacity-90 grayscale-[0.5]' : ''}`}>
-                        <ThemeList onSelectTheme={handleSelectTheme} />
-                    </div>
-                </>
+                    <ThemeList onSelectTheme={handleSelectTheme} />
+                </div>
             ) : (
                 selectedThemeId && <ThemeDetail themeId={selectedThemeId} onBack={handleBack} />
             )}
