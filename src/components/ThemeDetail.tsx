@@ -673,7 +673,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                     <div
                                         key={item.id}
                                         ref={el => { itemRefs.current[item.id] = el; }}
-                                        className={`rounded-lg border transition-all ${selectedItemId === item.id ? 'border-blue-500/50 shadow-lg shadow-blue-500/5' : 'border-slate-800 bg-slate-900'}`}
+                                        className={`border transition-all ${selectedItemId === item.id ? 'border-blue-500/50 shadow-lg shadow-blue-500/5' : 'border-slate-800 bg-slate-900'}`}
                                     >
                                         {/* Snippet Header */}
                                         <div
@@ -700,28 +700,103 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
-                                                {/* HTML Controls */}
-                                                {s.type === 'html' && !isCollapsed && (
-                                                    <div className="flex gap-2 mr-4">
+                                            {/* Publish / Reset Controls */}
+                                            {!isCollapsed && (
+                                                <div className="flex items-center gap-2 mr-2">
+                                                    {s.isLibraryItem === false ? (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                const newName = prompt('Enter name for Library:', s.name);
+                                                                if (newName) updateSnippet(s.id, { name: newName, isLibraryItem: true });
+                                                            }}
+                                                            className="text-purple-400 hover:text-purple-300 text-xs px-2 py-1 rounded border border-purple-900/50 hover:bg-purple-900/20"
+                                                        >
+                                                            Publish
+                                                        </button>
+                                                    ) : (
+                                                        item.overrides?.content !== undefined && (
+                                                            <>
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        if (confirm('Revert to Master Snippet? Local changes will be lost.')) {
+                                                                            const { content, ...rest } = item.overrides || {};
+                                                                            updateThemeItem(themeId, item.id, { overrides: rest.selector || rest.position ? rest : undefined });
+                                                                        }
+                                                                    }}
+                                                                    className="text-slate-400 hover:text-white text-xs px-2 py-1 rounded border border-slate-700 hover:bg-slate-800"
+                                                                >
+                                                                    Reset
+                                                                </button>
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        if (confirm('Publish changes to Master Snippet?')) {
+                                                                            const newContent = item.overrides?.content;
+                                                                            if (newContent) {
+                                                                                updateSnippet(s.id, { content: newContent });
+                                                                                const { content, ...rest } = item.overrides || {};
+                                                                                updateThemeItem(themeId, item.id, { overrides: rest.selector || rest.position ? rest : undefined });
+                                                                            }
+                                                                        }
+                                                                    }}
+                                                                    className="text-blue-400 hover:text-blue-300 text-xs px-2 py-1 rounded border border-blue-900/50 hover:bg-blue-900/20"
+                                                                >
+                                                                    Publish Changes
+                                                                </button>
+                                                            </>
+                                                        )
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            <label className="relative inline-flex items-center cursor-pointer" onClick={e => e.stopPropagation()}>
+                                                <input
+                                                    type="checkbox"
+                                                    className="sr-only peer"
+                                                    checked={item.isEnabled}
+                                                    onChange={() => {
+                                                        toggleThemeItem(theme.id, item.id);
+                                                    }}
+                                                />
+                                                <div className="w-8 h-4 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[0px] after:left-[0px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600/20 peer-checked:after:bg-blue-400 peer-checked:after:border-blue-300"></div>
+                                            </label>
+
+                                            <button
+                                                className="p-1 text-slate-500 hover:text-white rounded hover:bg-slate-800 ml-1"
+                                                onClick={(e) => handleKebabClick(e, item.id)}
+                                            >
+                                                <MoreVertical size={16} />
+                                            </button>
+
+                                        </div>
+
+                                        {/* HTML Controls Row (Expanded Only) */}
+                                        {
+                                            s.type === 'html' && !isCollapsed && (
+                                                <div className="bg-slate-950/30 px-3 pb-3 pt-3 flex gap-2 items-center border-b border-slate-800/50" onClick={e => e.stopPropagation()}>
+                                                    <div className="flex-1 flex gap-2 items-center bg-slate-900 border border-slate-800 rounded px-2 py-1">
+                                                        <span className="text-[10px] text-slate-500 font-mono uppercase">Target</span>
                                                         <input
-                                                            className="bg-slate-900 text-slate-300 border border-slate-700 rounded px-2 py-0.5 text-xs w-28 outline-none focus:border-blue-500 transition-colors"
-                                                            placeholder="Selector"
+                                                            className="bg-transparent text-slate-300 text-sm font-mono w-full outline-none placeholder:text-slate-700"
+                                                            placeholder="CSS Selector (e.g. .container)"
                                                             value={item.overrides?.selector ?? s.selector ?? ''}
                                                             onChange={(e) => updateThemeItem(themeId, item.id, {
                                                                 overrides: { ...item.overrides, selector: e.target.value }
                                                             })}
-                                                            title="CSS Selector"
-                                                            onClick={e => e.stopPropagation()}
+                                                            title="CSS Selector Target"
                                                         />
+                                                    </div>
+                                                    <div className="w-[120px] flex gap-2 items-center bg-slate-900 border border-slate-800 rounded px-2 py-1">
+                                                        <span className="text-[10px] text-slate-500 font-mono uppercase">Pos</span>
                                                         <select
-                                                            className="bg-slate-900 text-slate-300 border border-slate-700 rounded px-2 py-0.5 text-xs outline-none focus:border-blue-500 transition-colors"
+                                                            className="bg-transparent text-slate-300 text-sm w-full outline-none cursor-pointer"
                                                             value={item.overrides?.position ?? s.position ?? 'beforeend'}
                                                             onChange={(e) => updateThemeItem(themeId, item.id, {
                                                                 overrides: { ...item.overrides, position: e.target.value as any }
                                                             })}
                                                             title="Injection Position"
-                                                            onClick={e => e.stopPropagation()}
                                                         >
                                                             <option value="append">Append</option>
                                                             <option value="prepend">Prepend</option>
@@ -729,108 +804,42 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                                             <option value="after">After</option>
                                                         </select>
                                                     </div>
-                                                )}
+                                                </div>
+                                            )
+                                        }
 
-                                                {/* Publish / Reset Controls */}
-                                                {!isCollapsed && (
-                                                    <div className="flex items-center gap-2 mr-2">
-                                                        {s.isLibraryItem === false ? (
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    const newName = prompt('Enter name for Library:', s.name);
-                                                                    if (newName) updateSnippet(s.id, { name: newName, isLibraryItem: true });
-                                                                }}
-                                                                className="text-purple-400 hover:text-purple-300 text-xs px-2 py-1 rounded border border-purple-900/50 hover:bg-purple-900/20"
-                                                            >
-                                                                Publish
-                                                            </button>
-                                                        ) : (
-                                                            item.overrides?.content !== undefined && (
-                                                                <>
-                                                                    <button
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            if (confirm('Revert to Master Snippet? Local changes will be lost.')) {
-                                                                                const { content, ...rest } = item.overrides || {};
-                                                                                updateThemeItem(themeId, item.id, { overrides: rest.selector || rest.position ? rest : undefined });
-                                                                            }
-                                                                        }}
-                                                                        className="text-slate-400 hover:text-white text-xs px-2 py-1 rounded border border-slate-700 hover:bg-slate-800"
-                                                                    >
-                                                                        Reset
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            if (confirm('Publish changes to Master Snippet?')) {
-                                                                                const newContent = item.overrides?.content;
-                                                                                if (newContent) {
-                                                                                    updateSnippet(s.id, { content: newContent });
-                                                                                    const { content, ...rest } = item.overrides || {};
-                                                                                    updateThemeItem(themeId, item.id, { overrides: rest.selector || rest.position ? rest : undefined });
-                                                                                }
-                                                                            }
-                                                                        }}
-                                                                        className="text-blue-400 hover:text-blue-300 text-xs px-2 py-1 rounded border border-blue-900/50 hover:bg-blue-900/20"
-                                                                    >
-                                                                        Publish Changes
-                                                                    </button>
-                                                                </>
-                                                            )
-                                                        )}
-                                                    </div>
-                                                )}
 
-                                                <label className="relative inline-flex items-center cursor-pointer" onClick={e => e.stopPropagation()}>
-                                                    <input
-                                                        type="checkbox"
-                                                        className="sr-only peer"
-                                                        checked={item.isEnabled}
-                                                        onChange={() => {
-                                                            toggleThemeItem(theme.id, item.id);
-                                                        }}
-                                                    />
-                                                    <div className="w-8 h-4 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[0px] after:left-[0px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600/20 peer-checked:after:bg-blue-400 peer-checked:after:border-blue-300"></div>
-                                                </label>
-
-                                                <button
-                                                    className="p-1 text-slate-500 hover:text-white rounded hover:bg-slate-800 ml-1"
-                                                    onClick={(e) => handleKebabClick(e, item.id)}
-                                                >
-                                                    <MoreVertical size={16} />
-                                                </button>
-                                            </div>
-                                        </div>
 
                                         {/* Snippet Editor Body */}
-                                        {!isCollapsed && (
-                                            <div className="flex flex-col border-t border-slate-800">
-                                                <CodeEditor
-                                                    value={item.overrides?.content ?? s.content}
-                                                    onChange={(val) => {
-                                                        if (s.isLibraryItem === false) {
-                                                            updateSnippet(s.id, { content: val });
-                                                        } else {
-                                                            updateThemeItem(themeId, item.id, {
-                                                                overrides: { ...item.overrides, content: val }
-                                                            });
-                                                        }
-                                                    }}
-                                                    className="flex-1 rounded-none border-x-0 border-b-0 border-t-0"
-                                                    mode={s.type}
-                                                    autoHeight={true}
-                                                    onFocus={() => {
-                                                        if (selectedItemId !== item.id) {
-                                                            setSelectedItemId(item.id);
-                                                            // Optional: Scroll sidebar to it? 
-                                                            // Let's rely on user action or auto-scroll. 
-                                                            // Ideally if focusing via click, it's fine.
-                                                        }
-                                                    }}
-                                                />
-                                            </div>
-                                        )}
+                                        {
+                                            !isCollapsed && (
+                                                <div className="flex flex-col border-t border-slate-800">
+                                                    <CodeEditor
+                                                        value={item.overrides?.content ?? s.content}
+                                                        onChange={(val) => {
+                                                            if (s.isLibraryItem === false) {
+                                                                updateSnippet(s.id, { content: val });
+                                                            } else {
+                                                                updateThemeItem(themeId, item.id, {
+                                                                    overrides: { ...item.overrides, content: val }
+                                                                });
+                                                            }
+                                                        }}
+                                                        className="flex-1 rounded-none border-x-0 border-b-0 border-t-0"
+                                                        mode={s.type}
+                                                        autoHeight={true}
+                                                        onFocus={() => {
+                                                            if (selectedItemId !== item.id) {
+                                                                setSelectedItemId(item.id);
+                                                                // Optional: Scroll sidebar to it? 
+                                                                // Let's rely on user action or auto-scroll. 
+                                                                // Ideally if focusing via click, it's fine.
+                                                            }
+                                                        }}
+                                                    />
+                                                </div>
+                                            )
+                                        }
                                     </div>
                                 );
                             })}
