@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useStore } from '../store.ts';
 import { CodeEditor } from './CodeEditor.tsx';
 import { SnippetLibrary } from './SnippetLibrary.tsx';
-import { ArrowLeft, Trash2, Box, Play, Pause, Plus } from 'lucide-react';
+import { ArrowLeft, Trash2, Box, Play, Pause, Code, FileCode, Book, Plus } from 'lucide-react';
+import type { SnippetType } from '../types.ts';
+
+
 
 interface ThemeDetailProps {
     themeId: string;
@@ -10,7 +13,7 @@ interface ThemeDetailProps {
 }
 
 export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => {
-    const { themes, snippets, updateTheme, updateSnippet, addSnippetToTheme, toggleThemeItem, updateThemeItem } = useStore();
+    const { themes, snippets, updateTheme, updateSnippet, addSnippet, addSnippetToTheme, toggleThemeItem, updateThemeItem } = useStore();
     const theme = themes.find(t => t.id === themeId);
 
     // State
@@ -40,6 +43,17 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
         setShowLibrary(false);
     };
 
+    const handleCreateLocal = (type: SnippetType) => {
+        const id = addSnippet({
+            name: type === 'css' ? 'Local CSS' : 'Local HTML',
+            type,
+            content: type === 'css' ? '/* CSS */\n' : '<!-- HTML -->\n',
+            relatedSnippetIds: [],
+            isLibraryItem: false
+        });
+        addSnippetToTheme(themeId, id);
+    };
+
     return (
         <div className="flex flex-col h-full bg-slate-900 relative">
             {/* Header */}
@@ -65,18 +79,34 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                 >
                     {theme.isActive ? <Pause size={18} /> : <Play size={18} />}
                 </button>
-                <button
-                    onClick={() => setShowLibrary(!showLibrary)}
-                    className={`p-1.5 rounded ${showLibrary ? 'bg-blue-600 text-white' : 'bg-slate-800 text-blue-400'}`}
-                    title="Add Snippet"
-                >
-                    <Plus size={18} />
-                </button>
             </div>
 
-            <div className="flex-1 flex overflow-hidden">
+            <div className="flex-1 flex overflow-hidden relative">
                 {/* Sidebar: Applied Snippets */}
-                <div className="w-1/3 min-w-[150px] border-r border-slate-800 flex flex-col bg-slate-900">
+                <div className="w-1/3 min-w-[150px] border-r border-slate-800 flex flex-col bg-slate-900 z-20">
+                    <div className="flex p-3 gap-2 border-b border-slate-800">
+                        <button
+                            onClick={() => handleCreateLocal('css')}
+                            className="flex-1 bg-slate-800 hover:bg-slate-700 text-blue-400 text-xs py-1.5 rounded flex items-center justify-center gap-1.5 border border-slate-700 transition-colors"
+                            title="Add Local CSS"
+                        >
+                            <Plus size={12} /> <Code size={14} /> <span>CSS</span>
+                        </button>
+                        <button
+                            onClick={() => handleCreateLocal('html')}
+                            className="flex-1 bg-slate-800 hover:bg-slate-700 text-orange-400 text-xs py-1.5 rounded flex items-center justify-center gap-1.5 border border-slate-700 transition-colors"
+                            title="Add Local HTML"
+                        >
+                            <Plus size={12} /> <FileCode size={14} /> <span>HTML</span>
+                        </button>
+                        <button
+                            onClick={() => setShowLibrary(!showLibrary)}
+                            className={`px-3 py-1.5 rounded border border-slate-700 flex items-center justify-center transition-colors ${showLibrary ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                            title="Open Library"
+                        >
+                            <Book size={16} />
+                        </button>
+                    </div>
                     <div className="p-2 text-xs font-semibold text-slate-500 uppercase">Applied Snippets</div>
                     <div className="flex-1 overflow-y-auto">
                         {theme.items.map(item => {
@@ -132,14 +162,32 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                         })}
                         {theme.items.length === 0 && (
                             <div className="p-4 text-center text-xs text-slate-500">
-                                No snippets applied. Click + to add one.
+                                No snippets applied. Use controls above.
                             </div>
                         )}
                     </div>
                 </div>
 
                 {/* Main: Editor */}
-                <div className="flex-1 flex flex-col bg-slate-900">
+                <div className="flex-1 flex flex-col bg-slate-900 relative">
+                    {/* Library Popover with Backdrop */}
+                    {showLibrary && (
+                        <>
+                            {/* Backdrop to close on click outside */}
+                            <div
+                                className="absolute inset-0 z-20 bg-slate-900/50 backdrop-blur-[1px]"
+                                onClick={() => setShowLibrary(false)}
+                            />
+                            {/* Popover content */}
+                            <div className="absolute top-0 bottom-0 left-0 w-[300px] z-30 bg-slate-900 border-r border-slate-800 shadow-xl flex flex-col">
+                                <SnippetLibrary
+                                    onSelectSnippet={handleAddSnippet}
+                                    onClose={() => setShowLibrary(false)}
+                                />
+                            </div>
+                        </>
+                    )}
+
                     {activeSnippet ? (
                         <>
                             <div className="flex-none p-2 bg-slate-950 border-b border-slate-800 flex flex-col gap-2">
@@ -248,20 +296,11 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                         <div className="flex-1 flex items-center justify-center text-slate-600 flex-col gap-2">
                             <Box size={40} />
                             <p>Select a snippet to edit</p>
+                            <div className="text-xs text-slate-600">or add new from sidebar</div>
                         </div>
                     )}
                 </div>
             </div>
-
-            {/* Library Overlay */}
-            {showLibrary && (
-                <div className="absolute top-[60px] bottom-0 right-0 z-30 flex">
-                    <SnippetLibrary
-                        onSelectSnippet={handleAddSnippet}
-                        onClose={() => setShowLibrary(false)}
-                    />
-                </div>
-            )}
         </div>
     );
 };

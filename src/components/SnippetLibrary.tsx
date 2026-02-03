@@ -15,22 +15,6 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet 
     const [newItemName, setNewItemName] = useState('');
     const [newItemType, setNewItemType] = useState<SnippetType>('css');
 
-    const handleCreateLocal = (type: SnippetType) => {
-        const baseContent = type === 'css'
-            ? '/* Local Override */\n.class {\n  color: red;\n}'
-            : '<div class="local-snippet">\n  New HTML\n</div>';
-
-        const id = addSnippet({
-            name: type === 'css' ? 'Local CSS' : 'Local HTML',
-            type,
-            content: baseContent,
-            relatedSnippetIds: [],
-            isLibraryItem: false
-        });
-
-        onSelectSnippet(id);
-    };
-
     const handleCreateLibrary = () => {
         if (!newItemName.trim()) return;
 
@@ -59,22 +43,6 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet 
     return (
         <div className="flex flex-col h-full bg-slate-900 border-l border-slate-700 w-64 absolute right-0 top-0 z-20 shadow-xl">
             <div className="p-3 border-b border-slate-800 bg-slate-900">
-                <div className="text-xs font-bold text-slate-500 mb-2 uppercase">Add Local Snippet</div>
-                <div className="flex gap-2 mb-3">
-                    <button
-                        onClick={() => handleCreateLocal('css')}
-                        className="flex-1 bg-slate-800 hover:bg-slate-700 text-blue-400 border border-slate-700 rounded py-1 text-xs flex items-center justify-center gap-1"
-                    >
-                        <Plus size={12} /> CSS
-                    </button>
-                    <button
-                        onClick={() => handleCreateLocal('html')}
-                        className="flex-1 bg-slate-800 hover:bg-slate-700 text-orange-400 border border-slate-700 rounded py-1 text-xs flex items-center justify-center gap-1"
-                    >
-                        <Plus size={12} /> HTML
-                    </button>
-                </div>
-
                 <div className="flex justify-between items-center mb-1">
                     <h3 className="font-bold text-slate-200">Library</h3>
                     <button onClick={() => setIsCreating(true)} className="text-slate-400 hover:text-white" title="New Library Item">
