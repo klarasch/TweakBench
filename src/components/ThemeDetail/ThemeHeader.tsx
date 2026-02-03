@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Globe, MoreVertical, BookOpen, X, Plus, Wifi, WifiOff } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { ArrowLeft, Globe, MoreVertical, BookOpen, X, Plus, Wifi, WifiOff, Edit2 } from 'lucide-react';
 import type { Theme } from '../../types.ts';
 import { useActiveTab } from '../../hooks/useActiveTab.ts';
 import { isDomainMatch } from '../../utils/domains.ts';
@@ -47,6 +48,35 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
             updateTheme(theme.id, { domainPatterns: [...current, newDomain.trim()] });
         }
         setNewDomain('');
+    };
+
+    const [editingIndex, setEditingIndex] = useState<number | null>(null);
+    const [editValue, setEditValue] = useState('');
+
+    const startEditing = (index: number, val: string) => {
+        setEditingIndex(index);
+        setEditValue(val);
+    };
+
+    const saveEditing = (index: number) => {
+        if (editingIndex === null) return;
+        const current = theme.domainPatterns || [];
+        const newValue = editValue.trim();
+
+        if (!newValue) {
+            // If empty, maybe remove? or just revert? Let's revert for safety or remove if user intends.
+            // Better to revert if empty to avoid accidental deletes, or show confirm. 
+            // Let's just do nothing if empty string usually, but here maybe revert.
+            setEditingIndex(null);
+            return;
+        }
+
+        // Update
+        const newPatterns = [...current];
+        newPatterns[index] = newValue;
+        // Dedupe if needed, but simple update is fine
+        updateTheme(theme.id, { domainPatterns: newPatterns });
+        setEditingIndex(null);
     };
 
     const handleRemoveDomain = (domain: string) => {
@@ -142,20 +172,45 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                 </button>
             </div>
 
-            {/* Domain Settings Popover */}
-            {showDomainSettings && (
-                <>
-                    <div className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-[1px]" onClick={() => setShowDomainSettings(false)} />
-                    <div className="absolute top-14 left-4 z-50 w-[300px] bg-slate-900 border border-slate-700 shadow-xl rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Run on Domains</h3>
-                            <button onClick={() => setShowDomainSettings(false)} className="text-slate-500 hover:text-white"><X size={16} /></button>
+            {/* Domain Settings Modal */}
+            {showDomainSettings && createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+                    {/* Backdrop */}
+                    <div
+                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                        onClick={() => setShowDomainSettings(false)}
+                    />
+
+                    {/* Modal Content */}
+                    <div
+                        className="relative w-full max-w-md bg-slate-900 border border-slate-700 shadow-2xl rounded-xl p-6 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200"
+                        onClick={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 rounded bg-blue-500/10 text-blue-400">
+                                    <Globe size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-slate-100 tracking-tight">Domain Configuration</h3>
+                                    <p className="text-xs text-slate-500">Control where this theme is active</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowDomainSettings(false)}
+                                className="p-2 hover:bg-slate-800 rounded-full text-slate-400 hover:text-white transition-colors"
+                            >
+                                <X size={20} />
+                            </button>
                         </div>
+
                         {/* Run Everywhere Toggle */}
-                        <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-800 flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-2">
-                                <Globe size={16} className="text-slate-400" />
-                                <span className="text-sm font-medium text-slate-200">All Websites</span>
+                        <div className="bg-slate-800/30 rounded-lg p-4 border border-slate-800 flex items-center justify-between">
+                            <div className="flex flex-col gap-1">
+                                <span className="text-sm font-bold text-slate-200">Run Everywhere</span>
+                                <span className="text-xs text-slate-500">Inject code into all websites automatically</span>
                             </div>
                             <button
                                 onClick={() => {
@@ -164,32 +219,103 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                                     if (isAll) updateTheme(theme.id, { domainPatterns: currentPatterns.filter(p => p !== '<all_urls>') });
                                     else updateTheme(theme.id, { domainPatterns: [...currentPatterns, '<all_urls>'] });
                                 }}
-                                className={`w-10 h-5 rounded-full relative transition-colors ${theme.domainPatterns?.includes('<all_urls>') ? 'bg-green-500' : 'bg-slate-600'}`}
+                                className={`w-12 h-6 rounded-full relative transition-colors ${theme.domainPatterns?.includes('<all_urls>') ? 'bg-green-500' : 'bg-slate-600'}`}
                             >
-                                <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-transform ${theme.domainPatterns?.includes('<all_urls>') ? 'left-6' : 'left-1'}`}></div>
+                                <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-all ${theme.domainPatterns?.includes('<all_urls>') ? 'left-7' : 'left-1'}`}></div>
                             </button>
                         </div>
 
                         {theme.domainPatterns?.includes('<all_urls>') ? (
-                            <div className="text-xs text-slate-500 text-center py-4 border border-dashed border-slate-800 rounded">Theme runs everywhere.</div>
+                            <div className="text-sm text-center py-8 text-slate-500 bg-slate-800/20 rounded-lg border border-dashed border-slate-800">
+                                This theme is currently active on <span className="font-bold text-slate-300">all websites</span>.
+                            </div>
                         ) : (
-                            <div className="space-y-4">
-                                <div className="flex gap-2">
-                                    <input className="flex-1 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white" value={newDomain} onChange={e => setNewDomain(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAddDomain()} placeholder="google.com" />
-                                    <button onClick={handleAddDomain} disabled={!newDomain.trim()} className="p-1 bg-slate-800 rounded border border-slate-700"><Plus size={14} /></button>
+                            <div className="flex flex-col gap-4">
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Allowed Domains</label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:border-blue-500 focus:outline-none transition-colors placeholder:text-slate-600"
+                                            value={newDomain}
+                                            onChange={e => setNewDomain(e.target.value)}
+                                            onKeyDown={e => e.key === 'Enter' && handleAddDomain()}
+                                            placeholder="example.com"
+                                            autoFocus
+                                        />
+                                        <button
+                                            onClick={handleAddDomain}
+                                            disabled={!newDomain.trim()}
+                                            className="px-3 bg-slate-800 hover:bg-blue-600 disabled:opacity-50 disabled:hover:bg-slate-800 rounded-lg border border-slate-700 text-white transition-colors"
+                                        >
+                                            <Plus size={18} />
+                                        </button>
+                                    </div>
+                                    <p className="text-[10px] text-slate-500 px-1">
+                                        Enter a domain (e.g. <code className="bg-slate-800 px-1 rounded">google.com</code>) or pattern (<code className="bg-slate-800 px-1 rounded">*.gov</code>).
+                                    </p>
                                 </div>
-                                <div className="space-y-2 max-h-[200px] overflow-y-auto">
+
+                                <div className="space-y-2 max-h-[240px] overflow-y-auto pr-1">
+                                    {(!theme.domainPatterns || theme.domainPatterns.length === 0) && (
+                                        <div className="text-center py-6 text-slate-500 text-sm">
+                                            No domains configured.<br />The theme will not run anywhere.
+                                        </div>
+                                    )}
                                     {theme.domainPatterns?.map((p, i) => (
-                                        <div key={i} className="flex justify-between p-2 bg-slate-800/30 rounded text-xs text-slate-300">
-                                            <span>{p}</span>
-                                            <button onClick={() => handleRemoveDomain(p)} className="hover:text-red-400"><X size={12} /></button>
+                                        <div key={i} className="flex items-center justify-between p-3 bg-slate-800/50 hover:bg-slate-800 rounded-lg border border-slate-800/50 group transition-colors">
+                                            <div className="flex items-center gap-3 flex-1">
+                                                <Globe size={14} className="text-slate-500 group-hover:text-blue-400 transition-colors" />
+
+                                                {editingIndex === i ? (
+                                                    <input
+                                                        className="flex-1 bg-slate-900 border border-blue-500/50 rounded px-2 py-1 text-sm text-white focus:outline-none"
+                                                        value={editValue}
+                                                        onChange={(e) => setEditValue(e.target.value)}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter') saveEditing(i);
+                                                            if (e.key === 'Escape') setEditingIndex(null);
+                                                            e.stopPropagation(); // Keep input events isolated
+                                                        }}
+                                                        onBlur={() => saveEditing(i)}
+                                                        autoFocus
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    />
+                                                ) : (
+                                                    <div
+                                                        className="flex-1 flex items-center justify-between group/item cursor-pointer"
+                                                        onClick={(e) => { e.stopPropagation(); startEditing(i, p); }}
+                                                    >
+                                                        <span className="text-sm font-medium text-slate-300 group-hover:text-white font-mono truncate">
+                                                            {p}
+                                                        </span>
+                                                        <Edit2 size={12} className="text-slate-600 opacity-0 group-hover/item:opacity-100 transition-opacity ml-2" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleRemoveDomain(p); }}
+                                                className="p-1.5 rounded hover:bg-red-500/20 text-slate-500 hover:text-red-400 transition-colors ml-2"
+                                                title="Remove Domain"
+                                            >
+                                                <X size={14} />
+                                            </button>
                                         </div>
                                     ))}
                                 </div>
                             </div>
                         )}
+
+                        <div className="pt-4 border-t border-slate-800 flex justify-end">
+                            <button
+                                onClick={() => setShowDomainSettings(false)}
+                                className="px-4 py-2 bg-slate-100 hover:bg-white text-slate-900 font-bold rounded-lg text-sm transition-colors"
+                            >
+                                Done
+                            </button>
+                        </div>
                     </div>
-                </>
+                </div>,
+                document.body
             )}
         </div>
     );
