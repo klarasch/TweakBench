@@ -23,8 +23,8 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
         mode === 'css' ? css() : html(),
         EditorView.theme({
             "&": {
-                backgroundColor: "#1e293b", /* slate-800 */
-                color: "#e2e8f0", /* slate-200 */
+                backgroundColor: "#0f172a", /* slate-900 (matches app bg) */
+                color: "#cbd5e1", /* slate-300 */
                 fontSize: "12px",
                 height: "100%",
             },
@@ -32,18 +32,19 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
                 fontFamily: "Menlo, Monaco, Consolas, 'Courier New', monospace",
             },
             ".cm-gutters": {
-                backgroundColor: "#0f172a", /* slate-900 */
+                backgroundColor: "#020617", /* slate-950 (slightly darker than bg) */
                 color: "#475569", /* slate-600 */
                 border: "none",
+                borderRight: "1px solid #1e293b", /* slate-800 */
             },
             "&.cm-focused .cm-cursor": {
                 borderLeftColor: "#38bdf8" /* sky-400 */
             },
             ".cm-activeLine": {
-                backgroundColor: "#33415550"
+                backgroundColor: "#1e293b50" /* slate-800 with opacity */
             },
             ".cm-activeLineGutter": {
-                backgroundColor: "#0f172a",
+                backgroundColor: "#1e293b", /* slate-800 */
                 color: "#e2e8f0"
             }
         }, { dark: true })

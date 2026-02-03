@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useStore } from '../store.ts';
 import { CodeEditor } from './CodeEditor.tsx';
 import { SnippetLibrary } from './SnippetLibrary.tsx';
-import { ArrowLeft, Trash2, Box, Play, Pause, Plus, Power } from 'lucide-react';
+import { ArrowLeft, Trash2, Box, Play, Pause, Plus } from 'lucide-react';
 
 interface ThemeDetailProps {
     themeId: string;
@@ -92,19 +92,27 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                         <span className={`text-sm font-medium truncate ${selectedItemId === item.id ? 'text-white' : 'text-slate-400'}`}>
                                             {s.name}
                                         </span>
-                                        <span className="text-[10px] bg-slate-700 px-1 rounded text-slate-400 uppercase">{s.type}</span>
+                                        <div className="flex items-center gap-1">
+                                            {!item.isEnabled && (
+                                                <span className="text-[10px] bg-red-900/50 text-red-400 px-1 rounded uppercase">Disabled</span>
+                                            )}
+                                            <span className="text-[10px] bg-slate-700 px-1 rounded text-slate-400 uppercase w-[32px] text-center">{s.type}</span>
+                                        </div>
                                     </div>
-                                    <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button
-                                            className={`p-0.5 rounded ${item.isEnabled ? 'text-green-500 hover:text-green-400' : 'text-slate-500 hover:text-slate-400'}`}
-                                            title={item.isEnabled ? 'Disable Snippet' : 'Enable Snippet'}
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                toggleThemeItem(theme.id, item.id);
-                                            }}
-                                        >
-                                            <Power size={12} />
-                                        </button>
+                                    <div className="flex justify-end gap-2 items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                className="sr-only peer"
+                                                checked={item.isEnabled}
+                                                onChange={(e) => {
+                                                    e.stopPropagation();
+                                                    toggleThemeItem(theme.id, item.id);
+                                                }}
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
+                                            <div className="w-7 h-4 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-green-500"></div>
+                                        </label>
                                         <button
                                             className="p-0.5 text-slate-500 hover:text-red-400"
                                             onClick={(e) => {
@@ -114,6 +122,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                                     if (selectedItemId === item.id) setSelectedItemId(null);
                                                 }
                                             }}
+                                            title="Remove Snippet"
                                         >
                                             <Trash2 size={12} />
                                         </button>
