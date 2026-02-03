@@ -18,7 +18,7 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
 // Helper: Simple Glob Matching
 // Helper: Simple Glob Matching
 function isDomainMatch(patterns: string[], url: string): boolean {
-    if (!patterns || patterns.length === 0) return true;
+    if (!patterns || patterns.length === 0) return false; // Empty list = Run Nowhere
     if (patterns.includes('<all_urls>')) return true;
 
     const u = new URL(url);
@@ -98,23 +98,23 @@ function updateStyles(state: AppState) {
                 }
             });
         });
+    }
 
-        // Cleanup CSS
-        for (const [id, styleEl] of injectedStyles.entries()) {
-            if (!activeSnippetIds.has(id)) {
-                console.log('TweakBench: Removing CSS snippet', id);
-                styleEl.remove();
-                injectedStyles.delete(id);
-            }
+    // Cleanup CSS
+    for (const [id, styleEl] of injectedStyles.entries()) {
+        if (!activeSnippetIds.has(id)) {
+            console.log('TweakBench: Removing CSS snippet', id);
+            styleEl.remove();
+            injectedStyles.delete(id);
         }
+    }
 
-        // Cleanup HTML
-        for (const [id, el] of injectedElements.entries()) {
-            if (!activeSnippetIds.has(id)) {
-                console.log('TweakBench: Removing HTML snippet', id);
-                el.remove();
-                injectedElements.delete(id);
-            }
+    // Cleanup HTML
+    for (const [id, el] of injectedElements.entries()) {
+        if (!activeSnippetIds.has(id)) {
+            console.log('TweakBench: Removing HTML snippet', id);
+            el.remove();
+            injectedElements.delete(id);
         }
     }
 }
@@ -149,7 +149,6 @@ function injectOrUpdateStyle(id: string, content: string) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function injectOrUpdateHTML(id: string, snippet: any) {
     let el = injectedElements.get(id);
     const inDOM = el && el.isConnected;
@@ -166,68 +165,80 @@ function injectOrUpdateHTML(id: string, snippet: any) {
         return;
     }
 
-    // Check if we need to move the element
-    let needsMove = false;
-    if (inDOM && el) {
-        // Simple check: is the parent correct?
-        // This doesn't cover "position within parent" (e.g. before/after), 
-        // but it covers the main issue of wrong target.
-        // To fully support re-ordering, we'd need to check siblings or force re-insert.
-        // For now, let's force re-insert if the parent doesn't match the target (for append/prepend)
-        // or if the parent doesn't match target's parent (for before/after).
+    // 1. Parse Content to decide on Element or Wrapper
+    const temp = document.createElement('div');
+    temp.innerHTML = snippet.content;
 
-        let expectedParent: Element | null = target;
-        if (position === 'before' || position === 'after' || position === 'beforebegin' || position === 'afterend') {
-            expectedParent = target.parentElement;
-        }
+    let newEl: HTMLElement;
+    let isWrapped = false;
 
-        if (el.parentElement !== expectedParent) {
-            needsMove = true;
+    // Logic: If exactly one Element child, use it directly. Otherwise wrap in DIV.
+    // We ignore whitespace text nodes for this decision, but we might lose them if we unwrap.
+    if (temp.children.length === 1) {
+        newEl = temp.firstElementChild as HTMLElement;
+    } else {
+        newEl = document.createElement('div');
+        newEl.innerHTML = snippet.content;
+        isWrapped = true;
+    }
+
+    // 2. Tag it with metadata
+    // We attach ID to the injected element (or wrapper).
+    // Note: If user provided an ID in their HTML, we overwrite it. 
+    // This is necessary for tracking.
+    newEl.id = `tb-html-${id}`;
+    newEl.setAttribute('data-tb-generated', isWrapped ? 'wrapped' : 'direct');
+    newEl.setAttribute('data-tb-position', position);
+    newEl.setAttribute('data-tb-selector', selector);
+    // Store content hash/string to avoid re-renders if identical?
+    // Actually, we are replacing the element, so we can't easily compare existing.
+    // We could check if existing el matches?
+
+    // Check if we need to replace existing
+    // If existing exists, we just replace it.
+    // Optimization: If content is same, do nothing?
+    // Hard to check because `el.innerHTML` might not match `snippet.content` if we unwrapped.
+    // `el.outerHTML` tracking is better.
+    // Let's simplified approach: Always replace if it exists (reactivity).
+
+    if (el && inDOM) {
+        // Check if we strictly need to update (avoid flash)
+        // If position/selector changed, we move.
+        // If content changed, we replace.
+        // For now, Replace is safest.
+
+        // Match position?
+        // If we just do replaceWith, position is preserved relative to siblings, 
+        // BUT if the user changed 'position' (e.g. append -> prepend), replaceWith won't move it.
+        // So we need to remove and re-insert if info changed.
+
+        const lastPosition = el.getAttribute('data-tb-position');
+        const lastSelector = el.getAttribute('data-tb-selector');
+
+        if (lastPosition !== position || lastSelector !== selector) {
+            el.remove();
+            el = undefined; // Trigger insertion logic
         } else {
-            // Even if parent matches, position might have changed (e.g. append -> prepend).
-            // We can store the last position config on the element to check.
-            const lastPosition = el.getAttribute('data-tb-position');
-            const lastSelector = el.getAttribute('data-tb-selector');
-            if (lastPosition !== position || lastSelector !== selector) {
-                needsMove = true;
-            }
+            // Same position/selector, just content update?
+            // replaceWith keeps it in same spot.
+            el.replaceWith(newEl);
+            injectedElements.set(id, newEl);
+            return;
         }
     }
 
-    if (!inDOM || needsMove) {
-        if (el && needsMove) {
-            el.remove(); // Refreshes the insertion
-        }
-
-        if (!el || needsMove) {
-            el = document.createElement('div');
-            el.id = `tb-html-${id}`;
-            el.setAttribute('data-tb-generated', 'true');
-        }
-
-        // Update metadata
-        el.setAttribute('data-tb-position', position);
-        el.setAttribute('data-tb-selector', selector);
-        el.innerHTML = snippet.content;
-
-        // Position logic
-        if (position === 'append' || position === 'beforeend') {
-            target.appendChild(el);
-        } else if (position === 'prepend' || position === 'afterbegin') {
-            target.prepend(el);
-        } else if (position === 'before' || position === 'beforebegin') {
-            target.parentNode?.insertBefore(el, target);
-        } else if (position === 'after' || position === 'afterend') {
-            target.parentNode?.insertBefore(el, target.nextSibling);
-        }
-
-        injectedElements.set(id, el);
-    } else if (el) {
-        // Update content if changed (and position was fine)
-        if (el.innerHTML !== snippet.content) {
-            el.innerHTML = snippet.content;
-        }
+    // Insert New (or Moved)
+    if (position === 'append' || position === 'beforeend') {
+        target.appendChild(newEl);
+    } else if (position === 'prepend' || position === 'afterbegin') {
+        target.prepend(newEl);
+    } else if (position === 'before' || position === 'beforebegin') {
+        target.parentNode?.insertBefore(newEl, target);
+    } else if (position === 'after' || position === 'afterend') {
+        target.parentNode?.insertBefore(newEl, target.nextSibling);
     }
+
+    injectedElements.set(id, newEl);
 }
 
 chrome.storage.local.get([STORAGE_KEY], (result) => {

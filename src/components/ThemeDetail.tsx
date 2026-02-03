@@ -3,7 +3,7 @@ import { useStore } from '../store.ts';
 import { CodeEditor } from './CodeEditor.tsx';
 import { SnippetLibrary } from './SnippetLibrary.tsx';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
-import { ArrowLeft, Trash2, Code, FileCode, BookOpen, Plus, Globe, Monitor, MoreVertical, Box, Play, Pause, Download, X } from 'lucide-react';
+import { ArrowLeft, Trash2, BookOpen, Plus, Globe, Monitor, MoreVertical, Box, Play, Pause, Download, X } from 'lucide-react';
 import type { SnippetType } from '../types.ts';
 import { exportThemeToJS, exportThemeToCSS } from '../utils/impexp.ts';
 
@@ -16,6 +16,8 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     const { themes, snippets, updateTheme, updateSnippet, addSnippet, addSnippetToTheme, toggleThemeItem, updateThemeItem, globalEnabled, toggleGlobal } = useStore();
     const theme = themes.find(t => t.id === themeId);
 
+
+
     // State
     const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
     const [showLibrary, setShowLibrary] = useState(false);
@@ -25,8 +27,12 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     const [editingDomainIdx, setEditingDomainIdx] = useState<number | null>(null);
     const [editingDomainValue, setEditingDomainValue] = useState('');
 
+
     // Context Menu State
     const [menuState, setMenuState] = useState<{ x: number; y: number; itemId: string | null }>({ x: 0, y: 0, itemId: null });
+
+    const activeItem = theme?.items.find(i => i.id === selectedItemId);
+    const activeSnippet = activeItem ? snippets.find(s => s.id === activeItem.snippetId) : null;
 
     useEffect(() => {
         if (theme) {
@@ -38,10 +44,32 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
         }
     }, [theme, selectedItemId]);
 
-    if (!theme) return <div>Theme not found</div>;
+    // Handle Esc key to delete empty/new local snippets
+    React.useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && activeSnippet && activeSnippet.isLibraryItem === false) {
+                const defaultCSS = '/* CSS */\n';
+                const defaultHTML = '<!-- HTML -->\n';
+                const isDefault = activeSnippet.type === 'css'
+                    ? activeSnippet.content === defaultCSS
+                    : activeSnippet.content === defaultHTML;
 
-    const activeItem = theme.items.find(i => i.id === selectedItemId);
-    const activeSnippet = activeItem ? snippets.find(s => s.id === activeItem.snippetId) : null;
+                if (isDefault && activeItem) {
+                    // Delete snippet and remove from theme
+                    // Since it's local, deleting the snippet handles cleanup usually? 
+                    // Or we should double check store logic. 
+                    // But safesty: remove from theme then delete snippet.
+                    useStore.getState().removeSnippetFromTheme(themeId, activeItem.id);
+                    useStore.getState().deleteSnippet(activeSnippet.id);
+                    setSelectedItemId(null);
+                }
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [activeSnippet, activeItem, themeId]);
+
+    if (!theme) return <div>Theme not found</div>;
 
     const handleAddDomain = () => {
         if (!newDomain.trim()) return;
@@ -75,6 +103,14 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
             isLibraryItem: false
         });
         addSnippetToTheme(themeId, id);
+
+        // Auto-select the new item
+        // Access store directly to get the updated theme items immediately
+        setTimeout(() => {
+            const updatedTheme = useStore.getState().themes.find(t => t.id === themeId);
+            const newItem = updatedTheme?.items.find(i => i.snippetId === id);
+            if (newItem) setSelectedItemId(newItem.id);
+        }, 50);
     };
 
     const handleContextMenu = (e: React.MouseEvent, itemId: string) => {
@@ -249,23 +285,23 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                             className={`flex-1 hover:bg-slate-700 text-xs py-1.5 rounded flex items-center justify-center gap-1 border border-slate-700 transition-colors ${sidebarMode === 'snippets' ? 'bg-slate-800 text-blue-400' : 'bg-transparent text-slate-500'}`}
                             title="Add CSS"
                         >
-                            <Plus size={12} /> <Code size={14} />
+                            <Plus size={12} /> CSS
                         </button>
                         <button
                             onClick={() => { setSidebarMode('snippets'); handleCreateLocal('html'); }}
                             className={`flex-1 hover:bg-slate-700 text-xs py-1.5 rounded flex items-center justify-center gap-1 border border-slate-700 transition-colors ${sidebarMode === 'snippets' ? 'bg-slate-800 text-orange-400' : 'bg-transparent text-slate-500'}`}
                             title="Add HTML"
                         >
-                            <Plus size={12} /> <FileCode size={14} />
+                            <Plus size={12} /> HTML
                         </button>
                         <div className="w-px bg-slate-800 mx-0.5"></div>
                         {/* Toggle Modes */}
                         <button
                             onClick={() => setSidebarMode(sidebarMode === 'domains' ? 'snippets' : 'domains')}
                             className={`px-3 py-1.5 rounded border border-slate-700 flex items-center justify-center transition-colors ${sidebarMode === 'domains' ? 'bg-blue-600/20 text-blue-400 border-blue-500/50' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
-                            title="Configure Domains"
+                            title="Domain Settings"
                         >
-                            <Globe size={16} />
+                            <Globe size={14} />
                         </button>
                         <button
                             onClick={() => { setSidebarMode('snippets'); setShowLibrary(!showLibrary); }}
@@ -276,183 +312,221 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                         </button>
                     </div>
 
-                    {/* CONTENT: SNIPPETS or DOMAINS */}
-                    {sidebarMode === 'domains' ? (
-                        <div className="flex-1 flex flex-col overflow-hidden">
-                            <div className="p-2 text-xs font-semibold text-slate-500 uppercase bg-slate-900/50 flex justify-between items-center">
-                                <span>Run on Domains</span>
-                                <button
-                                    onClick={() => setSidebarMode('snippets')}
-                                    className="hover:text-slate-300"
-                                    title="Close Domain Editor"
-                                >
-                                    <X size={16} />
-                                </button>
-                            </div>
-                            <div className="p-2 border-b border-slate-800 flex gap-1">
-                                <input
-                                    className="bg-slate-950 border border-slate-700 rounded text-xs px-2 py-1 flex-1 text-white outline-none focus:border-blue-500"
-                                    placeholder="e.g. *.google.com"
-                                    value={newDomain}
-                                    onChange={(e) => setNewDomain(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && handleAddDomain()}
-                                />
-                                <button
-                                    onClick={handleAddDomain}
-                                    className="bg-slate-800 hover:bg-slate-700 text-slate-300 rounded px-2 flex items-center justify-center"
-                                >
-                                    <Plus size={14} />
-                                </button>
-                            </div>
-                            <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-1">
-                                {(theme.domainPatterns || ['<all_urls>']).map((pattern, idx) => (
-                                    <div key={idx} className="flex justify-between items-center bg-slate-800/50 rounded px-2 py-1 group min-h-[28px]">
-                                        {editingDomainIdx === idx ? (
+                    {/* Content */}
+                    <div className="flex-1 overflow-y-auto p-4">
+                        {sidebarMode === 'domains' ? (
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Run on Domains</h3>
+                                    <button
+                                        onClick={() => setSidebarMode('snippets')}
+                                        className="text-slate-500 hover:text-slate-300 transition-colors"
+                                        title="Close Domain Settings"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
+
+                                {/* Run Everywhere Toggle */}
+                                <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-800 flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Globe size={16} className="text-slate-400" />
+                                        <span className="text-sm font-medium text-slate-200">All Websites</span>
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            const currentPatterns = theme.domainPatterns || [];
+                                            const isAll = currentPatterns.includes('<all_urls>');
+
+                                            if (isAll) {
+                                                // Remove <all_urls> but keep others
+                                                updateTheme(themeId, {
+                                                    domainPatterns: currentPatterns.filter(p => p !== '<all_urls>')
+                                                });
+                                            } else {
+                                                // Add <all_urls>
+                                                updateTheme(themeId, {
+                                                    domainPatterns: [...currentPatterns, '<all_urls>']
+                                                });
+                                            }
+                                        }}
+                                        className={`w-10 h-5 rounded-full relative transition-colors ${theme.domainPatterns?.includes('<all_urls>') ? 'bg-green-500' : 'bg-slate-600'}`}
+                                    >
+                                        <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-transform ${theme.domainPatterns?.includes('<all_urls>') ? 'left-6' : 'left-1'}`}></div>
+                                    </button>
+                                </div>
+
+                                {theme.domainPatterns?.includes('<all_urls>') ? (
+                                    <div className="text-xs text-slate-500 text-center py-4 px-2 border border-dashed border-slate-800 rounded">
+                                        Theme applies to every website.
+                                        <br />
+                                        Turn off "All Websites" to restrict.
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="flex gap-2">
                                             <input
-                                                className="bg-slate-950 text-xs text-white px-1 py-0.5 rounded outline-none border border-blue-500 flex-1 mr-2"
-                                                value={editingDomainValue}
-                                                onChange={(e) => setEditingDomainValue(e.target.value)}
-                                                autoFocus
-                                                onBlur={() => {
-                                                    // Save on blurred
-                                                    if (editingDomainValue.trim() && editingDomainValue !== pattern) {
-                                                        const current = [...(theme.domainPatterns || ['<all_urls>'])];
-                                                        current[idx] = editingDomainValue.trim();
-                                                        updateTheme(themeId, { domainPatterns: current });
-                                                    }
-                                                    setEditingDomainIdx(null);
-                                                }}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                        e.currentTarget.blur(); // Trigger blur logic
-                                                    }
-                                                    if (e.key === 'Escape') {
-                                                        setEditingDomainIdx(null);
-                                                    }
-                                                }}
+                                                className="flex-1 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm text-white placeholder-slate-500 outline-none focus:border-blue-500 transition-colors"
+                                                placeholder="e.g. google.com"
+                                                value={newDomain}
+                                                onChange={(e) => setNewDomain(e.target.value)}
+                                                onKeyDown={(e) => e.key === 'Enter' && handleAddDomain()}
                                             />
-                                        ) : (
-                                            <span
-                                                className={`text-xs font-mono truncate cursor-pointer hover:underline ${pattern === '<all_urls>' ? 'text-yellow-400' : 'text-slate-300'}`}
-                                                onClick={() => {
-                                                    setEditingDomainIdx(idx);
-                                                    setEditingDomainValue(pattern);
-                                                }}
-                                                title="Click to edit"
-                                            >
-                                                {pattern}
-                                            </span>
-                                        )}
-
-                                        {/* Only show delete if NOT editing */}
-                                        {editingDomainIdx !== idx && (
                                             <button
-                                                onClick={() => handleRemoveDomain(pattern)}
-                                                className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                onClick={handleAddDomain}
+                                                disabled={!newDomain.trim()}
+                                                className="bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-slate-400 hover:text-white p-1.5 rounded border border-slate-700 transition-colors"
                                             >
-                                                <Trash2 size={12} />
+                                                <Plus size={16} />
                                             </button>
-                                        )}
-                                    </div>
-                                ))}
-                                {(theme.domainPatterns || []).length === 0 && (
-                                    <div className="text-[10px] text-slate-500 text-center mt-4">
-                                        No domains configured.<br />Theme will run nowhere.
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    ) : (
-                        <>
-                            <div className="p-2 text-xs font-semibold text-slate-500 uppercase">Applied Snippets</div>
-                            <div className="flex-1 overflow-y-auto">
-                                {theme.items.map(item => {
-                                    // ... (Snippet List logic unchanged, copying logic from view to ensure no regression)
-                                    const s = snippets.find(sn => sn.id === item.snippetId);
-                                    if (!s) return null;
-                                    return (
-                                        <div
-                                            key={item.id}
-                                            className={`p-2 border-l-2 cursor-pointer hover:bg-slate-800 group relative ${selectedItemId === item.id ? 'border-blue-500 bg-slate-800' : 'border-transparent'} ${!item.isEnabled ? 'opacity-50 grayscale-[0.5]' : ''}`}
-                                            onClick={() => setSelectedItemId(item.id)}
-                                            onContextMenu={(e) => handleContextMenu(e, item.id)}
-                                        >
-                                            {/* ... Snippet Item Content ... */}
-                                            <div className="flex justify-between items-center mb-1">
-                                                <span className={`text-sm font-medium truncate ${selectedItemId === item.id ? 'text-white' : 'text-slate-400'}`}>
-                                                    {s.name}
-                                                </span>
-                                                {/* ... Icons ... */}
-                                                <div className="flex items-center gap-1">
-                                                    {!item.isEnabled && (
-                                                        <span className="text-[10px] bg-red-900/50 text-red-400 px-1 rounded uppercase">Disabled</span>
-                                                    )}
-                                                    {s.isLibraryItem !== false && (
-                                                        <div className="relative flex items-center justify-center">
-                                                            <span className="text-blue-400" title="Library Snippet">
-                                                                <BookOpen size={12} />
-                                                            </span>
-                                                            {item.overrides?.content !== undefined && (
-                                                                <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-yellow-500 rounded-full border border-slate-900" title="Has Overrides" />
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                    <span className="text-[10px] bg-slate-700 px-1 rounded text-slate-400 uppercase w-[32px] text-center">{s.type}</span>
-                                                </div>
-                                            </div>
-
-                                            {/* Hover Controls */}
-                                            <div className="flex justify-end gap-2 items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <div
-                                                    className="relative inline-flex items-center"
-                                                    title={!theme.isActive ? "Enable theme to toggle snippets" : "Toggle Snippet"}
-                                                    onClick={(e) => !theme.isActive && e.stopPropagation()}
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        className={`sr-only peer ${!theme.isActive ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-                                                        checked={item.isEnabled}
-                                                        disabled={!theme.isActive}
-                                                        onChange={(e) => {
-                                                            e.stopPropagation();
-                                                            toggleThemeItem(theme.id, item.id);
-                                                        }}
-                                                        onClick={(e) => e.stopPropagation()}
-                                                    />
-                                                    <div className={`w-7 h-4 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all ${theme.isActive ? 'peer-checked:bg-green-500 cursor-pointer' : 'peer-checked:bg-slate-600 opacity-50 cursor-not-allowed'}`}></div>
-                                                </div>
-                                                <button
-                                                    className="p-0.5 text-slate-500 hover:text-red-400"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        if (confirm('Remove snippet from theme?')) {
-                                                            useStore.getState().removeSnippetFromTheme(theme.id, item.id);
-                                                            if (selectedItemId === item.id) setSelectedItemId(null);
-                                                        }
-                                                    }}
-                                                    title="Remove Snippet"
-                                                >
-                                                    <Trash2 size={12} />
-                                                </button>
-                                                <button
-                                                    className="p-0.5 text-slate-500 hover:text-white"
-                                                    onClick={(e) => handleKebabClick(e, item.id)}
-                                                    title="More options"
-                                                >
-                                                    <MoreVertical size={12} />
-                                                </button>
-                                            </div>
                                         </div>
-                                    );
-                                })}
-                                {theme.items.length === 0 && (
-                                    <div className="p-4 text-center text-xs text-slate-500">
-                                        No snippets applied. Use controls above.
-                                    </div>
+
+                                        <div className="space-y-2">
+                                            {theme.domainPatterns?.map((pattern, idx) => (
+                                                <div key={idx} className="flex items-center gap-2 bg-slate-800/30 p-2 rounded group border border-slate-800/50 hover:border-slate-700 min-h-[34px]">
+                                                    <Globe size={12} className="text-slate-500 shrink-0" />
+
+                                                    {editingDomainIdx === idx ? (
+                                                        <input
+                                                            className="flex-1 bg-slate-900 text-xs text-white px-1 py-0.5 rounded outline-none border border-blue-500 min-w-0"
+                                                            value={editingDomainValue}
+                                                            onChange={(e) => setEditingDomainValue(e.target.value)}
+                                                            autoFocus
+                                                            onBlur={() => {
+                                                                if (editingDomainValue.trim() && editingDomainValue !== pattern) {
+                                                                    const current = [...(theme.domainPatterns || [])];
+                                                                    current[idx] = editingDomainValue.trim();
+                                                                    updateTheme(themeId, { domainPatterns: current });
+                                                                }
+                                                                setEditingDomainIdx(null);
+                                                            }}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter') e.currentTarget.blur();
+                                                                if (e.key === 'Escape') setEditingDomainIdx(null);
+                                                            }}
+                                                        />
+                                                    ) : (
+                                                        <span
+                                                            className="text-sm font-mono text-slate-300 flex-1 truncate cursor-pointer hover:text-blue-400 hover:underline decoration-dashed underline-offset-4"
+                                                            title="Click to edit"
+                                                            onClick={() => {
+                                                                setEditingDomainIdx(idx);
+                                                                setEditingDomainValue(pattern);
+                                                            }}
+                                                        >
+                                                            {pattern}
+                                                        </span>
+                                                    )}
+
+                                                    {editingDomainIdx !== idx && (
+                                                        <button
+                                                            onClick={() => handleRemoveDomain(pattern)}
+                                                            className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                                                        >
+                                                            <X size={14} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            ))}
+                                            {(!theme.domainPatterns || theme.domainPatterns.length === 0) && (
+                                                <div className="text-xs text-slate-500 text-center py-8 px-4 border border-dashed border-slate-800 rounded">
+                                                    No domains configured.
+                                                    <br />
+                                                    Theme will <strong>run nowhere</strong>.
+                                                </div>
+                                            )}
+                                        </div>
+                                    </>
                                 )}
                             </div>
-                        </>
-                    )}
+                        ) : (
+                            <>
+                                <div className="p-2 text-xs font-semibold text-slate-500 uppercase">Applied Snippets</div>
+                                <div className="flex-1 overflow-y-auto">
+                                    {theme.items.map(item => {
+                                        const s = snippets.find(sn => sn.id === item.snippetId);
+                                        if (!s) return null;
+                                        return (
+                                            <div
+                                                key={item.id}
+                                                className={`p-2 border-l-2 cursor-pointer hover:bg-slate-800 group relative ${selectedItemId === item.id ? 'border-blue-500 bg-slate-800' : 'border-transparent'} ${!item.isEnabled ? 'opacity-50 grayscale-[0.5]' : ''}`}
+                                                onClick={() => setSelectedItemId(item.id)}
+                                                onContextMenu={(e) => handleContextMenu(e, item.id)}
+                                            >
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <span className={`text-sm font-medium truncate ${selectedItemId === item.id ? 'text-white' : 'text-slate-400'}`}>
+                                                        {s.name}
+                                                    </span>
+                                                    <div className="flex items-center gap-1">
+                                                        {!item.isEnabled && (
+                                                            <span className="text-[10px] bg-red-900/50 text-red-400 px-1 rounded uppercase">Disabled</span>
+                                                        )}
+                                                        {s.isLibraryItem !== false && (
+                                                            <div className="relative flex items-center justify-center">
+                                                                <span className="text-blue-400" title="Library Snippet">
+                                                                    <BookOpen size={12} />
+                                                                </span>
+                                                                {item.overrides?.content !== undefined && (
+                                                                    <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-yellow-500 rounded-full border border-slate-900" title="Has Overrides" />
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                        <span className="text-[10px] bg-slate-700 px-1 rounded text-slate-400 uppercase w-[32px] text-center">{s.type}</span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex justify-end gap-2 items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <div
+                                                        className="relative inline-flex items-center"
+                                                        title={!theme.isActive ? "Enable theme to toggle snippets" : "Toggle Snippet"}
+                                                        onClick={(e) => !theme.isActive && e.stopPropagation()}
+                                                    >
+                                                        <input
+                                                            type="checkbox"
+                                                            className={`sr-only peer ${!theme.isActive ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                                                            checked={item.isEnabled}
+                                                            disabled={!theme.isActive}
+                                                            onChange={(e) => {
+                                                                e.stopPropagation();
+                                                                toggleThemeItem(theme.id, item.id);
+                                                            }}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                        />
+                                                        <div className={`w-7 h-4 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all ${theme.isActive ? 'peer-checked:bg-green-500 cursor-pointer' : 'peer-checked:bg-slate-600 opacity-50 cursor-not-allowed'}`}></div>
+                                                    </div>
+                                                    <button
+                                                        className="p-0.5 text-slate-500 hover:text-red-400"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (confirm('Remove snippet from theme?')) {
+                                                                useStore.getState().removeSnippetFromTheme(theme.id, item.id);
+                                                                if (selectedItemId === item.id) setSelectedItemId(null);
+                                                            }
+                                                        }}
+                                                        title="Remove Snippet"
+                                                    >
+                                                        <Trash2 size={12} />
+                                                    </button>
+                                                    <button
+                                                        className="p-0.5 text-slate-500 hover:text-white"
+                                                        onClick={(e) => handleKebabClick(e, item.id)}
+                                                        title="More options"
+                                                    >
+                                                        <MoreVertical size={12} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                    {theme.items.length === 0 && (
+                                        <div className="p-4 text-center text-xs text-slate-500">
+                                            No snippets applied. Use controls above.
+                                        </div>
+                                    )}
+                                </div>
+                            </>
+                        )}
+                    </div>
                 </div>
 
                 {/* Context Menu Render */}

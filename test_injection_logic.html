@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>TweakBench Injection Logic Test</title>
+    <style>
+        .test-pass {
+            color: green;
+            font-weight: bold;
+        }
+
+        .test-fail {
+            color: red;
+            font-weight: bold;
+        }
+
+        .box {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Injection Logic Test</h1>
+    <div id="results"></div>
+
+    <!-- Test Targets -->
+    <div id="target-div" class="box">Target DIV</div>
+    <ul id="target-ul" class="box">
+        <li>Item 1</li>
+    </ul>
+
+    <script>
+        const results = document.getElementById('results');
+        const injectedElements = new Map();
+
+        function log(msg, pass) {
+            const div = document.createElement('div');
+            div.textContent = (pass ? '[PASS] ' : '[FAIL] ') + msg;
+            div.className = pass ? 'test-pass' : 'test-fail';
+            results.appendChild(div);
+        }
+
+        // NEW Algorithm: Smart Unwrap
+        function injectOrUpdateHTML(id, snippet) {
+            let el = document.getElementById(`tb-html-${id}`);
+            const selector = snippet.selector || 'body';
+            const position = snippet.position || 'beforeend';
+            const target = document.querySelector(selector);
+
+            if (!target) return;
+
+            // 1. Parse Content
+            const temp = document.createElement('div');
+            temp.innerHTML = snippet.content;
+
+            let newEl;
+            if (temp.children.length === 1 && temp.childNodes.length === 1) {
+                // Single Element Root -> Use it directly
+                newEl = temp.firstElementChild;
+            } else {
+                // Multiple/Text -> Wrap in DIV
+                newEl = document.createElement('div');
+                newEl.innerHTML = snippet.content;
+            }
+
+            // 2. Tag it
+            newEl.id = `tb-html-${id}`;
+            newEl.setAttribute('data-tb-generated', 'true');
+
+            // 3. Update or Insert
+            // Simple approach: Always replace if exists (simulating "content changed")
+            // In real app we compare content first to avoid thrashing.
+            if (el) {
+                el.replaceWith(newEl);
+            } else {
+                if (position === 'append' || position === 'beforeend') {
+                    target.appendChild(newEl);
+                } else if (position === 'prepend' || position === 'afterbegin') {
+                    target.prepend(newEl);
+                }
+            }
+
+            injectedElements.set(id, newEl);
+            return newEl;
+        }
+
+        // TEST 1: Inject DIV into DIV (Should be OK)
+        try {
+            const el = injectOrUpdateHTML('test1', {
+                selector: '#target-div',
+                content: '<p>Injected P</p>',
+                position: 'append'
+            });
+            if (el.parentElement.id === 'target-div' && el.tagName === 'DIV') {
+                log('Inject P into DIV (Wrapped in DIV): OK', true);
+            } else {
+                log('Inject P into DIV: Failed', false);
+            }
+        } catch (e) { log('Test 1 Error: ' + e, false); }
+
+        // TEST 2: Inject LI into UL (Should PASS with Smart Unwrap)
+        try {
+            const el = injectOrUpdateHTML('test2', {
+                selector: '#target-ul',
+                content: '<li>Injected Item</li>',
+                position: 'append'
+            });
+            // Check if we have UL > LI (Correct HTML)
+            if (el.parentElement.id === 'target-ul' && el.tagName === 'LI') {
+                log('Inject LI into UL: OK (Direct LI injection)', true);
+            } else {
+                log(`Inject LI into UL: Failed (Got ${el.tagName} inside ${el.parentElement.tagName})`, false);
+            }
+        } catch (e) { log('Test 2 Error: ' + e, false); }
+
+    </script>
+</body>
+
+</html>
