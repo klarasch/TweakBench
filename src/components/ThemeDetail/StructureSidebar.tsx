@@ -1,4 +1,5 @@
 import React from 'react';
+import { Toggle } from '../ui/Toggle';
 import { Reorder } from "framer-motion";
 import { GripVertical, BookOpen, Trash2, MoreVertical } from 'lucide-react';
 import type { Theme, ThemeItem, Snippet } from '../../types.ts';
@@ -78,22 +79,13 @@ export const StructureSidebar: React.FC<StructureSidebarProps> = ({
                                         </div>
 
                                         <div className="absolute right-2 flex gap-1 items-center opacity-0 group-hover:opacity-100 transition-opacity bg-slate-800/80 backdrop-blur pl-2 rounded">
-                                            <label
-                                                className="relative inline-flex items-center cursor-pointer"
+                                            <Toggle
+                                                checked={item.isEnabled}
+                                                disabled={!theme.isActive}
+                                                onChange={() => toggleThemeItem(theme.id, item.id)}
                                                 title={!theme.isActive ? "Enable theme to toggle snippets" : "Toggle Snippet"}
-                                                onClick={(e) => e.stopPropagation()}
-                                            >
-                                                <input
-                                                    type="checkbox"
-                                                    className={`sr-only peer ${!theme.isActive ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-                                                    checked={item.isEnabled}
-                                                    disabled={!theme.isActive}
-                                                    onChange={() => {
-                                                        toggleThemeItem(theme.id, item.id);
-                                                    }}
-                                                />
-                                                <div className={`w-7 h-4 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all ${theme.isActive ? 'peer-checked:bg-green-500 cursor-pointer' : 'peer-checked:bg-slate-600 opacity-50 cursor-not-allowed'}`}></div>
-                                            </label>
+                                                size="sm"
+                                            />
                                             <button
                                                 className="p-1 text-slate-500 hover:text-red-400 rounded hover:bg-slate-700"
                                                 onClick={(e) => {

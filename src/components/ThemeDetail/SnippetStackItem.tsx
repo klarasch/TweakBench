@@ -17,6 +17,7 @@ interface SnippetStackItemProps {
     isEditing: boolean;
     onSetEditing: (isEditing: boolean) => void;
     onSelect: () => void;
+    isThemeActive: boolean;
 }
 
 export const SnippetStackItem: React.FC<SnippetStackItemProps> = ({
@@ -29,7 +30,8 @@ export const SnippetStackItem: React.FC<SnippetStackItemProps> = ({
     onKebabClick,
     isEditing,
     onSetEditing,
-    onSelect
+    onSelect,
+    isThemeActive
 }) => {
     const { snippets, updateSnippet, updateThemeItem, toggleThemeItem } = useStore();
     const s = snippets.find(sn => sn.id === item.snippetId);
@@ -196,6 +198,8 @@ export const SnippetStackItem: React.FC<SnippetStackItemProps> = ({
                         checked={item.isEnabled}
                         onChange={() => toggleThemeItem(themeId, item.id)}
                         size="sm"
+                        disabled={!isThemeActive}
+                        title={!isThemeActive ? "Enable theme to toggle snippets" : "Toggle Snippet"}
                     />
 
                     {/* Kebab Menu */}

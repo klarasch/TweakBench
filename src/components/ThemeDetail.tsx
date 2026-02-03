@@ -468,6 +468,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                     key={item.id}
                                     item={item}
                                     themeId={themeId}
+                                    isThemeActive={theme.isActive}
                                     isCollapsed={collapsedItems.has(item.id)}
                                     onToggleCollapse={() => {
                                         const next = new Set(collapsedItems);
