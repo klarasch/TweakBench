@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useStore } from '../store.ts';
 import { CodeEditor } from './CodeEditor.tsx';
 import { SnippetLibrary } from './SnippetLibrary.tsx';
-import { ArrowLeft, Trash2, Box, Play, Pause, Code, FileCode, BookOpen, Plus, Globe, Monitor } from 'lucide-react';
+import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
+import { ArrowLeft, Trash2, Code, FileCode, BookOpen, Plus, Globe, Monitor, MoreVertical, Box, Play, Pause } from 'lucide-react';
 import type { SnippetType } from '../types.ts';
 
 interface ThemeDetailProps {
@@ -18,6 +19,9 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
     const [showLibrary, setShowLibrary] = useState(false);
     const [localName, setLocalName] = useState('');
+
+    // Context Menu State
+    const [menuState, setMenuState] = useState<{ x: number; y: number; itemId: string | null }>({ x: 0, y: 0, itemId: null });
 
     useEffect(() => {
         if (theme) {
@@ -50,6 +54,65 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
         addSnippetToTheme(themeId, id);
     };
 
+    const handleContextMenu = (e: React.MouseEvent, itemId: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setMenuState({ x: e.pageX, y: e.pageY, itemId });
+    };
+
+    const handleKebabClick = (e: React.MouseEvent, itemId: string) => {
+        e.stopPropagation();
+        const rect = e.currentTarget.getBoundingClientRect();
+        setMenuState({ x: rect.left, y: rect.bottom, itemId });
+    };
+
+    const getMenuItems = (itemId: string): ContextMenuItem[] => {
+        if (itemId === 'THEME_HEADER_MENU') {
+            return [
+                {
+                    label: theme.isActive ? 'Disable Theme' : 'Enable Theme',
+                    icon: theme.isActive ? <Pause size={14} /> : <Play size={14} />,
+                    onClick: () => updateTheme(themeId, { isActive: !theme.isActive })
+                },
+                { separator: true },
+                {
+                    label: 'Delete Theme',
+                    icon: <Trash2 size={14} />,
+                    danger: true,
+                    onClick: () => {
+                        if (confirm(`Are you sure you want to delete theme "${theme.name}"?`)) {
+                            const { deleteTheme } = useStore.getState();
+                            deleteTheme(themeId);
+                            onBack(); // Navigate back after deletion
+                        }
+                    }
+                }
+            ];
+        }
+
+        const item = theme.items.find(i => i.id === itemId);
+        if (!item) return [];
+
+        return [
+            {
+                label: item.isEnabled ? 'Disable Snippet' : 'Enable Snippet',
+                onClick: () => toggleThemeItem(theme.id, itemId)
+            },
+            { separator: true },
+            {
+                label: 'Remove from Theme',
+                icon: <Trash2 size={14} />,
+                danger: true,
+                onClick: () => {
+                    if (confirm('Remove snippet from theme?')) {
+                        useStore.getState().removeSnippetFromTheme(theme.id, itemId);
+                        if (selectedItemId === itemId) setSelectedItemId(null);
+                    }
+                }
+            }
+        ];
+    };
+
     return (
         <div className="flex flex-col h-full bg-slate-900 relative">
             {/* Header */}
@@ -68,19 +131,37 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                         placeholder="Theme Name"
                     />
                 </div>
-                <button
-                    onClick={() => updateTheme(themeId, { isActive: !theme.isActive })}
-                    className={`p-1.5 rounded mr-1 ${theme.isActive ? 'text-green-500 hover:bg-slate-800' : 'text-slate-500 hover:bg-slate-800'}`}
-                    title={theme.isActive ? "Disable Theme" : "Enable Theme"}
-                >
-                    {theme.isActive ? <Pause size={18} /> : <Play size={18} />}
-                </button>
+                {/* Theme Toggle & Menu */}
+                <div className="flex items-center gap-1">
+                    <label className="relative inline-flex items-center cursor-pointer mr-1">
+                        <input
+                            type="checkbox"
+                            className="sr-only peer"
+                            checked={theme.isActive}
+                            onChange={() => updateTheme(themeId, { isActive: !theme.isActive })}
+                        />
+                        <div className="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
+                    </label>
+                    <button
+                        className="p-1.5 rounded text-slate-500 hover:text-white hover:bg-slate-800"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            // Use a specific ID format for theme header menu
+                            setMenuState({ x: e.currentTarget.getBoundingClientRect().left, y: e.currentTarget.getBoundingClientRect().bottom, itemId: 'THEME_HEADER_MENU' });
+                        }}
+                        title="Theme Options"
+                    >
+                        <MoreVertical size={18} />
+                    </button>
+                </div>
             </div>
 
             <div className="flex-1 flex overflow-hidden relative">
                 {/* Sidebar: Applied Snippets */}
                 <div className="w-1/3 min-w-[150px] border-r border-slate-800 flex flex-col bg-slate-900 z-20">
+                    {/* ... toolbar buttons ... */}
                     <div className="flex p-3 gap-1 border-b border-slate-800">
+                        {/* ... existing buttons ... */}
                         <button
                             onClick={() => handleCreateLocal('css')}
                             className="flex-1 bg-slate-800 hover:bg-slate-700 text-blue-400 text-xs py-1.5 rounded flex items-center justify-center gap-1.5 border border-slate-700 transition-colors"
@@ -103,6 +184,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                             <BookOpen size={16} />
                         </button>
                     </div>
+
                     <div className="p-2 text-xs font-semibold text-slate-500 uppercase">Applied Snippets</div>
                     <div className="flex-1 overflow-y-auto">
                         {theme.items.map(item => {
@@ -111,8 +193,9 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                             return (
                                 <div
                                     key={item.id}
-                                    className={`p-2 border-l-2 cursor-pointer hover:bg-slate-800 group ${selectedItemId === item.id ? 'border-blue-500 bg-slate-800' : 'border-transparent'} ${!item.isEnabled ? 'opacity-50 grayscale-[0.5]' : ''}`}
+                                    className={`p-2 border-l-2 cursor-pointer hover:bg-slate-800 group relative ${selectedItemId === item.id ? 'border-blue-500 bg-slate-800' : 'border-transparent'} ${!item.isEnabled ? 'opacity-50 grayscale-[0.5]' : ''}`}
                                     onClick={() => setSelectedItemId(item.id)}
+                                    onContextMenu={(e) => handleContextMenu(e, item.id)}
                                 >
                                     <div className="flex justify-between items-center mb-1">
                                         <span className={`text-sm font-medium truncate ${selectedItemId === item.id ? 'text-white' : 'text-slate-400'}`}>
@@ -165,6 +248,13 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                         >
                                             <Trash2 size={12} />
                                         </button>
+                                        <button
+                                            className="p-0.5 text-slate-500 hover:text-white"
+                                            onClick={(e) => handleKebabClick(e, item.id)}
+                                            title="More options"
+                                        >
+                                            <MoreVertical size={12} />
+                                        </button>
                                     </div>
                                 </div>
                             );
@@ -176,6 +266,16 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                         )}
                     </div>
                 </div>
+
+                {/* Context Menu Render */}
+                {menuState.itemId && (
+                    <ContextMenu
+                        x={menuState.x}
+                        y={menuState.y}
+                        items={getMenuItems(menuState.itemId)}
+                        onClose={() => setMenuState({ ...menuState, itemId: null })}
+                    />
+                )}
 
                 {/* Main: Editor */}
                 <div className="flex-1 flex flex-col bg-slate-900 relative">

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useStore } from '../store.ts';
-import { Plus, Search, Code, FileCode, Trash2 } from 'lucide-react';
+import { Plus, Search, Code, FileCode, Trash2, MoreVertical } from 'lucide-react';
 import type { SnippetType } from '../types.ts';
+import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
 
 interface SnippetLibraryProps {
     onSelectSnippet: (id: string) => void;
@@ -14,6 +15,9 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet 
     const [isCreating, setIsCreating] = useState(false);
     const [newItemName, setNewItemName] = useState('');
     const [newItemType, setNewItemType] = useState<SnippetType>('css');
+
+    // Context Menu State
+    const [menuState, setMenuState] = useState<{ x: number; y: number; snippetId: string | null }>({ x: 0, y: 0, snippetId: null });
 
     const handleCreateLibrary = () => {
         if (!newItemName.trim()) return;
@@ -33,6 +37,47 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet 
         setNewItemName('');
         setIsCreating(false);
         // Optional: onSelectSnippet(id); 
+    };
+
+    const handleContextMenu = (e: React.MouseEvent, snippetId: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setMenuState({ x: e.pageX, y: e.pageY, snippetId });
+    };
+
+    const handleKebabClick = (e: React.MouseEvent, snippetId: string) => {
+        e.stopPropagation();
+        const rect = e.currentTarget.getBoundingClientRect();
+        setMenuState({ x: rect.left, y: rect.bottom, snippetId });
+    };
+
+    const getMenuItems = (snippetId: string): ContextMenuItem[] => {
+        const snippet = snippets.find(s => s.id === snippetId);
+        if (!snippet) return [];
+
+        const usageCount = themes.reduce((acc, t) => acc + t.items.filter(i => i.snippetId === snippet.id).length, 0);
+
+        return [
+            {
+                label: 'Add to Theme',
+                icon: <Plus size={14} />,
+                onClick: () => onSelectSnippet(snippetId)
+            },
+            { separator: true },
+            {
+                label: 'Delete Snippet',
+                icon: <Trash2 size={14} />,
+                danger: true,
+                onClick: () => {
+                    if (usageCount > 0) {
+                        if (!confirm(`Warning: This snippet is used in ${usageCount} themes. Deleting it will break those themes. Continue?`)) return;
+                    } else {
+                        if (!confirm('Delete this snippet from library?')) return;
+                    }
+                    deleteSnippet(snippetId);
+                }
+            }
+        ];
     };
 
     const filteredSnippets = snippets.filter(s =>
@@ -125,8 +170,9 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet 
                     return (
                         <div
                             key={snippet.id}
-                            className="p-2 mb-1 rounded hover:bg-slate-800 cursor-pointer group flex items-center justify-between"
+                            className="p-2 mb-1 rounded hover:bg-slate-800 cursor-pointer group flex items-center justify-between relative"
                             onClick={() => onSelectSnippet(snippet.id)}
+                            onContextMenu={(e) => handleContextMenu(e, snippet.id)}
                         >
                             <div className="flex items-center gap-2 overflow-hidden flex-1">
                                 {snippet.type === 'css' ? <Code size={14} className="text-blue-400 flex-none" /> : <FileCode size={14} className="text-orange-400 flex-none" />}
@@ -135,29 +181,56 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet 
                                     {usageCount > 0 && <span className="text-[10px] text-slate-500">Used in {usageCount} themes</span>}
                                 </div>
                             </div>
-                            <div className="flex gap-1">
+                            <div className="flex gap-1 items-center">
+                                {/* Shortcuts */}
+                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button
+                                        className="p-1 hover:bg-red-900/50 rounded text-slate-600 hover:text-red-400"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (usageCount > 0) {
+                                                if (!confirm(`Warning: This snippet is used in ${usageCount} themes. Deleting it will break those themes. Continue?`)) return;
+                                            } else {
+                                                if (!confirm('Delete this snippet from library?')) return;
+                                            }
+                                            deleteSnippet(snippet.id);
+                                        }}
+                                        title="Delete"
+                                    >
+                                        <Trash2 size={12} />
+                                    </button>
+                                    <button
+                                        className="p-1 hover:bg-slate-700 rounded text-slate-500 hover:text-white"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onSelectSnippet(snippet.id);
+                                        }}
+                                        title="Add to Theme"
+                                    >
+                                        <Plus size={14} />
+                                    </button>
+                                </div>
+                                {/* Kebab */}
                                 <button
-                                    className="p-1 hover:bg-red-900/50 rounded text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        if (usageCount > 0) {
-                                            if (!confirm(`Warning: This snippet is used in ${usageCount} themes. Deleting it will break those themes. Continue?`)) return;
-                                        } else {
-                                            if (!confirm('Delete this snippet from library?')) return;
-                                        }
-                                        deleteSnippet(snippet.id);
-                                    }}
+                                    onClick={(e) => handleKebabClick(e, snippet.id)}
+                                    className="p-1 rounded text-slate-500 hover:text-white hover:bg-slate-700 opacity-50 group-hover:opacity-100"
                                 >
-                                    <Trash2 size={12} />
-                                </button>
-                                <button className="p-1 hover:bg-slate-700 rounded text-slate-500 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <Plus size={14} />
+                                    <MoreVertical size={14} />
                                 </button>
                             </div>
                         </div>
                     );
                 })}
             </div>
+
+            {menuState.snippetId && (
+                <ContextMenu
+                    x={menuState.x}
+                    y={menuState.y}
+                    items={getMenuItems(menuState.snippetId)}
+                    onClose={() => setMenuState({ ...menuState, snippetId: null })}
+                />
+            )}
         </div>
     );
 };
