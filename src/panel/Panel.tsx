@@ -2,17 +2,20 @@ import React, { useEffect, useState } from 'react';
 import { useStore } from '../store.ts';
 import { ThemeList } from '../components/ThemeList.tsx';
 import { ThemeDetail } from '../components/ThemeDetail.tsx';
+import { StatusBar } from '../components/StatusBar.tsx';
+import { useActiveTab } from '../hooks/useActiveTab.ts';
 import { AlertTriangle, Power } from 'lucide-react';
 
 const Panel: React.FC = () => {
     const { loadFromStorage, globalEnabled, toggleGlobal } = useStore();
+    const activeUrl = useActiveTab();
     const [view, setView] = useState<'list' | 'detail'>('list');
     const [selectedThemeId, setSelectedThemeId] = useState<string | null>(null);
     const [isConnected, setIsConnected] = useState(true);
 
     useEffect(() => {
         loadFromStorage();
-
+        // ... (connection check logic stays same)
         const checkConnection = () => {
             if (typeof chrome !== 'undefined' && chrome.tabs) {
                 chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -44,17 +47,22 @@ const Panel: React.FC = () => {
 
     return (
         <div className="w-full h-screen bg-slate-900 text-slate-200 flex flex-col overflow-hidden">
+            {/* Connection Warning */}
             {!isConnected && (
                 <div className="flex-none bg-amber-800 text-white text-xs p-2 text-center font-bold flex items-center justify-center gap-2 z-50">
                     <AlertTriangle size={14} />
                     <span>Connection Lost: Reload Page</span>
                 </div>
             )}
+
+            {/* Global Status Bar - Always Visible */}
+            <StatusBar activeUrl={activeUrl} />
+
             {view === 'list' ? (
                 <>
                     <div className="flex-none p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900 z-10 shadow-sm">
+                        {/* ... Header Content ... */}
                         <div className="flex items-center gap-2">
-                            {/* Logo Removed */}
                             <h1 className="text-xl font-bold text-slate-100 tracking-tight">TweakBench</h1>
                         </div>
 

@@ -15,16 +15,14 @@ interface ThemeDetailProps {
 }
 
 export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => {
-    const { theme, snippets, addSnippet, addSnippetToTheme, toggleThemeItem, updateTheme, globalEnabled, toggleGlobal } = useStore(state => ({
-        theme: state.themes.find(t => t.id === themeId),
-        snippets: state.snippets,
-        addSnippet: state.addSnippet,
-        addSnippetToTheme: state.addSnippetToTheme,
-        toggleThemeItem: state.toggleThemeItem,
-        updateTheme: state.updateTheme,
-        globalEnabled: state.globalEnabled,
-        toggleGlobal: state.toggleGlobal
-    }));
+    const theme = useStore(state => state.themes.find(t => t.id === themeId));
+    const snippets = useStore(state => state.snippets);
+    const globalEnabled = useStore(state => state.globalEnabled);
+    const addSnippet = useStore(state => state.addSnippet);
+    const addSnippetToTheme = useStore(state => state.addSnippetToTheme);
+    const toggleThemeItem = useStore(state => state.toggleThemeItem);
+    const updateTheme = useStore(state => state.updateTheme);
+    const toggleGlobal = useStore(state => state.toggleGlobal);
     // State
     const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
     const [showLibrary, setShowLibrary] = useState(false);

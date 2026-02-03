@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Globe, MoreVertical, BookOpen, X, Plus } from 'lucide-react';
+import { ArrowLeft, Globe, MoreVertical, BookOpen, X, Plus, Wifi, WifiOff } from 'lucide-react';
 import type { Theme } from '../../types.ts';
+import { useActiveTab } from '../../hooks/useActiveTab.ts';
+import { isDomainMatch } from '../../utils/domains.ts';
 
 interface ThemeHeaderProps {
     theme: Theme;
@@ -27,9 +29,12 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
     toggleGlobal,
     onContextMenu
 }) => {
+    const activeUrl = useActiveTab();
     const [localName, setLocalName] = useState(theme.name);
     const [showDomainSettings, setShowDomainSettings] = useState(false);
     const [newDomain, setNewDomain] = useState('');
+
+    const isMatch = activeUrl ? isDomainMatch(theme.domainPatterns, activeUrl) : false;
 
     useEffect(() => {
         setLocalName(theme.name);
@@ -74,6 +79,13 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                                 : "No Configured Domains"
                         }
                     </div>
+                    {/* Active Match Status */}
+                    {activeUrl && (
+                        <div className={`flex items-center gap-1 text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border ${isMatch ? 'text-green-400 border-green-900/50 bg-green-900/20' : 'text-slate-500 border-transparent'}`} title={isMatch ? "Theme matches this tab" : "Theme does not run on this tab"}>
+                            {isMatch ? <Wifi size={10} /> : <WifiOff size={10} />}
+                            {isMatch ? "Active Tab" : "Inactive"}
+                        </div>
+                    )}
                 </div>
             </div>
             {/* Theme Toggle & Menu */}
