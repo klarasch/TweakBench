@@ -68,11 +68,7 @@ const Panel: React.FC = () => {
             {view === 'list' ? (
                 // List View
                 <div className={`flex-1 overflow-y-auto p-4 pt-4 transition-all duration-300 ${!globalEnabled ? 'opacity-90 grayscale-[0.5]' : ''}`}>
-                    <div className="mb-4 pl-1">
-                        <h1 className="text-2xl font-bold text-slate-100 tracking-tight">TweakBench</h1>
-                        <p className="text-xs text-slate-500">Theme & Snippet Manager</p>
-                    </div>
-                    <ThemeList onSelectTheme={handleSelectTheme} />
+                    <ThemeList onSelectTheme={handleSelectTheme} activeUrl={activeUrl} />
                 </div>
             ) : (
                 selectedThemeId && <ThemeDetail themeId={selectedThemeId} onBack={handleBack} />
