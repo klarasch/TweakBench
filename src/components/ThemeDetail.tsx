@@ -480,8 +480,11 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                     onKebabClick={(e) => handleKebabClick(e, item.id)}
                                     isEditing={editingSnippetId === item.id}
                                     onSetEditing={(isEditing) => setEditingSnippetId(isEditing ? item.id : null)}
+                                    onSelect={() => setSelectedItemId(item.id)}
                                 />
-                            ))}{filteredItems.length === 0 && (
+                            ))}
+
+                            {filteredItems.length === 0 && (
                                 <div className="flex flex-col items-center justify-center py-20 text-slate-500">
                                     <Box size={48} className="mb-4 opacity-20" />
                                     <p>No {activeTab.toUpperCase()} snippets found.</p>
