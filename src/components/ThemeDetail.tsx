@@ -3,8 +3,9 @@ import { useStore } from '../store.ts';
 import { CodeEditor } from './CodeEditor.tsx';
 import { SnippetLibrary } from './SnippetLibrary.tsx';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
-import { ArrowLeft, Trash2, Code, FileCode, BookOpen, Plus, Globe, Monitor, MoreVertical, Box, Play, Pause } from 'lucide-react';
+import { ArrowLeft, Trash2, Code, FileCode, BookOpen, Plus, Globe, Monitor, MoreVertical, Box, Play, Pause, Download } from 'lucide-react';
 import type { SnippetType } from '../types.ts';
+import { exportThemeToJS, exportThemeToCSS } from '../utils/impexp.ts';
 
 interface ThemeDetailProps {
     themeId: string;
@@ -66,6 +67,29 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
         setMenuState({ x: rect.left, y: rect.bottom, itemId });
     };
 
+    const handleExport = (type: 'js' | 'css') => {
+        if (!theme) return;
+
+        let content = '';
+        let extension = '';
+
+        if (type === 'js') {
+            content = exportThemeToJS(theme, snippets);
+            extension = 'tb.js';
+        } else {
+            content = exportThemeToCSS(theme, snippets);
+            extension = 'css';
+        }
+
+        const blob = new Blob([content], { type: type === 'js' ? 'text/javascript' : 'text/css' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${theme.name.replace(/\s+/g, '_')}.${extension}`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
     const getMenuItems = (itemId: string): ContextMenuItem[] => {
         if (itemId === 'THEME_HEADER_MENU') {
             return [
@@ -73,6 +97,17 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                     label: theme.isActive ? 'Disable Theme' : 'Enable Theme',
                     icon: theme.isActive ? <Pause size={14} /> : <Play size={14} />,
                     onClick: () => updateTheme(themeId, { isActive: !theme.isActive })
+                },
+                { separator: true },
+                {
+                    label: 'Export to JS',
+                    icon: <Download size={14} />,
+                    onClick: () => handleExport('js')
+                },
+                {
+                    label: 'Export to CSS (Only)',
+                    icon: <Download size={14} />,
+                    onClick: () => handleExport('css')
                 },
                 { separator: true },
                 {

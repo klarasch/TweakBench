@@ -10,7 +10,7 @@ interface Store extends AppState {
     updateSnippet: (id: string, updates: Partial<Snippet>) => void;
     deleteSnippet: (id: string) => void;
 
-    addTheme: (theme: Omit<Theme, 'id' | 'createdAt' | 'updatedAt'>) => void;
+    addTheme: (themeData: Omit<Theme, 'id' | 'createdAt' | 'updatedAt'>) => string; // Update to return string
     updateTheme: (id: string, updates: Partial<Theme>) => void;
     deleteTheme: (id: string) => void;
 
@@ -79,6 +79,22 @@ export const useStore = create<Store>((set) => ({
     },
 
     addTheme: (themeData) => {
+        const themeId = uuidv4();
+        // If items are provided, use them. If empty, create default snippet.
+        // Actually, checking if items are empty is a good heuristic.
+        // If the user INTENDS to create a truly empty theme, they can't via this heuristic unless we add a flag.
+        // But for manual creation, items is empty.
+        // For import, items is empty.
+        // PROBLEM: I can't distinguish.
+        // Let's rely on a property in themeData? No, themeData must match Theme omit.
+        // Let's look at ThemeList.tsx again. Import sets items: []. manual sets items: [].
+        // I'll stick to: Always create default IF items is empty, UNLESS I change the call in ThemeList.
+        // But I can't easily change the arguments without changing the interface defined above.
+        // I will just return the ID for now. And let the default snippet be created.
+        // IN IMPORT: I can just DELETE the default snippet item after creation if I want cleaner import.
+        // Or I can just accept the "Main CSS" is there. 
+        // For now, I will keep the default creation logic but RETURN THE ID to fix the type error.
+
         const snippetId = uuidv4();
         const mainSnippet: Snippet = {
             id: snippetId,
@@ -96,10 +112,14 @@ export const useStore = create<Store>((set) => ({
             isEnabled: true,
         };
 
+        // If themeData has items, use them instead of default?
+        // Existing logic forced [themeItem].
+        // Let's keep existing logic to avoid breaking manual flow, just return ID.
+
         const newTheme: Theme = {
             ...themeData,
-            items: [themeItem],
-            id: uuidv4(),
+            items: (themeData.items && themeData.items.length > 0) ? themeData.items : [themeItem],
+            id: themeId,
             createdAt: Date.now(),
             updatedAt: Date.now(),
         };
@@ -108,11 +128,13 @@ export const useStore = create<Store>((set) => ({
             const newState = {
                 ...state,
                 themes: [...state.themes, newTheme],
-                snippets: [...state.snippets, mainSnippet]
+                snippets: (themeData.items && themeData.items.length > 0) ? state.snippets : [...state.snippets, mainSnippet]
             };
             storageService.save(newState);
             return newState;
         });
+
+        return themeId;
     },
 
     updateTheme: (id, updates) => {
