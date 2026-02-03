@@ -167,7 +167,13 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                     />
                 </div>
                 {/* Theme Toggle & Menu */}
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => updateTheme(themeId, { isActive: !theme.isActive })}
+                        className={`text-xs font-semibold uppercase tracking-wider hover:opacity-80 transition-opacity ${theme.isActive ? 'text-green-400' : 'text-slate-500'}`}
+                    >
+                        {theme.isActive ? 'Theme Enabled' : 'Theme Disabled'}
+                    </button>
                     <label className="relative inline-flex items-center cursor-pointer mr-1">
                         <input
                             type="checkbox"
@@ -254,22 +260,24 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                         </div>
                                     </div>
                                     <div className="flex justify-end gap-2 items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <label
-                                            className="relative inline-flex items-center cursor-pointer"
-                                            onClick={(e) => e.stopPropagation()}
+                                        <div
+                                            className="relative inline-flex items-center"
+                                            title={!theme.isActive ? "Enable theme to toggle snippets" : "Toggle Snippet"}
+                                            onClick={(e) => !theme.isActive && e.stopPropagation()}
                                         >
                                             <input
                                                 type="checkbox"
-                                                className="sr-only peer"
+                                                className={`sr-only peer ${!theme.isActive ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                                                 checked={item.isEnabled}
+                                                disabled={!theme.isActive}
                                                 onChange={(e) => {
                                                     e.stopPropagation();
                                                     toggleThemeItem(theme.id, item.id);
                                                 }}
                                                 onClick={(e) => e.stopPropagation()}
                                             />
-                                            <div className="w-7 h-4 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-green-500"></div>
-                                        </label>
+                                            <div className={`w-7 h-4 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all ${theme.isActive ? 'peer-checked:bg-green-500 cursor-pointer' : 'peer-checked:bg-slate-600 opacity-50 cursor-not-allowed'}`}></div>
+                                        </div>
                                         <button
                                             className="p-0.5 text-slate-500 hover:text-red-400"
                                             onClick={(e) => {
