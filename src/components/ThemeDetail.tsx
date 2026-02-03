@@ -418,7 +418,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                         )}
 
                         {/* Main: Editor */}
-                        <div className="flex-1 flex flex-col bg-slate-900 relative overflow-y-auto">
+                        <div className="flex-1 flex flex-col bg-slate-900 relative overflow-y-auto p-3">
 
 
                             {/* Sticky Subheader - Refreshed */}

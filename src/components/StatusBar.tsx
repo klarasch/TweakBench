@@ -1,9 +1,8 @@
 import React from 'react';
 import { useStore } from '../store.ts';
 import { isDomainMatch } from '../utils/domains.ts';
-import { Network, Check, X, Globe } from 'lucide-react';
+import { Network, Check, X, Globe, Power } from 'lucide-react';
 import { Button } from './ui/Button';
-import { Toggle } from './ui/Toggle';
 
 interface StatusBarProps {
     activeUrl: string | null;
@@ -99,11 +98,16 @@ export const StatusBar: React.FC<StatusBarProps> = ({ activeUrl }) => {
                         </>
                     )}
 
-                    <Toggle
-                        checked={globalEnabled}
-                        onChange={toggleGlobal}
-                        size="sm"
-                    />
+                    <button
+                        onClick={toggleGlobal}
+                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-all shadow-lg ${globalEnabled
+                            ? 'bg-green-500 text-white shadow-green-500/30 hover:bg-green-400'
+                            : 'bg-slate-700 text-slate-400 hover:bg-slate-600 hover:text-white'
+                            }`}
+                        title={globalEnabled ? "System ON" : "System OFF"}
+                    >
+                        <Power size={14} strokeWidth={2.5} />
+                    </button>
                 </div>
             </div>
         </div>
