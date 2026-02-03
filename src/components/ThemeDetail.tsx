@@ -3,7 +3,7 @@ import { useStore } from '../store.ts';
 import { CodeEditor } from './CodeEditor.tsx';
 import { SnippetLibrary } from './SnippetLibrary.tsx';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
-import { ArrowLeft, Trash2, Code, FileCode, BookOpen, Plus, Globe, Monitor, MoreVertical, Box, Play, Pause, Download } from 'lucide-react';
+import { ArrowLeft, Trash2, Code, FileCode, BookOpen, Plus, Globe, Monitor, MoreVertical, Box, Play, Pause, Download, X } from 'lucide-react';
 import type { SnippetType } from '../types.ts';
 import { exportThemeToJS, exportThemeToCSS } from '../utils/impexp.ts';
 
@@ -13,7 +13,7 @@ interface ThemeDetailProps {
 }
 
 export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => {
-    const { themes, snippets, updateTheme, updateSnippet, addSnippet, addSnippetToTheme, toggleThemeItem, updateThemeItem } = useStore();
+    const { themes, snippets, updateTheme, updateSnippet, addSnippet, addSnippetToTheme, toggleThemeItem, updateThemeItem, globalEnabled, toggleGlobal } = useStore();
     const theme = themes.find(t => t.id === themeId);
 
     // State
@@ -191,21 +191,40 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                 </div>
                 {/* Theme Toggle & Menu */}
                 <div className="flex items-center gap-2">
-                    <button
-                        onClick={() => updateTheme(themeId, { isActive: !theme.isActive })}
-                        className={`text-xs font-semibold uppercase tracking-wider hover:opacity-80 transition-opacity ${theme.isActive ? 'text-green-400' : 'text-slate-500'}`}
-                    >
-                        {theme.isActive ? 'Theme Enabled' : 'Theme Disabled'}
-                    </button>
-                    <label className="relative inline-flex items-center cursor-pointer mr-1">
-                        <input
-                            type="checkbox"
-                            className="sr-only peer"
-                            checked={theme.isActive}
-                            onChange={() => updateTheme(themeId, { isActive: !theme.isActive })}
-                        />
-                        <div className="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
-                    </label>
+                    {/* Global Disabled Warning */}
+                    {!globalEnabled && (
+                        <span
+                            className="text-[10px] font-bold text-amber-500 uppercase tracking-wider mr-2 cursor-pointer hover:underline hover:text-amber-400"
+                            onClick={() => {
+                                if (confirm("Re-enable the entire plugin?")) {
+                                    toggleGlobal();
+                                }
+                            }}
+                            title="Click to re-enable plugin"
+                        >
+                            All Themes Disabled
+                        </span>
+                    )}
+
+                    {!globalEnabled ? (
+                        <button
+                            disabled
+                            className="p-1 rounded flex items-center gap-1.5 px-2 transition-colors bg-slate-800/50 text-slate-600 cursor-not-allowed opacity-50"
+                            title="System Disabled"
+                        >
+                            <div className="w-1.5 h-1.5 rounded-full bg-slate-600"></div>
+                            <span className="text-[10px] font-bold uppercase">OFF</span>
+                        </button>
+                    ) : (
+                        <button
+                            onClick={() => updateTheme(themeId, { isActive: !theme.isActive })}
+                            className={`p-1 rounded flex items-center gap-1.5 px-2 transition-colors ${theme.isActive ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20 shadow-[0_0_0_1px_rgba(74,222,128,0.2)]' : 'bg-slate-700/50 text-slate-500 hover:bg-slate-700 hover:text-slate-300'}`}
+                            title={theme.isActive ? "Disable Theme" : "Enable Theme"}
+                        >
+                            <div className={`w-1.5 h-1.5 rounded-full ${theme.isActive ? 'bg-green-400 animate-pulse' : 'bg-slate-500'}`}></div>
+                            <span className="text-[10px] font-bold uppercase">{theme.isActive ? 'ON' : 'OFF'}</span>
+                        </button>
+                    )}
                     <button
                         className="p-1.5 rounded text-slate-500 hover:text-white hover:bg-slate-800"
                         onClick={(e) => {
@@ -267,9 +286,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                     className="hover:text-slate-300"
                                     title="Close Domain Editor"
                                 >
-                                    <Trash2 size={12} className="rotate-45" /> {/* Using Trash2 rotated as X, or could import X icon. Let's assume X icon is cleaner if available, or just rotate Plus? Trash2 is odd. Let's use rotate-45 on Plus if available or just text 'x' if icon is missing. Wait, I imported Plus earlier. Let's check imports. X is not imported. Plus rotated 45deg is X. */}
-                                    {/* Actually, let's just use text "Close" or implicit X via rotated Plus. */}
-                                    <Plus size={14} className="rotate-45" />
+                                    <X size={16} />
                                 </button>
                             </div>
                             <div className="p-2 border-b border-slate-800 flex gap-1">

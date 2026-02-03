@@ -98,7 +98,7 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet 
     }, [isCreating]);
 
     return (
-        <div className="flex flex-col h-full bg-slate-900 border-l border-slate-700 w-64 absolute right-0 top-0 z-20 shadow-xl">
+        <div className="flex flex-col h-full bg-slate-900">
             <div className="p-3 border-b border-slate-800 bg-slate-900">
                 <div className="flex justify-between items-center mb-1">
                     <h3 className="font-bold text-slate-200">Library</h3>

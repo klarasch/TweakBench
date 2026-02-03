@@ -9,7 +9,7 @@ interface ThemeListProps {
 }
 
 export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme }) => {
-    const { themes, snippets, addTheme, deleteTheme, updateTheme, addSnippet, addSnippetToTheme } = useStore();
+    const { themes, snippets, addTheme, deleteTheme, updateTheme, addSnippet, addSnippetToTheme, globalEnabled } = useStore();
     const [isCreating, setIsCreating] = useState(false);
     const [newThemeName, setNewThemeName] = useState('');
     const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -234,16 +234,24 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme }) => {
                             </span>
                             <div className="flex gap-1 items-center">
                                 {/* Shortcuts (existing icons) */}
-                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="flex gap-1 transition-opacity">
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
+                                            if (!globalEnabled) return; // Prevent toggle if global disabled
                                             updateTheme(theme.id, { isActive: !theme.isActive });
                                         }}
-                                        className={`p-1 rounded ${theme.isActive ? 'text-green-400 hover:bg-slate-700' : 'text-slate-500 hover:bg-slate-700'}`}
-                                        title={theme.isActive ? "Disable" : "Enable"}
+                                        disabled={!globalEnabled}
+                                        className={`p-1 rounded flex items-center gap-1.5 px-2 transition-colors ${!globalEnabled
+                                            ? 'bg-slate-800/50 text-slate-600 cursor-not-allowed opacity-50'
+                                            : theme.isActive
+                                                ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20 shadow-[0_0_0_1px_rgba(74,222,128,0.2)]'
+                                                : 'bg-slate-700/50 text-slate-500 hover:bg-slate-700 hover:text-slate-300'
+                                            }`}
+                                        title={!globalEnabled ? "System Disabled" : (theme.isActive ? "Disable Theme" : "Enable Theme")}
                                     >
-                                        {theme.isActive ? <Pause size={14} /> : <Play size={14} />}
+                                        <div className={`w-1.5 h-1.5 rounded-full ${!globalEnabled ? 'bg-slate-600' : (theme.isActive ? 'bg-green-400 animate-pulse' : 'bg-slate-500')}`}></div>
+                                        <span className="text-[10px] font-bold uppercase">{theme.isActive ? 'ON' : 'OFF'}</span>
                                     </button>
                                     <button
                                         onClick={(e) => {
@@ -252,7 +260,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme }) => {
                                                 deleteTheme(theme.id);
                                             }
                                         }}
-                                        className="p-1 rounded text-slate-500 hover:text-red-400 hover:bg-slate-700"
+                                        className="p-1 rounded text-slate-600 hover:text-red-400 hover:bg-slate-700 opacity-0 group-hover:opacity-100 transition-opacity"
                                         title="Delete Theme"
                                     >
                                         <Trash2 size={14} />
@@ -261,7 +269,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme }) => {
                                 {/* Kebab Menu */}
                                 <button
                                     onClick={(e) => handleKebabClick(e, theme.id)}
-                                    className="p-1 rounded text-slate-500 hover:text-white hover:bg-slate-700 opacity-50 group-hover:opacity-100"
+                                    className="p-1 rounded text-slate-500 hover:text-white hover:bg-slate-700 opacity-0 group-hover:opacity-100"
                                 >
                                     <MoreVertical size={16} />
                                 </button>

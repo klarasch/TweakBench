@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useStore } from '../store.ts';
 import { ThemeList } from '../components/ThemeList.tsx';
 import { ThemeDetail } from '../components/ThemeDetail.tsx';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Power } from 'lucide-react';
 
 const Panel: React.FC = () => {
-    const { loadFromStorage } = useStore();
+    const { loadFromStorage, globalEnabled, toggleGlobal } = useStore();
     const [view, setView] = useState<'list' | 'detail'>('list');
     const [selectedThemeId, setSelectedThemeId] = useState<string | null>(null);
     const [isConnected, setIsConnected] = useState(true);
@@ -48,22 +48,27 @@ const Panel: React.FC = () => {
             )}
             {view === 'list' ? (
                 <>
-                    {/* <div className="flex-none p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900 z-10">
-                        <h1 className="text-xl font-bold text-blue-400">TweakBench</h1>
-                        <div className="flex items-center gap-2" title="Global Enable/Disable">
-                            <span className="text-xs text-slate-500 font-mono">MASTER</span>
-                            <label className="relative inline-flex items-center cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    className="sr-only peer"
-                                    checked={globalEnabled}
-                                    onChange={toggleGlobal}
-                                />
-                                <div className="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-                            </label>
+                    <div className="flex-none p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900 z-10 shadow-sm">
+                        <div className="flex items-center gap-2">
+                            {/* Logo Removed */}
+                            <h1 className="text-xl font-bold text-slate-100 tracking-tight">TweakBench</h1>
                         </div>
-                    </div> */}
-                    <div className="flex-1 overflow-y-auto p-4 pt-4">
+
+                        <div className="flex items-center gap-3">
+                            <span className={`text-[10px] font-bold uppercase tracking-wider ${globalEnabled ? 'text-green-400' : 'text-slate-600'}`}>
+                                {globalEnabled ? 'Plugin Active' : 'Plugin Inactive'}
+                            </span>
+                            <button
+                                onClick={toggleGlobal}
+                                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 shadow-md ${globalEnabled ? 'bg-green-500 text-white shadow-green-900/20 hover:bg-green-400' : 'bg-slate-800 text-slate-600 shadow-inner hover:bg-slate-700'}`}
+                                title={globalEnabled ? "Turn System OFF" : "Turn System ON"}
+                            >
+                                <Power size={16} strokeWidth={3} />
+                            </button>
+                        </div>
+                    </div>
+                    {/* Dimming adjusted: less aggressive grayscale, just slightly dimmed */}
+                    <div className={`flex-1 overflow-y-auto p-4 pt-4 transition-all duration-300 ${!globalEnabled ? 'opacity-90 grayscale-[0.5]' : ''}`}>
                         <ThemeList onSelectTheme={handleSelectTheme} />
                     </div>
                 </>
