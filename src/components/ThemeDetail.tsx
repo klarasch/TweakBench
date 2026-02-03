@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '../store.ts';
 import { CodeEditor } from './CodeEditor.tsx';
 import { SnippetLibrary } from './SnippetLibrary.tsx';
@@ -26,10 +26,19 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     const [sidebarMode, setSidebarMode] = useState<'snippets' | 'domains'>('snippets');
     const [activeTab, setActiveTab] = useState<'css' | 'html'>('css'); // Added activeTab state
     const [newDomain, setNewDomain] = useState('');
-    const [editingDomainIdx, setEditingDomainIdx] = useState<number | null>(null);
-    const [editingDomainValue, setEditingDomainValue] = useState('');
+
     const [collapsedItems, setCollapsedItems] = useState<Set<string>>(new Set());
-    const itemRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+    const [itemRefs] = useState(() => ({ current: {} as { [key: string]: HTMLDivElement | null } })); // Fix ref types
+
+    // Responsive & Popover State
+    const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
+    const [showDomainSettings, setShowDomainSettings] = useState(false);
+
+    useEffect(() => {
+        const handleResize = () => setViewportWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // Resize State
     const [sidebarWidth, setSidebarWidth] = useState(300);
@@ -289,7 +298,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                         placeholder="Theme Name"
                     />
                     <div className="flex items-center gap-2 mt-1">
-                        <div className="flex items-center gap-1 text-[10px] text-slate-500 uppercase tracking-wider bg-slate-800/50 px-1.5 py-0.5 rounded cursor-pointer hover:bg-slate-800 hover:text-slate-300 transition-colors" onClick={() => setSidebarMode('domains')}>
+                        <div className="flex items-center gap-1 text-[10px] text-slate-500 uppercase tracking-wider bg-slate-800/50 px-1.5 py-0.5 rounded cursor-pointer hover:bg-slate-800 hover:text-slate-300 transition-colors" onClick={() => setShowDomainSettings(true)}>
                             <Globe size={10} />
                             {theme.domainPatterns && theme.domainPatterns.includes('<all_urls>')
                                 ? "Runs Everywhere"
@@ -370,487 +379,433 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
 
             <div className="flex-1 flex overflow-hidden relative">
                 {/* Sidebar */}
-                <div
-                    className="flex flex-col bg-slate-900 z-20 shrink-0 relative"
-                    style={{ width: sidebarWidth }}
-                >
-                    {/* Resize Handle */}
-                    <div
-                        className="absolute top-0 bottom-0 -right-1 w-2 cursor-col-resize z-30 hover:bg-blue-500/50 transition-colors group"
-                        onMouseDown={() => setIsResizing(true)}
-                    >
-                        <div className="w-px h-full bg-slate-800 group-hover:bg-blue-500 mx-auto"></div>
-                    </div>
-                    {/* Toolbar */}
-                    <div className="flex p-3 gap-1 border-b border-slate-800">
-                        {/* Snippets Buttons */}
-                        <button
-                            onClick={() => { setSidebarMode('snippets'); handleCreateLocal('css'); }}
-                            className={`flex-1 hover:bg-slate-700 text-xs py-1.5 rounded flex items-center justify-center gap-1 border border-slate-700 transition-colors ${sidebarMode === 'snippets' ? 'bg-slate-800 text-blue-400' : 'bg-transparent text-slate-500'}`}
-                            title="Add CSS"
+                <div className="flex-1 flex overflow-hidden relative">
+                    {/* Sidebar - Only show if viewportWidth > 720 */}
+                    {viewportWidth > 720 && (
+                        <div
+                            className="flex flex-col bg-slate-900 z-20 shrink-0 relative border-r border-slate-800"
+                            style={{ width: sidebarWidth }}
                         >
-                            <Plus size={12} /> CSS
-                        </button>
-                        <button
-                            onClick={() => { setSidebarMode('snippets'); handleCreateLocal('html'); }}
-                            className={`flex-1 hover:bg-slate-700 text-xs py-1.5 rounded flex items-center justify-center gap-1 border border-slate-700 transition-colors ${sidebarMode === 'snippets' ? 'bg-slate-800 text-orange-400' : 'bg-transparent text-slate-500'}`}
-                            title="Add HTML"
-                        >
-                            <Plus size={12} /> HTML
-                        </button>
-                        <div className="w-px bg-slate-800 mx-0.5"></div>
-                        {/* Toggle Modes */}
-                        <button
-                            onClick={() => setSidebarMode(sidebarMode === 'domains' ? 'snippets' : 'domains')}
-                            className={`px-3 py-1.5 rounded border border-slate-700 flex items-center justify-center transition-colors ${sidebarMode === 'domains' ? 'bg-blue-600/20 text-blue-400 border-blue-500/50' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
-                            title="Domain Settings"
-                        >
-                            <Globe size={14} />
-                        </button>
-                        <button
-                            onClick={() => { setSidebarMode('snippets'); setShowLibrary(!showLibrary); }}
-                            className={`px-3 py-1.5 rounded border border-slate-700 flex items-center justify-center transition-colors ml-1 ${showLibrary ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
-                            title="Open Library"
-                        >
-                            <BookOpen size={16} />
-                        </button>
-                    </div>
+                            {/* Resize Handle */}
+                            <div
+                                className="absolute top-0 bottom-0 -right-1 w-2 cursor-col-resize z-30 hover:bg-blue-500/50 transition-colors group"
+                                onMouseDown={() => setIsResizing(true)}
+                            >
+                                <div className="w-px h-full bg-slate-800 group-hover:bg-blue-500 mx-auto"></div>
+                            </div>
+                            {/* Toolbar */}
+                            <div className="flex p-3 gap-1 border-b border-slate-800">
+                                {/* Snippets Buttons */}
+                                <button
+                                    onClick={() => { setSidebarMode('snippets'); handleCreateLocal('css'); }}
+                                    className={`flex-1 hover:bg-slate-700 text-xs py-1.5 rounded flex items-center justify-center gap-1 border border-slate-700 transition-colors ${sidebarMode === 'snippets' ? 'bg-slate-800 text-blue-400' : 'bg-transparent text-slate-500'}`}
+                                    title="Add CSS"
+                                >
+                                    <Plus size={12} /> CSS
+                                </button>
+                                <button
+                                    onClick={() => { setSidebarMode('snippets'); handleCreateLocal('html'); }}
+                                    className={`flex-1 hover:bg-slate-700 text-xs py-1.5 rounded flex items-center justify-center gap-1 border border-slate-700 transition-colors ${sidebarMode === 'snippets' ? 'bg-slate-800 text-orange-400' : 'bg-transparent text-slate-500'}`}
+                                    title="Add HTML"
+                                >
+                                    <Plus size={12} /> HTML
+                                </button>
+                                <div className="w-px bg-slate-800 mx-0.5"></div>
+                                <button
+                                    onClick={() => { setSidebarMode('snippets'); setShowLibrary(!showLibrary); }}
+                                    className={`px-3 py-1.5 rounded border border-slate-700 flex items-center justify-center transition-colors ml-1 ${showLibrary ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                                    title="Open Library"
+                                >
+                                    <BookOpen size={16} />
+                                </button>
+                            </div>
 
-                    {/* Content */}
-                    <div className="flex-1 overflow-y-auto p-4">
-                        {sidebarMode === 'domains' ? (
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Run on Domains</h3>
-                                    <button
-                                        onClick={() => setSidebarMode('snippets')}
-                                        className="text-slate-500 hover:text-slate-300 transition-colors"
-                                        title="Close Domain Settings"
-                                    >
-                                        <X size={16} />
-                                    </button>
-                                </div>
-
-                                {/* Run Everywhere Toggle */}
-                                <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-800 flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <Globe size={16} className="text-slate-400" />
-                                        <span className="text-sm font-medium text-slate-200">All Websites</span>
-                                    </div>
-                                    <button
-                                        onClick={() => {
-                                            const currentPatterns = theme.domainPatterns || [];
-                                            const isAll = currentPatterns.includes('<all_urls>');
-
-                                            if (isAll) {
-                                                // Remove <all_urls> but keep others
-                                                updateTheme(themeId, {
-                                                    domainPatterns: currentPatterns.filter(p => p !== '<all_urls>')
-                                                });
-                                            } else {
-                                                // Add <all_urls>
-                                                updateTheme(themeId, {
-                                                    domainPatterns: [...currentPatterns, '<all_urls>']
-                                                });
-                                            }
-                                        }}
-                                        className={`w-10 h-5 rounded-full relative transition-colors ${theme.domainPatterns?.includes('<all_urls>') ? 'bg-green-500' : 'bg-slate-600'}`}
-                                    >
-                                        <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-transform ${theme.domainPatterns?.includes('<all_urls>') ? 'left-6' : 'left-1'}`}></div>
-                                    </button>
-                                </div>
-
-                                {theme.domainPatterns?.includes('<all_urls>') ? (
-                                    <div className="text-xs text-slate-500 text-center py-4 px-2 border border-dashed border-slate-800 rounded">
-                                        Theme applies to every website.
-                                        <br />
-                                        Turn off "All Websites" to restrict.
-                                    </div>
-                                ) : (
-                                    <>
-                                        <div className="flex gap-2">
-                                            <input
-                                                className="flex-1 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm text-white placeholder-slate-500 outline-none focus:border-blue-500 transition-colors"
-                                                placeholder="e.g. google.com"
-                                                value={newDomain}
-                                                onChange={(e) => setNewDomain(e.target.value)}
-                                                onKeyDown={(e) => e.key === 'Enter' && handleAddDomain()}
-                                            />
-                                            <button
-                                                onClick={handleAddDomain}
-                                                disabled={!newDomain.trim()}
-                                                className="bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-slate-400 hover:text-white p-1.5 rounded border border-slate-700 transition-colors"
-                                            >
-                                                <Plus size={16} />
-                                            </button>
-                                        </div>
+                            {/* Content */}
+                            <div className="flex-1 overflow-y-auto p-4">
+                                {/* Snippet List (Structure View) */}
+                                <div className="space-y-2">
+                                    {/* Only show structure for active tab */}
+                                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Structure ({activeTab})</div>
+                                    <Reorder.Group axis="y" values={filteredItems} onReorder={handleReorder}>
 
                                         <div className="space-y-2">
-                                            {theme.domainPatterns?.map((pattern, idx) => (
-                                                <div key={idx} className="flex items-center gap-2 bg-slate-800/30 p-2 rounded group border border-slate-800/50 hover:border-slate-700 min-h-[34px]">
-                                                    <Globe size={12} className="text-slate-500 shrink-0" />
+                                            {filteredItems.map(item => {
+                                                const s = snippets.find(sn => sn.id === item.snippetId);
+                                                if (!s) return null;
+                                                return (
+                                                    <Reorder.Item
+                                                        key={item.id}
+                                                        value={item}
+                                                        className={`mb-1 bg-slate-900 border-l-2 rounded cursor-default group relative flex items-center ${selectedItemId === item.id ? 'border-blue-500 bg-slate-800' : 'border-transparent hover:bg-slate-800'} ${!item.isEnabled ? 'opacity-50 grayscale-[0.5]' : ''}`}
+                                                        onClick={() => setSelectedItemId(item.id)}
+                                                        onContextMenu={(e) => handleContextMenu(e, item.id)}
+                                                    >
+                                                        {/* Drag Handle */}
+                                                        <div className="pl-2 text-slate-600 cursor-grab active:cursor-grabbing hover:text-slate-400">
+                                                            <GripVertical size={14} />
+                                                        </div>
 
-                                                    {editingDomainIdx === idx ? (
-                                                        <input
-                                                            className="flex-1 bg-slate-900 text-xs text-white px-1 py-0.5 rounded outline-none border border-blue-500 min-w-0"
-                                                            value={editingDomainValue}
-                                                            onChange={(e) => setEditingDomainValue(e.target.value)}
-                                                            autoFocus
-                                                            onBlur={() => {
-                                                                if (editingDomainValue.trim() && editingDomainValue !== pattern) {
-                                                                    const current = [...(theme.domainPatterns || [])];
-                                                                    current[idx] = editingDomainValue.trim();
-                                                                    updateTheme(themeId, { domainPatterns: current });
-                                                                }
-                                                                setEditingDomainIdx(null);
-                                                            }}
-                                                            onKeyDown={(e) => {
-                                                                if (e.key === 'Enter') e.currentTarget.blur();
-                                                                if (e.key === 'Escape') setEditingDomainIdx(null);
-                                                            }}
-                                                        />
-                                                    ) : (
-                                                        <span
-                                                            className="text-sm font-mono text-slate-300 flex-1 truncate cursor-pointer hover:text-blue-400 hover:underline decoration-dashed underline-offset-4"
-                                                            title="Click to edit"
-                                                            onClick={() => {
-                                                                setEditingDomainIdx(idx);
-                                                                setEditingDomainValue(pattern);
-                                                            }}
-                                                        >
-                                                            {pattern}
-                                                        </span>
-                                                    )}
+                                                        <div className="flex-1 min-w-0 p-2 pl-2">
+                                                            <div className="flex justify-between items-center mb-0.5">
+                                                                <span className={`text-sm font-medium truncate ${selectedItemId === item.id ? 'text-white' : 'text-slate-400'}`}>
+                                                                    {s.name}
+                                                                </span>
+                                                                <div className="flex items-center gap-1">
+                                                                    {!item.isEnabled && (
+                                                                        <span className="text-[10px] bg-red-900/50 text-red-400 px-1 rounded uppercase">Disabled</span>
+                                                                    )}
+                                                                    {s.isLibraryItem !== false && (
+                                                                        <div className="relative flex items-center justify-center">
+                                                                            <span className="text-blue-400" title="Library Snippet">
+                                                                                <BookOpen size={12} />
+                                                                            </span>
+                                                                            {item.overrides?.content !== undefined && (
+                                                                                <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-yellow-500 rounded-full border border-slate-900" title="Has Overrides" />
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+                                                                    <span className="text-[10px] bg-slate-700 px-1 rounded text-slate-400 uppercase w-[32px] text-center">{s.type}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
 
-                                                    {editingDomainIdx !== idx && (
-                                                        <button
-                                                            onClick={() => handleRemoveDomain(pattern)}
-                                                            className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                                                        >
-                                                            <X size={14} />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            ))}
-                                            {(!theme.domainPatterns || theme.domainPatterns.length === 0) && (
-                                                <div className="text-xs text-slate-500 text-center py-8 px-4 border border-dashed border-slate-800 rounded">
-                                                    No domains configured.
-                                                    <br />
-                                                    Theme will <strong>run nowhere</strong>.
+                                                        <div className="absolute right-2 flex gap-1 items-center opacity-0 group-hover:opacity-100 transition-opacity bg-slate-800/80 backdrop-blur pl-2 rounded">
+                                                            <label
+                                                                className="relative inline-flex items-center cursor-pointer"
+                                                                title={!theme.isActive ? "Enable theme to toggle snippets" : "Toggle Snippet"}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                            >
+                                                                <input
+                                                                    type="checkbox"
+                                                                    className={`sr-only peer ${!theme.isActive ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                                                                    checked={item.isEnabled}
+                                                                    disabled={!theme.isActive}
+                                                                    onChange={() => {
+                                                                        toggleThemeItem(theme.id, item.id);
+                                                                    }}
+                                                                />
+                                                                <div className={`w-7 h-4 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all ${theme.isActive ? 'peer-checked:bg-green-500 cursor-pointer' : 'peer-checked:bg-slate-600 opacity-50 cursor-not-allowed'}`}></div>
+                                                            </label>
+                                                            <button
+                                                                className="p-1 text-slate-500 hover:text-red-400 rounded hover:bg-slate-700"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    if (confirm('Remove snippet from theme?')) {
+                                                                        useStore.getState().removeSnippetFromTheme(theme.id, item.id);
+                                                                        if (selectedItemId === item.id) setSelectedItemId(null);
+                                                                    }
+                                                                }}
+                                                                title="Remove Snippet"
+                                                            >
+                                                                <Trash2 size={12} />
+                                                            </button>
+                                                            <button
+                                                                className="p-1 text-slate-500 hover:text-white rounded hover:bg-slate-700"
+                                                                onClick={(e) => handleKebabClick(e, item.id)}
+                                                                title="More options"
+                                                            >
+                                                                <MoreVertical size={12} />
+                                                            </button>
+                                                        </div>
+                                                    </Reorder.Item>
+                                                );
+                                            })}
+                                            {filteredItems.length === 0 && (
+                                                <div className="p-4 text-center text-xs text-slate-500">
+                                                    No {activeTab.toUpperCase()} snippets.
                                                 </div>
                                             )}
                                         </div>
-                                    </>
-                                )}
+                                    </Reorder.Group>
+                                </div>
                             </div>
-                        ) : (
-                            <>
-                                <div className="p-2 text-xs font-semibold text-slate-500 uppercase">Applied Snippets</div>
-                                <Reorder.Group
-                                    axis="y"
-                                    values={filteredItems}
-                                    onReorder={handleReorder}
-                                    className="flex-1 overflow-y-auto px-1"
-                                >
-                                    {filteredItems.map(item => {
-                                        const s = snippets.find(sn => sn.id === item.snippetId);
-                                        if (!s) return null;
-                                        return (
-                                            <Reorder.Item
-                                                key={item.id}
-                                                value={item}
-                                                className={`mb-1 bg-slate-900 border-l-2 rounded cursor-default group relative flex items-center ${selectedItemId === item.id ? 'border-blue-500 bg-slate-800' : 'border-transparent hover:bg-slate-800'} ${!item.isEnabled ? 'opacity-50 grayscale-[0.5]' : ''}`}
-                                                onClick={() => setSelectedItemId(item.id)}
-                                                onContextMenu={(e) => handleContextMenu(e, item.id)}
-                                            >
-                                                {/* Drag Handle */}
-                                                <div className="pl-2 text-slate-600 cursor-grab active:cursor-grabbing hover:text-slate-400">
-                                                    <GripVertical size={14} />
-                                                </div>
-
-                                                <div className="flex-1 min-w-0 p-2 pl-2">
-                                                    <div className="flex justify-between items-center mb-0.5">
-                                                        <span className={`text-sm font-medium truncate ${selectedItemId === item.id ? 'text-white' : 'text-slate-400'}`}>
-                                                            {s.name}
-                                                        </span>
-                                                        <div className="flex items-center gap-1">
-                                                            {!item.isEnabled && (
-                                                                <span className="text-[10px] bg-red-900/50 text-red-400 px-1 rounded uppercase">Disabled</span>
-                                                            )}
-                                                            {s.isLibraryItem !== false && (
-                                                                <div className="relative flex items-center justify-center">
-                                                                    <span className="text-blue-400" title="Library Snippet">
-                                                                        <BookOpen size={12} />
-                                                                    </span>
-                                                                    {item.overrides?.content !== undefined && (
-                                                                        <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-yellow-500 rounded-full border border-slate-900" title="Has Overrides" />
-                                                                    )}
-                                                                </div>
-                                                            )}
-                                                            <span className="text-[10px] bg-slate-700 px-1 rounded text-slate-400 uppercase w-[32px] text-center">{s.type}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div className="absolute right-2 flex gap-1 items-center opacity-0 group-hover:opacity-100 transition-opacity bg-slate-800/80 backdrop-blur pl-2 rounded">
-                                                    <label
-                                                        className="relative inline-flex items-center cursor-pointer"
-                                                        title={!theme.isActive ? "Enable theme to toggle snippets" : "Toggle Snippet"}
-                                                        onClick={(e) => e.stopPropagation()}
-                                                    >
-                                                        <input
-                                                            type="checkbox"
-                                                            className={`sr-only peer ${!theme.isActive ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-                                                            checked={item.isEnabled}
-                                                            disabled={!theme.isActive}
-                                                            onChange={() => {
-                                                                toggleThemeItem(theme.id, item.id);
-                                                            }}
-                                                        />
-                                                        <div className={`w-7 h-4 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all ${theme.isActive ? 'peer-checked:bg-green-500 cursor-pointer' : 'peer-checked:bg-slate-600 opacity-50 cursor-not-allowed'}`}></div>
-                                                    </label>
-                                                    <button
-                                                        className="p-1 text-slate-500 hover:text-red-400 rounded hover:bg-slate-700"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            if (confirm('Remove snippet from theme?')) {
-                                                                useStore.getState().removeSnippetFromTheme(theme.id, item.id);
-                                                                if (selectedItemId === item.id) setSelectedItemId(null);
-                                                            }
-                                                        }}
-                                                        title="Remove Snippet"
-                                                    >
-                                                        <Trash2 size={12} />
-                                                    </button>
-                                                    <button
-                                                        className="p-1 text-slate-500 hover:text-white rounded hover:bg-slate-700"
-                                                        onClick={(e) => handleKebabClick(e, item.id)}
-                                                        title="More options"
-                                                    >
-                                                        <MoreVertical size={12} />
-                                                    </button>
-                                                </div>
-                                            </Reorder.Item>
-                                        );
-                                    })}
-                                    {filteredItems.length === 0 && (
-                                        <div className="p-4 text-center text-xs text-slate-500">
-                                            No {activeTab.toUpperCase()} snippets.
-                                        </div>
-                                    )}
-                                </Reorder.Group>
-                            </>
-                        )}
-                    </div>
-                </div>
-
-                {/* Context Menu Render */}
-                {menuState.itemId && (
-                    <ContextMenu
-                        x={menuState.x}
-                        y={menuState.y}
-                        items={getMenuItems(menuState.itemId)}
-                        onClose={() => setMenuState({ ...menuState, itemId: null })}
-                    />
-                )}
-
-                {/* Main: Editor */}
-                <div className="flex-1 flex flex-col bg-slate-900 relative overflow-y-auto">
-                    {/* Library Popover with Backdrop */}
-                    {showLibrary && (
-                        <>
-                            {/* Backdrop to close on click outside */}
-                            <div
-                                className="absolute inset-0 z-20 bg-slate-900/50 backdrop-blur-[1px]"
-                                onClick={() => setShowLibrary(false)}
-                            />
-                            {/* Popover content */}
-                            <div className="absolute top-0 bottom-0 left-0 w-[300px] z-30 bg-slate-900 border-r border-slate-800 shadow-xl flex flex-col">
-                                <SnippetLibrary
-                                    onSelectSnippet={handleAddSnippet}
-                                    onClose={() => setShowLibrary(false)}
-                                />
-                            </div>
-                        </>
+                        </div>
                     )}
 
-                    <div className="p-4 space-y-6 pb-20">
-                        {filteredItems.map(item => {
-                            const s = snippets.find(sn => sn.id === item.snippetId);
-                            if (!s) return null;
-                            const isCollapsed = collapsedItems.has(item.id);
+                    {/* Context Menu Render */}
+                    {menuState.itemId && (
+                        <ContextMenu
+                            x={menuState.x}
+                            y={menuState.y}
+                            items={getMenuItems(menuState.itemId)}
+                            onClose={() => setMenuState({ ...menuState, itemId: null })}
+                        />
+                    )}
 
-                            return (
+                    {/* Main: Editor */}
+                    <div className="flex-1 flex flex-col bg-slate-900 relative overflow-y-auto">
+                        {/* Library Popover with Backdrop */}
+                        {showLibrary && (
+                            <>
+                                {/* Backdrop to close on click outside */}
                                 <div
-                                    key={item.id}
-                                    ref={el => { itemRefs.current[item.id] = el; }}
-                                    className={`rounded-lg border transition-all ${selectedItemId === item.id ? 'border-blue-500/50 shadow-lg shadow-blue-500/5' : 'border-slate-800 bg-slate-900'}`}
-                                >
-                                    {/* Snippet Header */}
-                                    <div
-                                        className={`flex items-center gap-2 p-3 cursor-pointer select-none ${isCollapsed ? 'bg-slate-800/20' : 'bg-slate-950/50 border-b border-slate-800'}`}
-                                        onClick={() => {
-                                            const next = new Set(collapsedItems);
-                                            if (next.has(item.id)) next.delete(item.id);
-                                            else next.add(item.id);
-                                            setCollapsedItems(next);
-                                        }}
-                                    >
-                                        <button className="text-slate-500 hover:text-white transition-colors">
-                                            {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
-                                        </button>
+                                    className="absolute inset-0 z-20 bg-slate-900/50 backdrop-blur-[1px]"
+                                    onClick={() => setShowLibrary(false)}
+                                />
+                                {/* Popover content */}
+                                <div className="absolute top-0 bottom-0 left-0 w-[300px] z-30 bg-slate-900 border-r border-slate-800 shadow-xl flex flex-col">
+                                    <SnippetLibrary
+                                        onSelectSnippet={handleAddSnippet}
+                                        onClose={() => setShowLibrary(false)}
+                                    />
+                                </div>
+                            </>
+                        )}
 
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2">
-                                                <span className={`font-medium text-sm truncate ${!item.isEnabled ? 'text-slate-500 line-through decoration-slate-600' : 'text-slate-200'}`}>
-                                                    {s.name}
-                                                </span>
-                                                {item.overrides?.content !== undefined && (
-                                                    <span className="text-[10px] bg-yellow-500/10 text-yellow-500 px-1.5 py-0.5 rounded uppercase tracking-wider font-bold">Modified</span>
-                                                )}
-                                            </div>
+                        {/* Main: Editor */}
+                        <div className="flex-1 flex flex-col bg-slate-900 relative overflow-y-auto">
+                            {/* Domain Settings Popover */}
+                            {showDomainSettings && (
+                                <>
+                                    <div className="absolute inset-0 z-20 bg-slate-900/50 backdrop-blur-[1px]" onClick={() => setShowDomainSettings(false)} />
+                                    <div className="absolute top-14 left-4 z-30 w-[300px] bg-slate-900 border border-slate-700 shadow-xl rounded-lg p-4">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Run on Domains</h3>
+                                            <button onClick={() => setShowDomainSettings(false)} className="text-slate-500 hover:text-white"><X size={16} /></button>
                                         </div>
-
-                                        <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
-                                            {/* HTML Controls */}
-                                            {s.type === 'html' && !isCollapsed && (
-                                                <div className="flex gap-2 mr-4">
-                                                    <input
-                                                        className="bg-slate-900 text-slate-300 border border-slate-700 rounded px-2 py-0.5 text-xs w-28 outline-none focus:border-blue-500 transition-colors"
-                                                        placeholder="Selector"
-                                                        value={item.overrides?.selector ?? s.selector ?? ''}
-                                                        onChange={(e) => updateThemeItem(themeId, item.id, {
-                                                            overrides: { ...item.overrides, selector: e.target.value }
-                                                        })}
-                                                        title="CSS Selector"
-                                                        onClick={e => e.stopPropagation()}
-                                                    />
-                                                    <select
-                                                        className="bg-slate-900 text-slate-300 border border-slate-700 rounded px-2 py-0.5 text-xs outline-none focus:border-blue-500 transition-colors"
-                                                        value={item.overrides?.position ?? s.position ?? 'beforeend'}
-                                                        onChange={(e) => updateThemeItem(themeId, item.id, {
-                                                            overrides: { ...item.overrides, position: e.target.value as any }
-                                                        })}
-                                                        title="Injection Position"
-                                                        onClick={e => e.stopPropagation()}
-                                                    >
-                                                        <option value="append">Append</option>
-                                                        <option value="prepend">Prepend</option>
-                                                        <option value="before">Before</option>
-                                                        <option value="after">After</option>
-                                                    </select>
+                                        {/* Run Everywhere Toggle */}
+                                        <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-800 flex items-center justify-between mb-4">
+                                            <div className="flex items-center gap-2">
+                                                <Globe size={16} className="text-slate-400" />
+                                                <span className="text-sm font-medium text-slate-200">All Websites</span>
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    const currentPatterns = theme.domainPatterns || [];
+                                                    const isAll = currentPatterns.includes('<all_urls>');
+                                                    if (isAll) updateTheme(themeId, { domainPatterns: currentPatterns.filter(p => p !== '<all_urls>') });
+                                                    else updateTheme(themeId, { domainPatterns: [...currentPatterns, '<all_urls>'] });
+                                                }}
+                                                className={`w-10 h-5 rounded-full relative transition-colors ${theme.domainPatterns?.includes('<all_urls>') ? 'bg-green-500' : 'bg-slate-600'}`}
+                                            >
+                                                <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-transform ${theme.domainPatterns?.includes('<all_urls>') ? 'left-6' : 'left-1'}`}></div>
+                                            </button>
+                                        </div>
+                                        {/* Remainder of Domain Logic... condensed for brevity if possible or full? I'll implement full simple version */}
+                                        {theme.domainPatterns?.includes('<all_urls>') ? (
+                                            <div className="text-xs text-slate-500 text-center py-4 border border-dashed border-slate-800 rounded">Theme runs everywhere.</div>
+                                        ) : (
+                                            <div className="space-y-4">
+                                                <div className="flex gap-2">
+                                                    <input className="flex-1 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white" value={newDomain} onChange={e => setNewDomain(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAddDomain()} placeholder="google.com" />
+                                                    <button onClick={handleAddDomain} disabled={!newDomain.trim()} className="p-1 bg-slate-800 rounded border border-slate-700"><Plus size={14} /></button>
                                                 </div>
-                                            )}
+                                                <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                                                    {theme.domainPatterns?.map((p, i) => (
+                                                        <div key={i} className="flex justify-between p-2 bg-slate-800/30 rounded text-xs text-slate-300">
+                                                            <span>{p}</span>
+                                                            <button onClick={() => handleRemoveDomain(p)} className="hover:text-red-400"><X size={12} /></button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </>
+                            )}
 
-                                            {/* Publish / Reset Controls */}
-                                            {!isCollapsed && (
-                                                <div className="flex items-center gap-2 mr-2">
-                                                    {s.isLibraryItem === false ? (
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                const newName = prompt('Enter name for Library:', s.name);
-                                                                if (newName) updateSnippet(s.id, { name: newName, isLibraryItem: true });
-                                                            }}
-                                                            className="text-purple-400 hover:text-purple-300 text-xs px-2 py-1 rounded border border-purple-900/50 hover:bg-purple-900/20"
+                            {/* Sticky Subheader */}
+                            <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-800 p-2 flex items-center justify-between">
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => setCollapsedItems(new Set())}
+                                        className="px-2 py-1 text-[10px] bg-slate-800 text-slate-400 rounded hover:text-white"
+                                    >
+                                        Expand All
+                                    </button>
+                                    <button
+                                        onClick={() => setCollapsedItems(new Set(filteredItems.map(i => i.id)))}
+                                        className="px-2 py-1 text-[10px] bg-slate-800 text-slate-400 rounded hover:text-white"
+                                    >
+                                        Collapse All
+                                    </button>
+                                </div>
+                                <button
+                                    onClick={() => handleCreateLocal(activeTab)}
+                                    className="flex items-center gap-1 bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1.5 rounded transition-colors shadow-sm"
+                                >
+                                    <Plus size={14} /> Add {activeTab.toUpperCase()}
+                                </button>
+                            </div>
+
+                            {filteredItems.map(item => {
+                                const s = snippets.find(sn => sn.id === item.snippetId);
+                                if (!s) return null;
+                                const isCollapsed = collapsedItems.has(item.id);
+
+                                return (
+                                    <div
+                                        key={item.id}
+                                        ref={el => { itemRefs.current[item.id] = el; }}
+                                        className={`rounded-lg border transition-all ${selectedItemId === item.id ? 'border-blue-500/50 shadow-lg shadow-blue-500/5' : 'border-slate-800 bg-slate-900'}`}
+                                    >
+                                        {/* Snippet Header */}
+                                        <div
+                                            className={`flex items-center gap-2 p-3 cursor-pointer select-none ${isCollapsed ? 'bg-slate-800/20' : 'bg-slate-950/50 border-b border-slate-800'}`}
+                                            onClick={() => {
+                                                const next = new Set(collapsedItems);
+                                                if (next.has(item.id)) next.delete(item.id);
+                                                else next.add(item.id);
+                                                setCollapsedItems(next);
+                                            }}
+                                        >
+                                            <button className="text-slate-500 hover:text-white transition-colors">
+                                                {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+                                            </button>
+
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`font-medium text-sm truncate ${!item.isEnabled ? 'text-slate-500 line-through decoration-slate-600' : 'text-slate-200'}`}>
+                                                        {s.name}
+                                                    </span>
+                                                    {item.overrides?.content !== undefined && (
+                                                        <span className="text-[10px] bg-yellow-500/10 text-yellow-500 px-1.5 py-0.5 rounded uppercase tracking-wider font-bold">Modified</span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                                                {/* HTML Controls */}
+                                                {s.type === 'html' && !isCollapsed && (
+                                                    <div className="flex gap-2 mr-4">
+                                                        <input
+                                                            className="bg-slate-900 text-slate-300 border border-slate-700 rounded px-2 py-0.5 text-xs w-28 outline-none focus:border-blue-500 transition-colors"
+                                                            placeholder="Selector"
+                                                            value={item.overrides?.selector ?? s.selector ?? ''}
+                                                            onChange={(e) => updateThemeItem(themeId, item.id, {
+                                                                overrides: { ...item.overrides, selector: e.target.value }
+                                                            })}
+                                                            title="CSS Selector"
+                                                            onClick={e => e.stopPropagation()}
+                                                        />
+                                                        <select
+                                                            className="bg-slate-900 text-slate-300 border border-slate-700 rounded px-2 py-0.5 text-xs outline-none focus:border-blue-500 transition-colors"
+                                                            value={item.overrides?.position ?? s.position ?? 'beforeend'}
+                                                            onChange={(e) => updateThemeItem(themeId, item.id, {
+                                                                overrides: { ...item.overrides, position: e.target.value as any }
+                                                            })}
+                                                            title="Injection Position"
+                                                            onClick={e => e.stopPropagation()}
                                                         >
-                                                            Publish
-                                                        </button>
-                                                    ) : (
-                                                        item.overrides?.content !== undefined && (
-                                                            <>
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        if (confirm('Revert to Master Snippet? Local changes will be lost.')) {
-                                                                            const { content, ...rest } = item.overrides || {};
-                                                                            updateThemeItem(themeId, item.id, { overrides: rest.selector || rest.position ? rest : undefined });
-                                                                        }
-                                                                    }}
-                                                                    className="text-slate-400 hover:text-white text-xs px-2 py-1 rounded border border-slate-700 hover:bg-slate-800"
-                                                                >
-                                                                    Reset
-                                                                </button>
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        if (confirm('Publish changes to Master Snippet?')) {
-                                                                            const newContent = item.overrides?.content;
-                                                                            if (newContent) {
-                                                                                updateSnippet(s.id, { content: newContent });
+                                                            <option value="append">Append</option>
+                                                            <option value="prepend">Prepend</option>
+                                                            <option value="before">Before</option>
+                                                            <option value="after">After</option>
+                                                        </select>
+                                                    </div>
+                                                )}
+
+                                                {/* Publish / Reset Controls */}
+                                                {!isCollapsed && (
+                                                    <div className="flex items-center gap-2 mr-2">
+                                                        {s.isLibraryItem === false ? (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    const newName = prompt('Enter name for Library:', s.name);
+                                                                    if (newName) updateSnippet(s.id, { name: newName, isLibraryItem: true });
+                                                                }}
+                                                                className="text-purple-400 hover:text-purple-300 text-xs px-2 py-1 rounded border border-purple-900/50 hover:bg-purple-900/20"
+                                                            >
+                                                                Publish
+                                                            </button>
+                                                        ) : (
+                                                            item.overrides?.content !== undefined && (
+                                                                <>
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            if (confirm('Revert to Master Snippet? Local changes will be lost.')) {
                                                                                 const { content, ...rest } = item.overrides || {};
                                                                                 updateThemeItem(themeId, item.id, { overrides: rest.selector || rest.position ? rest : undefined });
                                                                             }
-                                                                        }
-                                                                    }}
-                                                                    className="text-blue-400 hover:text-blue-300 text-xs px-2 py-1 rounded border border-blue-900/50 hover:bg-blue-900/20"
-                                                                >
-                                                                    Publish Changes
-                                                                </button>
-                                                            </>
-                                                        )
-                                                    )}
-                                                </div>
-                                            )}
+                                                                        }}
+                                                                        className="text-slate-400 hover:text-white text-xs px-2 py-1 rounded border border-slate-700 hover:bg-slate-800"
+                                                                    >
+                                                                        Reset
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            if (confirm('Publish changes to Master Snippet?')) {
+                                                                                const newContent = item.overrides?.content;
+                                                                                if (newContent) {
+                                                                                    updateSnippet(s.id, { content: newContent });
+                                                                                    const { content, ...rest } = item.overrides || {};
+                                                                                    updateThemeItem(themeId, item.id, { overrides: rest.selector || rest.position ? rest : undefined });
+                                                                                }
+                                                                            }
+                                                                        }}
+                                                                        className="text-blue-400 hover:text-blue-300 text-xs px-2 py-1 rounded border border-blue-900/50 hover:bg-blue-900/20"
+                                                                    >
+                                                                        Publish Changes
+                                                                    </button>
+                                                                </>
+                                                            )
+                                                        )}
+                                                    </div>
+                                                )}
 
-                                            <label className="relative inline-flex items-center cursor-pointer" onClick={e => e.stopPropagation()}>
-                                                <input
-                                                    type="checkbox"
-                                                    className="sr-only peer"
-                                                    checked={item.isEnabled}
-                                                    onChange={() => {
-                                                        toggleThemeItem(theme.id, item.id);
+                                                <label className="relative inline-flex items-center cursor-pointer" onClick={e => e.stopPropagation()}>
+                                                    <input
+                                                        type="checkbox"
+                                                        className="sr-only peer"
+                                                        checked={item.isEnabled}
+                                                        onChange={() => {
+                                                            toggleThemeItem(theme.id, item.id);
+                                                        }}
+                                                    />
+                                                    <div className="w-8 h-4 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[0px] after:left-[0px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600/20 peer-checked:after:bg-blue-400 peer-checked:after:border-blue-300"></div>
+                                                </label>
+
+                                                <button
+                                                    className="p-1 text-slate-500 hover:text-white rounded hover:bg-slate-800 ml-1"
+                                                    onClick={(e) => handleKebabClick(e, item.id)}
+                                                >
+                                                    <MoreVertical size={16} />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Snippet Editor Body */}
+                                        {!isCollapsed && (
+                                            <div className="flex flex-col border-t border-slate-800">
+                                                <CodeEditor
+                                                    value={item.overrides?.content ?? s.content}
+                                                    onChange={(val) => {
+                                                        if (s.isLibraryItem === false) {
+                                                            updateSnippet(s.id, { content: val });
+                                                        } else {
+                                                            updateThemeItem(themeId, item.id, {
+                                                                overrides: { ...item.overrides, content: val }
+                                                            });
+                                                        }
                                                     }}
+                                                    className="flex-1 rounded-none border-x-0 border-b-0 border-t-0"
+                                                    mode={s.type}
+                                                    autoHeight={true}
                                                 />
-                                                <div className="w-8 h-4 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[0px] after:left-[0px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600/20 peer-checked:after:bg-blue-400 peer-checked:after:border-blue-300"></div>
-                                            </label>
-
-                                            <button
-                                                className="p-1 text-slate-500 hover:text-white rounded hover:bg-slate-800 ml-1"
-                                                onClick={(e) => handleKebabClick(e, item.id)}
-                                            >
-                                                <MoreVertical size={16} />
-                                            </button>
-                                        </div>
+                                            </div>
+                                        )}
                                     </div>
-
-                                    {/* Snippet Editor Body */}
-                                    {!isCollapsed && (
-                                        <div className="h-[300px] flex flex-col border-t border-slate-800">
-                                            <CodeEditor
-                                                value={item.overrides?.content ?? s.content}
-                                                onChange={(val) => {
-                                                    if (s.isLibraryItem === false) {
-                                                        updateSnippet(s.id, { content: val });
-                                                    } else {
-                                                        updateThemeItem(themeId, item.id, {
-                                                            overrides: { ...item.overrides, content: val }
-                                                        });
-                                                    }
-                                                }}
-                                                className="flex-1"
-                                                mode={s.type}
-                                            />
-                                        </div>
-                                    )}
+                                );
+                            })}
+                            {filteredItems.length === 0 && (
+                                <div className="flex flex-col items-center justify-center py-20 text-slate-500">
+                                    <Box size={48} className="mb-4 opacity-20" />
+                                    <p>No {activeTab.toUpperCase()} snippets found.</p>
+                                    <button
+                                        onClick={() => handleCreateLocal(activeTab)}
+                                        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 transition-colors"
+                                    >
+                                        Create New {activeTab.toUpperCase()} Snippet
+                                    </button>
                                 </div>
-                            );
-                        })}
-                        {filteredItems.length === 0 && (
-                            <div className="flex flex-col items-center justify-center py-20 text-slate-500">
-                                <Box size={48} className="mb-4 opacity-20" />
-                                <p>No {activeTab.toUpperCase()} snippets found.</p>
-                                <button
-                                    onClick={() => handleCreateLocal(activeTab)}
-                                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 transition-colors"
-                                >
-                                    Create New {activeTab.toUpperCase()} Snippet
-                                </button>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
-        </div >
+        </div>
     );
 };

@@ -10,6 +10,7 @@ interface CodeEditorProps {
     mode?: 'css' | 'html';
     placeholder?: string;
     className?: string;
+    autoHeight?: boolean;
 }
 
 export const CodeEditor: React.FC<CodeEditorProps> = ({
@@ -17,7 +18,8 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
     onChange,
     mode = 'css',
     placeholder,
-    className
+    className,
+    autoHeight = false
 }) => {
     const extensions = [
         mode === 'css' ? css() : html(),
@@ -26,7 +28,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
                 backgroundColor: "#0f172a", /* slate-900 (matches app bg) */
                 color: "#cbd5e1", /* slate-300 */
                 fontSize: "12px",
-                height: "100%",
+                height: autoHeight ? "auto" : "100%",
             },
             ".cm-scroller": {
                 fontFamily: "Menlo, Monaco, Consolas, 'Courier New', monospace",
@@ -55,10 +57,10 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
     }, [onChange]);
 
     return (
-        <div className={`h-full overflow-hidden border border-slate-700 rounded ${className}`}>
+        <div className={`${autoHeight ? '' : 'h-full'} overflow-hidden border border-slate-700 rounded ${className}`}>
             <CodeMirror
                 value={value}
-                height="100%"
+                height={autoHeight ? "auto" : "100%"}
                 extensions={extensions}
                 onChange={handleChange}
                 theme="dark"

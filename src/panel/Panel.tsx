@@ -14,13 +14,17 @@ const Panel: React.FC = () => {
         loadFromStorage();
 
         const checkConnection = () => {
-            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-                if (tabs[0]?.id) {
-                    chrome.tabs.sendMessage(tabs[0].id, { type: 'PING' })
-                        .then(() => setIsConnected(true))
-                        .catch(() => setIsConnected(false));
-                }
-            });
+            if (typeof chrome !== 'undefined' && chrome.tabs) {
+                chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                    if (tabs[0]?.id) {
+                        chrome.tabs.sendMessage(tabs[0].id, { type: 'PING' })
+                            .then(() => setIsConnected(true))
+                            .catch(() => setIsConnected(false));
+                    }
+                });
+            } else {
+                setIsConnected(true); // Mock connection for local dev
+            }
         };
 
         checkConnection();
