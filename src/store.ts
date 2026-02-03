@@ -18,6 +18,7 @@ interface Store extends AppState {
     toggleThemeItem: (themeId: string, itemId: string) => void;
     removeSnippetFromTheme: (themeId: string, itemId: string) => void;
     updateThemeItem: (themeId: string, itemId: string, updates: Partial<import('./types.ts').ThemeItem>) => void;
+    reorderThemeItems: (themeId: string, newItems: import('./types.ts').ThemeItem[]) => void;
     toggleGlobal: () => void;
 }
 
@@ -235,6 +236,20 @@ export const useStore = create<Store>((set) => ({
             const newState = {
                 ...state,
                 themes: state.themes.map(t => t.id === themeId ? updatedTheme : t)
+            };
+            storageService.save(newState);
+            return newState;
+        });
+    },
+
+    reorderThemeItems: (themeId, newItems) => {
+        set((state) => {
+            const newState = {
+                ...state,
+                themes: state.themes.map(t => {
+                    if (t.id !== themeId) return t;
+                    return { ...t, items: newItems, updatedAt: Date.now() };
+                })
             };
             storageService.save(newState);
             return newState;

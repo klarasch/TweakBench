@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../store.ts';
 import { CodeEditor } from './CodeEditor.tsx';
 import { SnippetLibrary } from './SnippetLibrary.tsx';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
-import { ArrowLeft, Trash2, BookOpen, Plus, Globe, Monitor, MoreVertical, Box, Play, Pause, Download, X } from 'lucide-react';
+import { ArrowLeft, Trash2, BookOpen, Plus, Globe, MoreVertical, Box, Play, Pause, Download, X, GripVertical, ChevronDown, ChevronRight } from 'lucide-react';
+import { Reorder } from "framer-motion";
 import type { SnippetType } from '../types.ts';
 import { exportThemeToJS, exportThemeToCSS } from '../utils/impexp.ts';
 
@@ -23,9 +24,12 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     const [showLibrary, setShowLibrary] = useState(false);
     const [localName, setLocalName] = useState('');
     const [sidebarMode, setSidebarMode] = useState<'snippets' | 'domains'>('snippets');
+    const [activeTab, setActiveTab] = useState<'css' | 'html'>('css'); // Added activeTab state
     const [newDomain, setNewDomain] = useState('');
     const [editingDomainIdx, setEditingDomainIdx] = useState<number | null>(null);
     const [editingDomainValue, setEditingDomainValue] = useState('');
+    const [collapsedItems, setCollapsedItems] = useState<Set<string>>(new Set());
+    const itemRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
     // Resize State
     const [sidebarWidth, setSidebarWidth] = useState(300);
@@ -43,10 +47,22 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
             setLocalName(theme.name);
             // Select first item by default if nothing selected
             if (!selectedItemId && theme.items.length > 0) {
-                setSelectedItemId(theme.items[0].id);
+                // Determine first visible item in active tab
+                const firstVisible = theme.items.find(item => {
+                    const s = snippets.find(sn => sn.id === item.snippetId);
+                    return s?.type === activeTab;
+                });
+                if (firstVisible) setSelectedItemId(firstVisible.id);
             }
         }
-    }, [theme, selectedItemId]);
+    }, [theme, selectedItemId, activeTab]);
+
+    // Scroll into view when selectedItemId changes
+    useEffect(() => {
+        if (selectedItemId && itemRefs.current[selectedItemId]) {
+            itemRefs.current[selectedItemId]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, [selectedItemId]);
 
     // Resize Handler
     useEffect(() => {
@@ -124,7 +140,25 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
         setShowLibrary(false);
     };
 
+    const filteredItems = theme ? theme.items.filter(item => {
+        const s = snippets.find(sn => sn.id === item.snippetId);
+        return s?.type === activeTab;
+    }) : [];
+
+    const handleReorder = (newFilteredItems: typeof theme.items) => {
+        if (!theme) return;
+        // Get items NOT in the current tab
+        const otherItems = theme.items.filter(item => {
+            const s = snippets.find(sn => sn.id === item.snippetId);
+            return s?.type !== activeTab;
+        });
+        // Concatenate: New Order for Current Tab + Other Items
+        // This effectively groups items by type in the storage, which is fine.
+        useStore.getState().reorderThemeItems(theme.id, [...newFilteredItems, ...otherItems]);
+    };
+
     const handleCreateLocal = (type: SnippetType) => {
+        setActiveTab(type); // Switch to content type tab
         const id = addSnippet({
             name: type === 'css' ? 'Local CSS' : 'Local HTML',
             type,
@@ -254,6 +288,17 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                         }}
                         placeholder="Theme Name"
                     />
+                    <div className="flex items-center gap-2 mt-1">
+                        <div className="flex items-center gap-1 text-[10px] text-slate-500 uppercase tracking-wider bg-slate-800/50 px-1.5 py-0.5 rounded cursor-pointer hover:bg-slate-800 hover:text-slate-300 transition-colors" onClick={() => setSidebarMode('domains')}>
+                            <Globe size={10} />
+                            {theme.domainPatterns && theme.domainPatterns.includes('<all_urls>')
+                                ? "Runs Everywhere"
+                                : theme.domainPatterns && theme.domainPatterns.length > 0
+                                    ? `${theme.domainPatterns.length} Domain${theme.domainPatterns.length > 1 ? 's' : ''}`
+                                    : "No Configured Domains"
+                            }
+                        </div>
+                    </div>
                 </div>
                 {/* Theme Toggle & Menu */}
                 <div className="flex items-center gap-2">
@@ -302,6 +347,25 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                         <MoreVertical size={18} />
                     </button>
                 </div>
+            </div>
+
+            {/* Tab Bar (New) */}
+            <div className="flex border-b border-slate-800 bg-slate-900">
+                <button
+                    onClick={() => setActiveTab('css')}
+                    className={`flex-1 py-2 text-xs font-semibold uppercase tracking-wider transition-colors relative ${activeTab === 'css' ? 'text-blue-400' : 'text-slate-500 hover:text-slate-300'}`}
+                >
+                    CSS
+                    {activeTab === 'css' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500"></div>}
+                </button>
+                <div className="w-px bg-slate-800 my-2"></div>
+                <button
+                    onClick={() => setActiveTab('html')}
+                    className={`flex-1 py-2 text-xs font-semibold uppercase tracking-wider transition-colors relative ${activeTab === 'html' ? 'text-orange-400' : 'text-slate-500 hover:text-slate-300'}`}
+                >
+                    HTML
+                    {activeTab === 'html' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-orange-500"></div>}
+                </button>
             </div>
 
             <div className="flex-1 flex overflow-hidden relative">
@@ -482,40 +546,53 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                         ) : (
                             <>
                                 <div className="p-2 text-xs font-semibold text-slate-500 uppercase">Applied Snippets</div>
-                                <div className="flex-1 overflow-y-auto">
-                                    {theme.items.map(item => {
+                                <Reorder.Group
+                                    axis="y"
+                                    values={filteredItems}
+                                    onReorder={handleReorder}
+                                    className="flex-1 overflow-y-auto px-1"
+                                >
+                                    {filteredItems.map(item => {
                                         const s = snippets.find(sn => sn.id === item.snippetId);
                                         if (!s) return null;
                                         return (
-                                            <div
+                                            <Reorder.Item
                                                 key={item.id}
-                                                className={`p-2 border-l-2 cursor-pointer hover:bg-slate-800 group relative ${selectedItemId === item.id ? 'border-blue-500 bg-slate-800' : 'border-transparent'} ${!item.isEnabled ? 'opacity-50 grayscale-[0.5]' : ''}`}
+                                                value={item}
+                                                className={`mb-1 bg-slate-900 border-l-2 rounded cursor-default group relative flex items-center ${selectedItemId === item.id ? 'border-blue-500 bg-slate-800' : 'border-transparent hover:bg-slate-800'} ${!item.isEnabled ? 'opacity-50 grayscale-[0.5]' : ''}`}
                                                 onClick={() => setSelectedItemId(item.id)}
                                                 onContextMenu={(e) => handleContextMenu(e, item.id)}
                                             >
-                                                <div className="flex justify-between items-center mb-1">
-                                                    <span className={`text-sm font-medium truncate ${selectedItemId === item.id ? 'text-white' : 'text-slate-400'}`}>
-                                                        {s.name}
-                                                    </span>
-                                                    <div className="flex items-center gap-1">
-                                                        {!item.isEnabled && (
-                                                            <span className="text-[10px] bg-red-900/50 text-red-400 px-1 rounded uppercase">Disabled</span>
-                                                        )}
-                                                        {s.isLibraryItem !== false && (
-                                                            <div className="relative flex items-center justify-center">
-                                                                <span className="text-blue-400" title="Library Snippet">
-                                                                    <BookOpen size={12} />
-                                                                </span>
-                                                                {item.overrides?.content !== undefined && (
-                                                                    <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-yellow-500 rounded-full border border-slate-900" title="Has Overrides" />
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                        <span className="text-[10px] bg-slate-700 px-1 rounded text-slate-400 uppercase w-[32px] text-center">{s.type}</span>
+                                                {/* Drag Handle */}
+                                                <div className="pl-2 text-slate-600 cursor-grab active:cursor-grabbing hover:text-slate-400">
+                                                    <GripVertical size={14} />
+                                                </div>
+
+                                                <div className="flex-1 min-w-0 p-2 pl-2">
+                                                    <div className="flex justify-between items-center mb-0.5">
+                                                        <span className={`text-sm font-medium truncate ${selectedItemId === item.id ? 'text-white' : 'text-slate-400'}`}>
+                                                            {s.name}
+                                                        </span>
+                                                        <div className="flex items-center gap-1">
+                                                            {!item.isEnabled && (
+                                                                <span className="text-[10px] bg-red-900/50 text-red-400 px-1 rounded uppercase">Disabled</span>
+                                                            )}
+                                                            {s.isLibraryItem !== false && (
+                                                                <div className="relative flex items-center justify-center">
+                                                                    <span className="text-blue-400" title="Library Snippet">
+                                                                        <BookOpen size={12} />
+                                                                    </span>
+                                                                    {item.overrides?.content !== undefined && (
+                                                                        <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-yellow-500 rounded-full border border-slate-900" title="Has Overrides" />
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                            <span className="text-[10px] bg-slate-700 px-1 rounded text-slate-400 uppercase w-[32px] text-center">{s.type}</span>
+                                                        </div>
                                                     </div>
                                                 </div>
 
-                                                <div className="flex justify-end gap-2 items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <div className="absolute right-2 flex gap-1 items-center opacity-0 group-hover:opacity-100 transition-opacity bg-slate-800/80 backdrop-blur pl-2 rounded">
                                                     <label
                                                         className="relative inline-flex items-center cursor-pointer"
                                                         title={!theme.isActive ? "Enable theme to toggle snippets" : "Toggle Snippet"}
@@ -533,7 +610,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                                         <div className={`w-7 h-4 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all ${theme.isActive ? 'peer-checked:bg-green-500 cursor-pointer' : 'peer-checked:bg-slate-600 opacity-50 cursor-not-allowed'}`}></div>
                                                     </label>
                                                     <button
-                                                        className="p-0.5 text-slate-500 hover:text-red-400"
+                                                        className="p-1 text-slate-500 hover:text-red-400 rounded hover:bg-slate-700"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             if (confirm('Remove snippet from theme?')) {
@@ -546,22 +623,22 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                                         <Trash2 size={12} />
                                                     </button>
                                                     <button
-                                                        className="p-0.5 text-slate-500 hover:text-white"
+                                                        className="p-1 text-slate-500 hover:text-white rounded hover:bg-slate-700"
                                                         onClick={(e) => handleKebabClick(e, item.id)}
                                                         title="More options"
                                                     >
                                                         <MoreVertical size={12} />
                                                     </button>
                                                 </div>
-                                            </div>
+                                            </Reorder.Item>
                                         );
                                     })}
-                                    {theme.items.length === 0 && (
+                                    {filteredItems.length === 0 && (
                                         <div className="p-4 text-center text-xs text-slate-500">
-                                            No snippets applied. Use controls above.
+                                            No {activeTab.toUpperCase()} snippets.
                                         </div>
                                     )}
-                                </div>
+                                </Reorder.Group>
                             </>
                         )}
                     </div>
@@ -578,7 +655,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                 )}
 
                 {/* Main: Editor */}
-                <div className="flex-1 flex flex-col bg-slate-900 relative">
+                <div className="flex-1 flex flex-col bg-slate-900 relative overflow-y-auto">
                     {/* Library Popover with Backdrop */}
                     {showLibrary && (
                         <>
@@ -597,123 +674,181 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                         </>
                     )}
 
-                    {activeSnippet ? (
-                        <>
-                            <div className="flex-none p-2 bg-slate-950 border-b border-slate-800 flex flex-col gap-2">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-xs text-slate-400 font-mono flex items-center gap-2">
-                                        {activeSnippet.isLibraryItem !== false ? (
-                                            <span className="flex items-center gap-1 text-blue-400"><Globe size={12} /> Library</span>
-                                        ) : (
-                                            <span className="flex items-center gap-1 text-slate-500"><Monitor size={12} /> Local</span>
-                                        )}
-                                        <span className="text-slate-600">/</span>
-                                        {activeSnippet.type === 'css' ? 'CSS' : 'HTML'}
-                                        {activeItem?.overrides?.content !== undefined && (
-                                            <span className="text-[10px] bg-yellow-500/20 text-yellow-500 px-1 rounded uppercase ml-1">Override</span>
-                                        )}
-                                    </span>
+                    <div className="p-4 space-y-6 pb-20">
+                        {filteredItems.map(item => {
+                            const s = snippets.find(sn => sn.id === item.snippetId);
+                            if (!s) return null;
+                            const isCollapsed = collapsedItems.has(item.id);
 
-                                    <div className="flex gap-2 text-xs items-center h-6"> {/* Fixed height container */}
-                                        {/* GHOST SNIPPET LOGIC */}
-                                        {activeSnippet.isLibraryItem === false && (
+                            return (
+                                <div
+                                    key={item.id}
+                                    ref={el => { itemRefs.current[item.id] = el; }}
+                                    className={`rounded-lg border transition-all ${selectedItemId === item.id ? 'border-blue-500/50 shadow-lg shadow-blue-500/5' : 'border-slate-800 bg-slate-900'}`}
+                                >
+                                    {/* Snippet Header */}
+                                    <div
+                                        className={`flex items-center gap-2 p-3 cursor-pointer select-none ${isCollapsed ? 'bg-slate-800/20' : 'bg-slate-950/50 border-b border-slate-800'}`}
+                                        onClick={() => {
+                                            const next = new Set(collapsedItems);
+                                            if (next.has(item.id)) next.delete(item.id);
+                                            else next.add(item.id);
+                                            setCollapsedItems(next);
+                                        }}
+                                    >
+                                        <button className="text-slate-500 hover:text-white transition-colors">
+                                            {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+                                        </button>
+
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                <span className={`font-medium text-sm truncate ${!item.isEnabled ? 'text-slate-500 line-through decoration-slate-600' : 'text-slate-200'}`}>
+                                                    {s.name}
+                                                </span>
+                                                {item.overrides?.content !== undefined && (
+                                                    <span className="text-[10px] bg-yellow-500/10 text-yellow-500 px-1.5 py-0.5 rounded uppercase tracking-wider font-bold">Modified</span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                                            {/* HTML Controls */}
+                                            {s.type === 'html' && !isCollapsed && (
+                                                <div className="flex gap-2 mr-4">
+                                                    <input
+                                                        className="bg-slate-900 text-slate-300 border border-slate-700 rounded px-2 py-0.5 text-xs w-28 outline-none focus:border-blue-500 transition-colors"
+                                                        placeholder="Selector"
+                                                        value={item.overrides?.selector ?? s.selector ?? ''}
+                                                        onChange={(e) => updateThemeItem(themeId, item.id, {
+                                                            overrides: { ...item.overrides, selector: e.target.value }
+                                                        })}
+                                                        title="CSS Selector"
+                                                        onClick={e => e.stopPropagation()}
+                                                    />
+                                                    <select
+                                                        className="bg-slate-900 text-slate-300 border border-slate-700 rounded px-2 py-0.5 text-xs outline-none focus:border-blue-500 transition-colors"
+                                                        value={item.overrides?.position ?? s.position ?? 'beforeend'}
+                                                        onChange={(e) => updateThemeItem(themeId, item.id, {
+                                                            overrides: { ...item.overrides, position: e.target.value as any }
+                                                        })}
+                                                        title="Injection Position"
+                                                        onClick={e => e.stopPropagation()}
+                                                    >
+                                                        <option value="append">Append</option>
+                                                        <option value="prepend">Prepend</option>
+                                                        <option value="before">Before</option>
+                                                        <option value="after">After</option>
+                                                    </select>
+                                                </div>
+                                            )}
+
+                                            {/* Publish / Reset Controls */}
+                                            {!isCollapsed && (
+                                                <div className="flex items-center gap-2 mr-2">
+                                                    {s.isLibraryItem === false ? (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                const newName = prompt('Enter name for Library:', s.name);
+                                                                if (newName) updateSnippet(s.id, { name: newName, isLibraryItem: true });
+                                                            }}
+                                                            className="text-purple-400 hover:text-purple-300 text-xs px-2 py-1 rounded border border-purple-900/50 hover:bg-purple-900/20"
+                                                        >
+                                                            Publish
+                                                        </button>
+                                                    ) : (
+                                                        item.overrides?.content !== undefined && (
+                                                            <>
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        if (confirm('Revert to Master Snippet? Local changes will be lost.')) {
+                                                                            const { content, ...rest } = item.overrides || {};
+                                                                            updateThemeItem(themeId, item.id, { overrides: rest.selector || rest.position ? rest : undefined });
+                                                                        }
+                                                                    }}
+                                                                    className="text-slate-400 hover:text-white text-xs px-2 py-1 rounded border border-slate-700 hover:bg-slate-800"
+                                                                >
+                                                                    Reset
+                                                                </button>
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        if (confirm('Publish changes to Master Snippet?')) {
+                                                                            const newContent = item.overrides?.content;
+                                                                            if (newContent) {
+                                                                                updateSnippet(s.id, { content: newContent });
+                                                                                const { content, ...rest } = item.overrides || {};
+                                                                                updateThemeItem(themeId, item.id, { overrides: rest.selector || rest.position ? rest : undefined });
+                                                                            }
+                                                                        }
+                                                                    }}
+                                                                    className="text-blue-400 hover:text-blue-300 text-xs px-2 py-1 rounded border border-blue-900/50 hover:bg-blue-900/20"
+                                                                >
+                                                                    Publish Changes
+                                                                </button>
+                                                            </>
+                                                        )
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            <label className="relative inline-flex items-center cursor-pointer" onClick={e => e.stopPropagation()}>
+                                                <input
+                                                    type="checkbox"
+                                                    className="sr-only peer"
+                                                    checked={item.isEnabled}
+                                                    onChange={() => {
+                                                        toggleThemeItem(theme.id, item.id);
+                                                    }}
+                                                />
+                                                <div className="w-8 h-4 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[0px] after:left-[0px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600/20 peer-checked:after:bg-blue-400 peer-checked:after:border-blue-300"></div>
+                                            </label>
+
                                             <button
-                                                onClick={() => {
-                                                    const newName = prompt('Enter name for Library:', activeSnippet.name);
-                                                    if (newName) {
-                                                        updateSnippet(activeSnippet.id, { name: newName, isLibraryItem: true });
+                                                className="p-1 text-slate-500 hover:text-white rounded hover:bg-slate-800 ml-1"
+                                                onClick={(e) => handleKebabClick(e, item.id)}
+                                            >
+                                                <MoreVertical size={16} />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Snippet Editor Body */}
+                                    {!isCollapsed && (
+                                        <div className="h-[300px] flex flex-col border-t border-slate-800">
+                                            <CodeEditor
+                                                value={item.overrides?.content ?? s.content}
+                                                onChange={(val) => {
+                                                    if (s.isLibraryItem === false) {
+                                                        updateSnippet(s.id, { content: val });
+                                                    } else {
+                                                        updateThemeItem(themeId, item.id, {
+                                                            overrides: { ...item.overrides, content: val }
+                                                        });
                                                     }
                                                 }}
-                                                className="text-purple-400 hover:text-purple-300 px-2 py-0.5 rounded border border-purple-900 bg-purple-900/20 hover:bg-purple-900/40 text-xs flex items-center gap-1"
-                                            >
-                                                Publish
-                                            </button>
-                                        )}
-
-                                        {/* OVERRIDE LOGIC (Only for Library Snippets) */}
-                                        {activeSnippet.isLibraryItem !== false && activeItem?.overrides?.content !== undefined && (
-                                            <>
-                                                <button
-                                                    onClick={() => {
-                                                        if (confirm('Revert to Master Snippet? Local changes will be lost.')) {
-                                                            const { content, ...rest } = activeItem.overrides || {};
-                                                            updateThemeItem(themeId, activeItem.id, { overrides: rest.selector || rest.position ? rest : undefined });
-                                                        }
-                                                    }}
-                                                    className="text-slate-400 hover:text-white px-2 py-0.5 rounded border border-slate-700 hover:bg-slate-800"
-                                                >
-                                                    Reset
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        if (confirm('Publish changes to Master Snippet? This will affect all themes using this snippet.')) {
-                                                            const newContent = activeItem.overrides?.content;
-                                                            if (newContent) {
-                                                                updateSnippet(activeSnippet.id, { content: newContent });
-                                                                // Clear local override after promotion
-                                                                const { content, ...rest } = activeItem.overrides || {};
-                                                                updateThemeItem(themeId, activeItem.id, { overrides: rest.selector || rest.position ? rest : undefined });
-                                                            }
-                                                        }
-                                                    }}
-                                                    className="text-blue-400 hover:text-blue-300 px-2 py-0.5 rounded border border-blue-900 bg-blue-900/20 hover:bg-blue-900/40 text-xs"
-                                                >
-                                                    Publish Changes
-                                                </button>
-                                            </>
-                                        )}
-
-                                        {activeSnippet.type === 'html' && activeItem && (
-                                            <>
-                                                <input
-                                                    className="bg-slate-800 text-slate-200 border border-slate-700 rounded px-1 w-32 outline-none"
-                                                    placeholder="Selector (e.g. body)"
-                                                    value={activeItem.overrides?.selector ?? activeSnippet.selector ?? ''}
-                                                    onChange={(e) => updateThemeItem(themeId, activeItem.id, {
-                                                        overrides: { ...activeItem.overrides, selector: e.target.value }
-                                                    })}
-                                                />
-                                                <select
-                                                    className="bg-slate-800 text-slate-200 border border-slate-700 rounded px-1 outline-none"
-                                                    value={activeItem.overrides?.position ?? activeSnippet.position ?? 'beforeend'}
-                                                    onChange={(e) => updateThemeItem(themeId, activeItem.id, {
-                                                        overrides: { ...activeItem.overrides, position: e.target.value as any }
-                                                    })}
-                                                >
-                                                    <option value="append">Append</option>
-                                                    <option value="prepend">Prepend</option>
-                                                    <option value="before">Before</option>
-                                                    <option value="after">After</option>
-                                                </select>
-                                            </>
-                                        )}
-                                    </div>
+                                                className="flex-1"
+                                                mode={s.type}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
+                            );
+                        })}
+                        {filteredItems.length === 0 && (
+                            <div className="flex flex-col items-center justify-center py-20 text-slate-500">
+                                <Box size={48} className="mb-4 opacity-20" />
+                                <p>No {activeTab.toUpperCase()} snippets found.</p>
+                                <button
+                                    onClick={() => handleCreateLocal(activeTab)}
+                                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 transition-colors"
+                                >
+                                    Create New {activeTab.toUpperCase()} Snippet
+                                </button>
                             </div>
-                            <CodeEditor
-                                value={activeItem?.overrides?.content ?? activeSnippet.content}
-                                onChange={(val) => {
-                                    // If Ghost Snippet, update directly
-                                    if (activeSnippet.isLibraryItem === false) {
-                                        updateSnippet(activeSnippet.id, { content: val });
-                                    } else {
-                                        // If Library Snippet, use Override
-                                        updateThemeItem(themeId, activeItem!.id, {
-                                            overrides: { ...activeItem!.overrides, content: val }
-                                        });
-                                    }
-                                }}
-                                className="flex-1"
-                                mode={activeSnippet.type}
-                            />
-                        </>
-                    ) : (
-                        <div className="flex-1 flex items-center justify-center text-slate-600 flex-col gap-2">
-                            <Box size={40} />
-                            <p>Select a snippet to edit</p>
-                            <div className="text-xs text-slate-600">or add new from sidebar</div>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             </div>
         </div >
