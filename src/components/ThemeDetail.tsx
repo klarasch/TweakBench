@@ -27,6 +27,10 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     const [editingDomainIdx, setEditingDomainIdx] = useState<number | null>(null);
     const [editingDomainValue, setEditingDomainValue] = useState('');
 
+    // Resize State
+    const [sidebarWidth, setSidebarWidth] = useState(300);
+    const [isResizing, setIsResizing] = useState(false);
+
 
     // Context Menu State
     const [menuState, setMenuState] = useState<{ x: number; y: number; itemId: string | null }>({ x: 0, y: 0, itemId: null });
@@ -43,6 +47,32 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
             }
         }
     }, [theme, selectedItemId]);
+
+    // Resize Handler
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            if (!isResizing) return;
+            // Limit width between 200px and 600px
+            const newWidth = Math.max(200, Math.min(e.clientX, 600));
+            setSidebarWidth(newWidth);
+        };
+
+        const handleMouseUp = () => {
+            setIsResizing(false);
+            document.body.style.cursor = 'default';
+        };
+
+        if (isResizing) {
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+            document.body.style.cursor = 'col-resize';
+        }
+
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [isResizing]);
 
     // Handle Esc key to delete empty/new local snippets
     React.useEffect(() => {
@@ -276,7 +306,17 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
 
             <div className="flex-1 flex overflow-hidden relative">
                 {/* Sidebar */}
-                <div className="w-1/3 min-w-[150px] border-r border-slate-800 flex flex-col bg-slate-900 z-20">
+                <div
+                    className="flex flex-col bg-slate-900 z-20 shrink-0 relative"
+                    style={{ width: sidebarWidth }}
+                >
+                    {/* Resize Handle */}
+                    <div
+                        className="absolute top-0 bottom-0 -right-1 w-2 cursor-col-resize z-30 hover:bg-blue-500/50 transition-colors group"
+                        onMouseDown={() => setIsResizing(true)}
+                    >
+                        <div className="w-px h-full bg-slate-800 group-hover:bg-blue-500 mx-auto"></div>
+                    </div>
                     {/* Toolbar */}
                     <div className="flex p-3 gap-1 border-b border-slate-800">
                         {/* Snippets Buttons */}
