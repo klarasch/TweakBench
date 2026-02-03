@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useStore } from '../store.ts';
 import { CodeEditor } from './CodeEditor.tsx';
 import { SnippetLibrary } from './SnippetLibrary.tsx';
-import { ArrowLeft, Trash2, Box, Play, Pause, Plus } from 'lucide-react';
+import { ArrowLeft, Trash2, Box, Play, Pause, Plus, Power } from 'lucide-react';
 
 interface ThemeDetailProps {
     themeId: string;
@@ -85,7 +85,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                             return (
                                 <div
                                     key={item.id}
-                                    className={`p-2 border-l-2 cursor-pointer hover:bg-slate-800 group ${selectedItemId === item.id ? 'border-blue-500 bg-slate-800' : 'border-transparent'}`}
+                                    className={`p-2 border-l-2 cursor-pointer hover:bg-slate-800 group ${selectedItemId === item.id ? 'border-blue-500 bg-slate-800' : 'border-transparent'} ${!item.isEnabled ? 'opacity-50 grayscale-[0.5]' : ''}`}
                                     onClick={() => setSelectedItemId(item.id)}
                                 >
                                     <div className="flex justify-between items-center mb-1">
@@ -96,13 +96,14 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                     </div>
                                     <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button
-                                            className={`p-0.5 rounded ${item.isEnabled ? 'text-green-500' : 'text-slate-500'}`}
+                                            className={`p-0.5 rounded ${item.isEnabled ? 'text-green-500 hover:text-green-400' : 'text-slate-500 hover:text-slate-400'}`}
+                                            title={item.isEnabled ? 'Disable Snippet' : 'Enable Snippet'}
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 toggleThemeItem(theme.id, item.id);
                                             }}
                                         >
-                                            {item.isEnabled ? <Pause size={12} /> : <Play size={12} />}
+                                            <Power size={12} />
                                         </button>
                                         <button
                                             className="p-0.5 text-slate-500 hover:text-red-400"
@@ -173,7 +174,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                                 </button>
                                                 <button
                                                     onClick={() => {
-                                                        if (confirm('Push changes to Master Snippet? This will affect all themes using this snippet.')) {
+                                                        if (confirm('Publish changes to Master Snippet? This will affect all themes using this snippet.')) {
                                                             const newContent = activeItem.overrides?.content;
                                                             if (newContent) {
                                                                 updateSnippet(activeSnippet.id, { content: newContent });
@@ -185,7 +186,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                                     }}
                                                     className="text-blue-400 hover:text-blue-300 px-2 py-0.5 rounded border border-blue-900 bg-blue-900/20 hover:bg-blue-900/40 text-xs"
                                                 >
-                                                    Push to Master
+                                                    Publish Changes
                                                 </button>
                                             </>
                                         )}
