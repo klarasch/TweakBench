@@ -172,6 +172,25 @@ export const SnippetStackItem: React.FC<SnippetStackItemProps> = ({
                             ) : (
                                 item.overrides?.content !== undefined && (
                                     <>
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (confirm('Update library snippet with local changes?')) {
+                                                    if (item.overrides?.content) {
+                                                        updateSnippet(s.id, { content: item.overrides.content });
+                                                        updateThemeItem(themeId, item.id, { overrides: undefined });
+                                                    }
+                                                }
+                                            }}
+                                            className="h-5 text-[10px] px-1.5 border-purple-500/30 text-purple-300 hover:bg-purple-500/10 hover:border-purple-500/60 mr-1"
+                                            title="Update Library Snippet"
+                                            icon={<Upload size={10} />}
+                                        >
+                                            Push
+                                        </Button>
+
                                         {/* Removed redundant "Modified" badge as per user request */}
                                         <Button
                                             size="sm"
