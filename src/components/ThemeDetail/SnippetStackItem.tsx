@@ -18,6 +18,7 @@ interface SnippetStackItemProps {
     onSetEditing: (isEditing: boolean) => void;
     onSelect: () => void;
     isThemeActive: boolean;
+    editorRef?: React.Ref<any>;
 }
 
 export const SnippetStackItem: React.FC<SnippetStackItemProps> = ({
@@ -31,7 +32,8 @@ export const SnippetStackItem: React.FC<SnippetStackItemProps> = ({
     isEditing,
     onSetEditing,
     onSelect,
-    isThemeActive
+    isThemeActive,
+    editorRef
 }) => {
     const { snippets, updateSnippet, updateThemeItem, toggleThemeItem } = useStore();
     const s = snippets.find(sn => sn.id === item.snippetId);
@@ -110,7 +112,7 @@ export const SnippetStackItem: React.FC<SnippetStackItemProps> = ({
                             />
                         ) : (
                             <span
-                                className={`text-xs font-semibold truncate cursor-text ${isSelected ? 'text-white' : 'text-slate-400 group-hover:text-slate-300'}`}
+                                className={`text-xs font-semibold truncate cursor-text ${isSelected ? 'text-white' : 'text-slate-400 group-hover:text-slate-300'} ${!item.isEnabled ? 'line-through opacity-75' : ''}`}
                                 onDoubleClick={(e: React.MouseEvent) => {
                                     e.stopPropagation();
                                     onSetEditing(true);
@@ -255,6 +257,7 @@ export const SnippetStackItem: React.FC<SnippetStackItemProps> = ({
                 !isCollapsed && (
                     <div className="flex flex-col border-t border-slate-800">
                         <CodeEditor
+                            ref={editorRef}
                             value={item.overrides?.content ?? s.content}
                             onChange={(val) => {
                                 if (s.isLibraryItem === false) {

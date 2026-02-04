@@ -34,6 +34,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     const [editingSnippetId, setEditingSnippetId] = useState<string | null>(null); // Added editing state
     const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
     const sidebarItemRefs = useRef<Record<string, HTMLDivElement | null>>({});
+    const editorRefs = useRef<Record<string, any>>({});
 
     // Responsive & Popover State
     const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
@@ -379,7 +380,15 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                 activeTab={activeTab}
                                 theme={theme}
                                 selectedItemId={selectedItemId}
-                                onSelect={setSelectedItemId}
+                                onSelect={(id) => {
+                                    setSelectedItemId(id);
+                                    // Focus editor on sidebar click
+                                    requestAnimationFrame(() => {
+                                        if (editorRefs.current[id]) {
+                                            editorRefs.current[id]?.focus();
+                                        }
+                                    });
+                                }}
                                 onReorder={handleReorder}
                                 onContextMenu={handleContextMenu}
                                 itemRefs={sidebarItemRefs}
@@ -470,16 +479,37 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                     isCollapsed={collapsedItems.has(item.id)}
                                     onToggleCollapse={() => {
                                         const next = new Set(collapsedItems);
-                                        if (next.has(item.id)) next.delete(item.id);
+                                        // next is a COPY. collapsedItems has the current state.
+                                        // If collapsedItems.has(item.id), we are removing it -> EXPANDING.
+                                        const willExpand = collapsedItems.has(item.id);
+
+                                        if (collapsedItems.has(item.id)) next.delete(item.id);
                                         else next.add(item.id);
                                         setCollapsedItems(next);
+
+                                        if (willExpand) {
+                                            requestAnimationFrame(() => {
+                                                if (editorRefs.current[item.id]) {
+                                                    editorRefs.current[item.id]?.focus();
+                                                }
+                                            });
+                                        }
                                     }}
                                     isSelected={selectedItemId === item.id}
                                     itemRef={(el) => { itemRefs.current[item.id] = el; }}
                                     onKebabClick={(e) => handleKebabClick(e, item.id)}
                                     isEditing={editingSnippetId === item.id}
                                     onSetEditing={(isEditing) => setEditingSnippetId(isEditing ? item.id : null)}
-                                    onSelect={() => setSelectedItemId(item.id)}
+                                    onSelect={() => {
+                                        setSelectedItemId(item.id);
+                                        // Focus on click
+                                        requestAnimationFrame(() => {
+                                            if (editorRefs.current[item.id]) {
+                                                editorRefs.current[item.id]?.focus();
+                                            }
+                                        });
+                                    }}
+                                    editorRef={(el) => { editorRefs.current[item.id] = el; }}
                                 />
                             ))}
 
