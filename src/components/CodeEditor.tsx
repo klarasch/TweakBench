@@ -1,16 +1,8 @@
-import { useCallback, useImperativeHandle, forwardRef, useRef } from 'react';
-import CodeMirror, { type ReactCodeMirrorRef } from '@uiw/react-codemirror';
+import React, { useCallback } from 'react';
+import CodeMirror from '@uiw/react-codemirror';
 import { css } from '@codemirror/lang-css';
 import { html } from '@codemirror/lang-html';
-import { EditorView, keymap } from '@codemirror/view';
-import * as prettier from "prettier/standalone";
-import * as parserPostcss from "prettier/plugins/postcss";
-import * as parserHtml from "prettier/plugins/html";
-
-export interface CodeEditorRef {
-    focus: () => void;
-    format: () => Promise<void>;
-}
+import { EditorView } from '@codemirror/view';
 
 interface CodeEditorProps {
     value: string;
@@ -22,7 +14,7 @@ interface CodeEditorProps {
     onFocus?: () => void;
 }
 
-export const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({
+export const CodeEditor: React.FC<CodeEditorProps> = ({
     value,
     onChange,
     mode = 'css',
@@ -30,32 +22,7 @@ export const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({
     className,
     autoHeight = false,
     onFocus
-}, ref) => {
-    const editorRef = useRef<ReactCodeMirrorRef>(null);
-
-    const handleFormat = useCallback(async () => {
-        try {
-            const formatted = await prettier.format(value, {
-                parser: mode === 'css' ? 'css' : 'html',
-                plugins: [parserPostcss, parserHtml],
-                tabWidth: 4,
-                useTabs: false,
-            });
-            // remove trailing newline if added and not desired, or keep it.
-            // prettier usually adds a newline. CodeMirror might double it?
-            // Let's just use it.
-            onChange(formatted);
-        } catch (e) {
-            console.error("Formatting failed:", e);
-        }
-    }, [value, mode, onChange]);
-
-    useImperativeHandle(ref, () => ({
-        focus: () => {
-            editorRef.current?.view?.focus();
-        },
-        format: handleFormat
-    }));
+}) => {
     const extensions = [
         mode === 'css' ? css() : html(),
         EditorView.theme({
@@ -84,17 +51,7 @@ export const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({
                 backgroundColor: "#1e293b", /* slate-800 */
                 color: "#e2e8f0"
             }
-        }, { dark: true }),
-        keymap.of([
-            {
-                key: "Mod-Shift-f",
-                run: () => {
-                    handleFormat();
-                    return true;
-                },
-                preventDefault: true
-            }
-        ])
+        }, { dark: true })
     ];
 
     const handleChange = useCallback((val: string) => {
@@ -104,7 +61,6 @@ export const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({
     return (
         <div className={`${autoHeight ? '' : 'h-full'} overflow-hidden border border-slate-700 rounded ${className}`}>
             <CodeMirror
-                ref={editorRef}
                 value={value}
                 height={autoHeight ? "auto" : "100%"}
                 extensions={extensions}
@@ -121,5 +77,4 @@ export const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({
             />
         </div>
     );
-});
-CodeEditor.displayName = 'CodeEditor';
+};

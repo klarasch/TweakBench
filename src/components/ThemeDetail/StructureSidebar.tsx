@@ -57,7 +57,7 @@ export const StructureSidebar: React.FC<StructureSidebarProps> = ({
 
                                         <div className="flex-1 min-w-0 p-2 pl-2">
                                             <div className="flex justify-between items-center mb-0.5">
-                                                <span className={`text-sm font-medium truncate ${selectedItemId === item.id ? 'text-white' : 'text-slate-400'} ${!item.isEnabled ? 'line-through opacity-75' : ''}`}>
+                                                <span className={`text-sm font-medium truncate ${selectedItemId === item.id ? 'text-white' : 'text-slate-400'}`}>
                                                     {s.name}
                                                 </span>
                                                 <div className="flex items-center gap-1">
@@ -66,7 +66,7 @@ export const StructureSidebar: React.FC<StructureSidebarProps> = ({
                                                     )}
                                                     {s.isLibraryItem !== false && (
                                                         <div className="relative flex items-center justify-center">
-                                                            <span className="text-purple-400" title="Library Snippet">
+                                                            <span className="text-blue-400" title="Library Snippet">
                                                                 <BookOpen size={12} />
                                                             </span>
                                                             {item.overrides?.content !== undefined && (

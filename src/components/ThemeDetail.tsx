@@ -34,7 +34,6 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     const [editingSnippetId, setEditingSnippetId] = useState<string | null>(null); // Added editing state
     const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
     const sidebarItemRefs = useRef<Record<string, HTMLDivElement | null>>({});
-    const editorRefs = useRef<Record<string, any>>({});
 
     // Responsive & Popover State
     const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
@@ -380,15 +379,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                 activeTab={activeTab}
                                 theme={theme}
                                 selectedItemId={selectedItemId}
-                                onSelect={(id) => {
-                                    setSelectedItemId(id);
-                                    // Focus editor on sidebar click
-                                    requestAnimationFrame(() => {
-                                        if (editorRefs.current[id]) {
-                                            editorRefs.current[id]?.focus();
-                                        }
-                                    });
-                                }}
+                                onSelect={setSelectedItemId}
                                 onReorder={handleReorder}
                                 onContextMenu={handleContextMenu}
                                 itemRefs={sidebarItemRefs}
@@ -461,10 +452,8 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                     size="sm"
                                     onClick={() => handleCreateLocal(activeTab)}
                                     // Make HTML orange button use black text for better contrast against orange-600? Or go darker orange?
-                                    // User said "make everything slightly darker". 
-                                    // text-slate-900 on orange-500 might be best? Or bg-orange-700 with white text?
-                                    // User said "I don't believe the white against the orange is visible." -> Dark text on orange is readable.
-                                    className={activeTab === 'css' ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-orange-500 hover:bg-orange-400 text-slate-900 font-bold'}
+                                    // User requested darker orange with white label (AA contrast)
+                                    className={activeTab === 'css' ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-orange-700 hover:bg-orange-600 text-white font-bold'}
                                     icon={<Plus size={10} />}
                                 >
                                     Add {activeTab === 'css' ? 'CSS' : 'HTML'}
@@ -491,7 +480,6 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                     isEditing={editingSnippetId === item.id}
                                     onSetEditing={(isEditing) => setEditingSnippetId(isEditing ? item.id : null)}
                                     onSelect={() => setSelectedItemId(item.id)}
-                                    editorRef={(el) => { editorRefs.current[item.id] = el; }}
                                 />
                             ))}
 
