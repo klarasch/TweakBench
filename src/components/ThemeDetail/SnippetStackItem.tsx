@@ -43,16 +43,13 @@ export const SnippetStackItem: React.FC<SnippetStackItemProps> = ({
 
     if (!s) return null;
 
-    const handleUpdateName = (val: string) => {
-        if (val.trim()) updateSnippet(s.id, { name: val.trim() });
-        onSetEditing(false);
-    };
+
 
     return (
         <div
             ref={itemRef}
             className={`
-                group relative border transition-all rounded-lg mb-4 overflow-hidden shrink-0
+                group relative border transition-all rounded-lg mb-4 overflow-hidden shrink-0 scroll-mt-14
                 ${isSelected
                     ? 'bg-slate-900 border-blue-500/50 shadow-[0_0_15px_-3px_rgba(59,130,246,0.15)] ring-1 ring-blue-500/20'
                     : item.isEnabled
@@ -96,28 +93,30 @@ export const SnippetStackItem: React.FC<SnippetStackItemProps> = ({
                             <input
                                 autoFocus
                                 className="bg-slate-950 text-white text-sm font-medium border border-blue-500 rounded px-1.5 py-0.5 outline-none flex-1 min-w-0"
-                                defaultValue={s.name}
+                                value={s.name}
+                                onChange={(e) => updateSnippet(s.id, { name: e.target.value })}
+                                onFocus={(e) => e.target.select()}
                                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
                                 onKeyDown={(e: React.KeyboardEvent) => {
                                     if (e.key === 'Enter') {
                                         e.stopPropagation();
                                         e.preventDefault();
-                                        handleUpdateName((e.target as HTMLInputElement).value);
+                                        onSetEditing(false); // Done
                                     } else if (e.key === 'Escape') {
                                         e.stopPropagation();
                                         onSetEditing(false);
                                     }
                                 }}
-                                onBlur={(e) => handleUpdateName(e.target.value)}
+                                onBlur={() => onSetEditing(false)}
                             />
                         ) : (
                             <span
-                                className={`text-xs font-semibold truncate cursor-text ${isSelected ? 'text-white' : 'text-slate-400 group-hover:text-slate-300'} ${!item.isEnabled ? 'line-through opacity-75' : ''}`}
-                                onDoubleClick={(e: React.MouseEvent) => {
+                                className={`text-xs font-semibold truncate cursor-text hover:text-white border border-transparent hover:border-slate-700 px-1.5 py-0.5 rounded -ml-1.5 transition-colors ${isSelected ? 'text-white' : 'text-slate-400 group-hover:text-slate-300'} ${!item.isEnabled ? 'line-through opacity-75' : ''}`}
+                                onClick={(e: React.MouseEvent) => {
                                     e.stopPropagation();
                                     onSetEditing(true);
                                 }}
-                                title="Double-click to rename"
+                                title="Click to rename"
                             >
                                 {s.name}
                             </span>

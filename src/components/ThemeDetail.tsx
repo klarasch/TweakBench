@@ -373,7 +373,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     };
 
     return (
-        <div className="flex flex-col h-full bg-slate-900 relative">
+        <div className="flex-1 flex flex-col min-h-0 bg-slate-900 relative overflow-hidden">
             {/* ... (Header) ... */}
             <ThemeHeader
                 theme={theme}
@@ -428,191 +428,170 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
             </div>
 
             <div className="flex-1 flex overflow-hidden relative">
-                {/* ... (Sidebar) ... */}
-                <div className="flex-1 flex overflow-hidden relative">
-                    {/* Sidebar - Only show if viewportWidth > 720 */}
-                    {viewportWidth > 720 && (
+                {/* Sidebar - Only show if viewportWidth > 720 */}
+                {viewportWidth > 720 && (
+                    <div
+                        className="flex flex-col bg-slate-900 z-20 shrink-0 relative border-r border-slate-800"
+                        style={{ width: sidebarWidth }}
+                    >
+                        {/* Resize Handle */}
                         <div
-                            className="flex flex-col bg-slate-900 z-20 shrink-0 relative border-r border-slate-800"
-                            style={{ width: sidebarWidth }}
+                            className="absolute top-0 bottom-0 -right-1 w-2 cursor-col-resize z-30 hover:bg-blue-500/50 transition-colors group"
+                            onMouseDown={() => setIsResizing(true)}
                         >
-                            {/* Resize Handle */}
-                            <div
-                                className="absolute top-0 bottom-0 -right-1 w-2 cursor-col-resize z-30 hover:bg-blue-500/50 transition-colors group"
-                                onMouseDown={() => setIsResizing(true)}
-                            >
-                                <div className="w-px h-full bg-slate-800 group-hover:bg-blue-500 mx-auto"></div>
-                            </div>
+                            <div className="w-px h-full bg-slate-800 group-hover:bg-blue-500 mx-auto"></div>
+                        </div>
 
-                            {/* Content */}
-                            <StructureSidebar
-                                items={filteredItems}
-                                snippets={snippets}
-                                activeTab={activeTab}
-                                theme={theme}
-                                selectedItemId={selectedItemId}
-                                onSelect={(id) => {
-                                    setSelectedItemId(id);
-                                    // Focus editor on sidebar click
+                        {/* Content */}
+                        <StructureSidebar
+                            items={filteredItems}
+                            snippets={snippets}
+                            activeTab={activeTab}
+                            theme={theme}
+                            selectedItemId={selectedItemId}
+                            onSelect={(id) => {
+                                setSelectedItemId(id);
+                                // Focus editor on sidebar click
+                                requestAnimationFrame(() => {
+                                    if (editorRefs.current[id]) {
+                                        editorRefs.current[id]?.focus();
+                                    }
+                                });
+                            }}
+                            onReorder={handleReorder}
+                            onContextMenu={handleContextMenu}
+                            itemRefs={sidebarItemRefs}
+                        />
+                    </div>
+                )}
+
+                {/* Context Menu Render */}
+                {menuState.itemId && (
+                    <ContextMenu
+                        x={menuState.x}
+                        y={menuState.y}
+                        items={getMenuItems(menuState.itemId)}
+                        onClose={() => setMenuState({ ...menuState, itemId: null })}
+                    />
+                )}
+
+                {/* Main: Editor */}
+
+
+                {/* Main: Editor */}
+                <div className="flex-1 flex flex-col bg-slate-900 relative overflow-y-auto">
+
+
+                    {/* Sticky Subheader - Refreshed */}
+                    <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-800 p-2 flex items-center justify-between">
+                        <div className="flex gap-2">
+                            {(() => {
+                                const isAllCollapsed = filteredItems.length > 0 && filteredItems.every(i => collapsedItems.has(i.id));
+                                return (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => {
+                                            const next = new Set(collapsedItems);
+                                            if (isAllCollapsed) {
+                                                filteredItems.forEach(i => next.delete(i.id));
+                                            } else {
+                                                filteredItems.forEach(i => next.add(i.id));
+                                            }
+                                            setCollapsedItems(next);
+                                        }}
+                                        className="text-slate-500 hover:text-white"
+                                    >
+                                        {isAllCollapsed ? 'Expand All' : 'Collapse All'}
+                                    </Button>
+                                );
+                            })()}
+                        </div>
+
+                        <div className="flex gap-2">
+                            {activeTab === 'css' && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleImportVariables}
+                                    className="text-slate-400 hover:text-white border-slate-700 hover:border-slate-500"
+                                    icon={<Download size={14} />}
+                                    title="Import CSS Variables from Page"
+                                >
+                                    Import Vars
+                                </Button>
+                            )}
+
+                            <Button
+                                variant="filled"
+                                size="sm"
+                                onClick={() => handleCreateLocal(activeTab)}
+                                // Make HTML orange button use black text for better contrast against orange-600? Or go darker orange?
+                                // User requested darker orange with white label (AA contrast)
+                                className={activeTab === 'css' ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-orange-700 hover:bg-orange-600 text-white font-bold'}
+                                icon={<Plus size={10} />}
+                            >
+                                Add {activeTab === 'css' ? 'CSS' : 'HTML'}
+                            </Button>
+                        </div>
+                    </div>
+
+                    <div className="p-3">
+                        {filteredItems.map(item => (
+                            <SnippetStackItem
+                                key={item.id}
+                                item={item}
+                                themeId={themeId}
+                                isThemeActive={theme.isActive}
+                                isCollapsed={collapsedItems.has(item.id)}
+                                onToggleCollapse={() => {
+                                    const next = new Set(collapsedItems);
+                                    // next is a COPY. collapsedItems has the current state.
+                                    // If collapsedItems.has(item.id), we are removing it -> EXPANDING.
+                                    const willExpand = collapsedItems.has(item.id);
+
+                                    if (collapsedItems.has(item.id)) next.delete(item.id);
+                                    else next.add(item.id);
+                                    setCollapsedItems(next);
+
+                                    if (willExpand) {
+                                        requestAnimationFrame(() => {
+                                            if (editorRefs.current[item.id]) {
+                                                editorRefs.current[item.id]?.focus();
+                                            }
+                                        });
+                                    }
+                                }}
+                                isSelected={selectedItemId === item.id}
+                                itemRef={(el) => { itemRefs.current[item.id] = el; }}
+                                onKebabClick={(e) => handleKebabClick(e, item.id)}
+                                isEditing={editingSnippetId === item.id}
+                                onSetEditing={(isEditing) => setEditingSnippetId(isEditing ? item.id : null)}
+                                onSelect={() => {
+                                    setSelectedItemId(item.id);
+                                    // Focus on click
                                     requestAnimationFrame(() => {
-                                        if (editorRefs.current[id]) {
-                                            editorRefs.current[id]?.focus();
+                                        if (editorRefs.current[item.id]) {
+                                            editorRefs.current[item.id]?.focus();
                                         }
                                     });
                                 }}
-                                onReorder={handleReorder}
-                                onContextMenu={handleContextMenu}
-                                itemRefs={sidebarItemRefs}
+                                editorRef={(el) => { editorRefs.current[item.id] = el; }}
                             />
-                        </div>
-                    )}
+                        ))}
 
-                    {/* Context Menu Render */}
-                    {menuState.itemId && (
-                        <ContextMenu
-                            x={menuState.x}
-                            y={menuState.y}
-                            items={getMenuItems(menuState.itemId)}
-                            onClose={() => setMenuState({ ...menuState, itemId: null })}
-                        />
-                    )}
-
-                    {/* Main: Editor */}
-                    <div className="flex-1 flex flex-col bg-slate-900 relative overflow-y-auto">
-                        {/* Library Popover with Backdrop */}
-                        {showLibrary && (
-                            <>
-                                {/* Backdrop to close on click outside */}
-                                <div
-                                    className="absolute inset-0 z-20 bg-slate-900/50 backdrop-blur-[1px]"
-                                    onClick={() => setShowLibrary(false)}
-                                />
-                                {/* Popover content */}
-                                <div className="absolute top-0 bottom-0 left-0 w-[300px] z-30 bg-slate-900 border-r border-slate-800 shadow-xl flex flex-col">
-                                    <SnippetLibrary
-                                        onSelectSnippet={handleAddSnippet}
-                                        onClose={() => setShowLibrary(false)}
-                                    />
-                                </div>
-                            </>
+                        {filteredItems.length === 0 && (
+                            <div className="flex flex-col items-center justify-center py-20 text-slate-500">
+                                <Box size={48} className="mb-4 opacity-20" />
+                                <p>No {activeTab.toUpperCase()} snippets found.</p>
+                                <button
+                                    onClick={() => handleCreateLocal(activeTab)}
+                                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 transition-colors"
+                                >
+                                    Create New {activeTab.toUpperCase()} Snippet
+                                </button>
+                            </div>
                         )}
-
-                        {/* Main: Editor */}
-                        <div className="flex-1 flex flex-col bg-slate-900 relative overflow-y-auto">
-
-
-                            {/* Sticky Subheader - Refreshed */}
-                            <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-800 p-2 flex items-center justify-between">
-                                <div className="flex gap-2">
-                                    {(() => {
-                                        const isAllCollapsed = filteredItems.length > 0 && filteredItems.every(i => collapsedItems.has(i.id));
-                                        return (
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => {
-                                                    const next = new Set(collapsedItems);
-                                                    if (isAllCollapsed) {
-                                                        filteredItems.forEach(i => next.delete(i.id));
-                                                    } else {
-                                                        filteredItems.forEach(i => next.add(i.id));
-                                                    }
-                                                    setCollapsedItems(next);
-                                                }}
-                                                className="text-slate-500 hover:text-white"
-                                            >
-                                                {isAllCollapsed ? 'Expand All' : 'Collapse All'}
-                                            </Button>
-                                        );
-                                    })()}
-                                </div>
-
-                                <div className="flex gap-2">
-                                    {activeTab === 'css' && (
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={handleImportVariables}
-                                            className="text-slate-400 hover:text-white border-slate-700 hover:border-slate-500"
-                                            icon={<Download size={14} />}
-                                            title="Import CSS Variables from Page"
-                                        >
-                                            Import Vars
-                                        </Button>
-                                    )}
-
-                                    <Button
-                                        variant="filled"
-                                        size="sm"
-                                        onClick={() => handleCreateLocal(activeTab)}
-                                        // Make HTML orange button use black text for better contrast against orange-600? Or go darker orange?
-                                        // User requested darker orange with white label (AA contrast)
-                                        className={activeTab === 'css' ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-orange-700 hover:bg-orange-600 text-white font-bold'}
-                                        icon={<Plus size={10} />}
-                                    >
-                                        Add {activeTab === 'css' ? 'CSS' : 'HTML'}
-                                    </Button>
-                                </div>
-                            </div>
-
-                            <div className="p-3">
-                                {filteredItems.map(item => (
-                                    <SnippetStackItem
-                                        key={item.id}
-                                        item={item}
-                                        themeId={themeId}
-                                        isThemeActive={theme.isActive}
-                                        isCollapsed={collapsedItems.has(item.id)}
-                                        onToggleCollapse={() => {
-                                            const next = new Set(collapsedItems);
-                                            // next is a COPY. collapsedItems has the current state.
-                                            // If collapsedItems.has(item.id), we are removing it -> EXPANDING.
-                                            const willExpand = collapsedItems.has(item.id);
-
-                                            if (collapsedItems.has(item.id)) next.delete(item.id);
-                                            else next.add(item.id);
-                                            setCollapsedItems(next);
-
-                                            if (willExpand) {
-                                                requestAnimationFrame(() => {
-                                                    if (editorRefs.current[item.id]) {
-                                                        editorRefs.current[item.id]?.focus();
-                                                    }
-                                                });
-                                            }
-                                        }}
-                                        isSelected={selectedItemId === item.id}
-                                        itemRef={(el) => { itemRefs.current[item.id] = el; }}
-                                        onKebabClick={(e) => handleKebabClick(e, item.id)}
-                                        isEditing={editingSnippetId === item.id}
-                                        onSetEditing={(isEditing) => setEditingSnippetId(isEditing ? item.id : null)}
-                                        onSelect={() => {
-                                            setSelectedItemId(item.id);
-                                            // Focus on click
-                                            requestAnimationFrame(() => {
-                                                if (editorRefs.current[item.id]) {
-                                                    editorRefs.current[item.id]?.focus();
-                                                }
-                                            });
-                                        }}
-                                        editorRef={(el) => { editorRefs.current[item.id] = el; }}
-                                    />
-                                ))}
-
-                                {filteredItems.length === 0 && (
-                                    <div className="flex flex-col items-center justify-center py-20 text-slate-500">
-                                        <Box size={48} className="mb-4 opacity-20" />
-                                        <p>No {activeTab.toUpperCase()} snippets found.</p>
-                                        <button
-                                            onClick={() => handleCreateLocal(activeTab)}
-                                            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 transition-colors"
-                                        >
-                                            Create New {activeTab.toUpperCase()} Snippet
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
                     </div>
                 </div>
                 {/* Import Modal */}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useStore } from '../store.ts';
 import { Plus, Search, Code, FileCode, Trash2, MoreVertical, X } from 'lucide-react';
-import type { SnippetType } from '../types.ts';
+import type { SnippetType, Snippet } from '../types.ts';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
 
 interface SnippetLibraryProps {
@@ -12,14 +12,38 @@ interface SnippetLibraryProps {
 }
 
 export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet, onSelect, filterType, onClose }) => {
-    const { snippets, addSnippet, themes, deleteSnippet } = useStore();
+    const { snippets, addSnippet, themes, deleteSnippet, updateSnippet } = useStore();
     const [filter, setFilter] = useState('');
     const [isCreating, setIsCreating] = useState(false);
     const [newItemName, setNewItemName] = useState('');
     const [newItemType, setNewItemType] = useState<SnippetType>('css');
 
+    // Renaming State
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editName, setEditName] = useState('');
+
     // Context Menu State
     const [menuState, setMenuState] = useState<{ x: number; y: number; snippetId: string | null }>({ x: 0, y: 0, snippetId: null });
+
+    const handleStartRename = (e: React.MouseEvent, snippet: Snippet) => {
+        e.stopPropagation();
+        setEditingId(snippet.id);
+        setEditName(snippet.name);
+    };
+
+    const handleRenameSubmit = () => {
+        if (!editingId) return;
+        if (editName.trim()) {
+            updateSnippet(editingId, { name: editName });
+        }
+        setEditingId(null);
+        setEditName('');
+    };
+
+    const handleRenameCancel = () => {
+        setEditingId(null);
+        setEditName('');
+    };
 
     const handleCreateLibrary = () => {
         if (!newItemName.trim()) return;
@@ -68,6 +92,14 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
                     else if (onSelectSnippet) onSelectSnippet(snippetId);
                 }
             },
+            {
+                label: 'Rename',
+                icon: <Code size={14} />,
+                onClick: () => {
+                    setEditingId(snippetId);
+                    setEditName(snippet.name);
+                }
+            },
             { separator: true },
             {
                 label: 'Delete Snippet',
@@ -94,14 +126,19 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
     // Cancel creation on Esc
     React.useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape' && isCreating) {
-                setIsCreating(false);
-                setNewItemName('');
+            if (e.key === 'Escape') {
+                if (isCreating) {
+                    setIsCreating(false);
+                    setNewItemName('');
+                }
+                if (editingId) {
+                    handleRenameCancel();
+                }
             }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isCreating]);
+    }, [isCreating, editingId]);
 
     return (
         <div className="flex flex-col h-full bg-slate-900">
@@ -198,11 +235,14 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
             <div className="flex-1 overflow-y-auto p-2 pt-0">
                 {filteredSnippets.map(snippet => {
                     const usageCount = themes.reduce((acc, t) => acc + t.items.filter(i => i.snippetId === snippet.id).length, 0);
+                    const isEditing = editingId === snippet.id;
+
                     return (
                         <div
                             key={snippet.id}
                             className="p-2 mb-1 rounded hover:bg-slate-800 cursor-pointer group flex items-center justify-between relative"
                             onClick={() => {
+                                if (isEditing) return;
                                 if (onSelect) onSelect(snippet);
                                 else if (onSelectSnippet) onSelectSnippet(snippet.id);
                             }}
@@ -210,49 +250,71 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
                         >
                             <div className="flex items-center gap-2 overflow-hidden flex-1">
                                 {snippet.type === 'css' ? <Code size={14} className="text-blue-400 flex-none" /> : <FileCode size={14} className="text-orange-400 flex-none" />}
-                                <div className="flex flex-col overflow-hidden">
-                                    <span className="text-slate-300 text-sm truncate">{snippet.name}</span>
-                                    {usageCount > 0 && <span className="text-[10px] text-slate-500">Used in {usageCount} themes</span>}
+                                <div className="flex flex-col overflow-hidden w-full">
+                                    {isEditing ? (
+                                        <input
+                                            value={editName}
+                                            onChange={e => setEditName(e.target.value)}
+                                            onBlur={handleRenameSubmit}
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter') handleRenameSubmit();
+                                                if (e.key === 'Escape') handleRenameCancel();
+                                            }}
+                                            autoFocus
+                                            onFocus={(e) => e.target.select()}
+                                            onClick={e => e.stopPropagation()}
+                                            className="bg-slate-950 text-white text-sm rounded outline-none w-full border border-blue-500 px-1"
+                                        />
+                                    ) : (
+                                        <span
+                                            className="text-slate-300 text-sm truncate hover:text-white cursor-text"
+                                            onClick={(e) => handleStartRename(e, snippet)}
+                                            title="Click to rename"
+                                        >{snippet.name}</span>
+                                    )}
+                                    {usageCount > 0 && !isEditing && <span className="text-[10px] text-slate-500">Used in {usageCount} themes</span>}
                                 </div>
                             </div>
-                            <div className="flex gap-1 items-center">
-                                {/* Shortcuts */}
-                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {!isEditing && (
+                                <div className="flex gap-1 items-center">
+                                    {/* Shortcuts */}
+                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button
+                                            className="p-1 hover:bg-red-900/50 rounded text-slate-600 hover:text-red-400"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (usageCount > 0) {
+                                                    if (!confirm(`Warning: This snippet is used in ${usageCount} themes. Deleting it will break those themes. Continue?`)) return;
+                                                } else {
+                                                    if (!confirm('Delete this snippet from library?')) return;
+                                                }
+                                                deleteSnippet(snippet.id);
+                                            }}
+                                            title="Delete"
+                                        >
+                                            <Trash2 size={12} />
+                                        </button>
+                                        <button
+                                            className="p-1 hover:bg-slate-700 rounded text-slate-500 hover:text-white"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (onSelect) onSelect(snippet);
+                                                else if (onSelectSnippet) onSelectSnippet(snippet.id);
+                                            }}
+                                            title="Add to Theme"
+                                        >
+                                            <Plus size={14} />
+                                        </button>
+                                    </div>
+                                    {/* Kebab */}
                                     <button
-                                        className="p-1 hover:bg-red-900/50 rounded text-slate-600 hover:text-red-400"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (usageCount > 0) {
-                                                if (!confirm(`Warning: This snippet is used in ${usageCount} themes. Deleting it will break those themes. Continue?`)) return;
-                                            } else {
-                                                if (!confirm('Delete this snippet from library?')) return;
-                                            }
-                                            deleteSnippet(snippet.id);
-                                        }}
-                                        title="Delete"
+                                        onClick={(e) => handleKebabClick(e, snippet.id)}
+                                        className="p-1 rounded text-slate-500 hover:text-white hover:bg-slate-700 opacity-50 group-hover:opacity-100"
                                     >
-                                        <Trash2 size={12} />
-                                    </button>
-                                    <button
-                                        className="p-1 hover:bg-slate-700 rounded text-slate-500 hover:text-white"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (onSelect) onSelect(snippet);
-                                            else if (onSelectSnippet) onSelectSnippet(snippet.id);
-                                        }}
-                                        title="Add to Theme"
-                                    >
-                                        <Plus size={14} />
+                                        <MoreVertical size={14} />
                                     </button>
                                 </div>
-                                {/* Kebab */}
-                                <button
-                                    onClick={(e) => handleKebabClick(e, snippet.id)}
-                                    className="p-1 rounded text-slate-500 hover:text-white hover:bg-slate-700 opacity-50 group-hover:opacity-100"
-                                >
-                                    <MoreVertical size={14} />
-                                </button>
-                            </div>
+                            )}
                         </div>
                     );
                 })}
