@@ -7,7 +7,7 @@ import { ThemeHeader } from './ThemeDetail/ThemeHeader.tsx';
 import { ImportVariablesModal } from './ThemeDetail/ImportVariablesModal.tsx';
 import { Button } from './ui/Button';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
-import { Trash2, Plus, Box, Play, Pause, Download, X, Edit } from 'lucide-react';
+import { Trash2, Plus, Box, Play, Pause, Download, Edit } from 'lucide-react';
 import type { SnippetType } from '../types.ts';
 import { exportThemeToJS, exportThemeToCSS } from '../utils/impexp.ts';
 
@@ -392,22 +392,19 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
             />
             {/* ... (Library Drawer) ... */}
             {showLibrary && (
-                <div
-                    className={`absolute left-0 right-0 h-[50vh] bg-slate-900/95 backdrop-blur-xl border-b border-slate-700 shadow-2xl z-40 flex flex-col transition-all animate-in slide-in-from-top-4 duration-200`}
-                    style={{ top: libraryFilter ? '98px' : '61px' }}
-                >
-                    <div className="flex justify-between items-center p-2 border-b border-slate-800 bg-slate-900">
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider pl-2">
-                            {libraryFilter ? `Select ${libraryFilter.toUpperCase()} Snippet` : 'Snippet Library'}
-                        </span>
-                        <button onClick={() => setShowLibrary(false)} className="p-1 hover:bg-slate-800 rounded"><X size={14} /></button>
-                    </div>
-                    <div className="flex-1 overflow-hidden">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div
+                        className="w-full max-w-3xl h-[80vh] bg-slate-900 border border-slate-800 rounded-xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <SnippetLibrary
                             onSelectSnippet={handleAddSnippet}
                             filterType={libraryFilter}
+                            onClose={() => setShowLibrary(false)}
                         />
                     </div>
+                    {/* Click outside to close */}
+                    <div className="absolute inset-0 -z-10" onClick={() => setShowLibrary(false)} />
                 </div>
             )}
 
