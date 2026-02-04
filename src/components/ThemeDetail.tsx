@@ -583,6 +583,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                     <div className="flex-1 p-3">
                         {filteredItems.length > 0 ? (
                             <Virtuoso
+                                style={{ height: '100%' }}
                                 ref={virtuosoRef}
                                 totalCount={filteredItems.length}
                                 itemContent={(index) => {

@@ -136,7 +136,7 @@ export const CodeEditor = React.forwardRef<CodeEditorRef, CodeEditorProps>((prop
         };
     }, [mode, props.snippets]);
 
-    const extensions = [
+    const extensions = React.useMemo(() => [
         mode === 'css' ? css() : html(),
         EditorView.theme({
             "&": {
@@ -166,7 +166,7 @@ export const CodeEditor = React.forwardRef<CodeEditorRef, CodeEditorProps>((prop
             }
         }, { dark: true }),
         autocompletion({ override: [cssVariableCompletions] }) // Add our custom completion
-    ];
+    ], [mode, autoHeight, cssVariableCompletions]);
 
     const handleChange = useCallback((val: string) => {
         onChange(val);
