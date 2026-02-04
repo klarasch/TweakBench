@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useRef, useImperativeHandle } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { css } from '@codemirror/lang-css';
 import { html } from '@codemirror/lang-html';
@@ -54,12 +54,52 @@ export const CodeEditor = React.forwardRef<CodeEditorRef, CodeEditorProps>(({
         }
     }, [value, mode, onChange]);
 
-    React.useImperativeHandle(ref, () => ({
+    useImperativeHandle(ref, () => ({
         focus: () => {
             editorRef.current?.view?.focus();
         },
         format: handleFormat
     }));
+
+    // Native brute-force listener to intercept before browser
+    const containerRef = useRef<HTMLDivElement>(null);
+    const handleFormatRef = useRef(handleFormat);
+
+    // Update ref when handleFormat changes
+    useEffect(() => {
+        handleFormatRef.current = handleFormat;
+    }, [handleFormat]);
+
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+
+        const onKeyDown = (e: KeyboardEvent) => {
+            // Priority 1: Cmd+Shift+F / Ctrl+Shift+F (Explicitly Requested)
+            const isCmdShiftF = (e.metaKey || e.ctrlKey) && e.shiftKey && (e.code === 'KeyF' || e.key.toLowerCase() === 'f');
+
+            // Priority 2: Opt+Shift+F (Mac) / Alt+Shift+F (Win) - Standard VS Code format & Backup
+            const isOptShiftF = e.altKey && e.shiftKey && (e.code === 'KeyF' || e.key.toLowerCase() === 'f');
+
+            // Priority 3: Cmd+S / Ctrl+S - Format on Save (Common User Habit)
+            const isSaveShortcut = (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's';
+
+            if (isCmdShiftF || isOptShiftF || isSaveShortcut) {
+                console.log(`Formatting triggered via native capture! (Shortcut: ${isCmdShiftF ? 'Cmd+Shift+F' : isOptShiftF ? 'Opt+Shift+F' : 'Cmd+S'})`);
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation(); // REALLY stop it
+                handleFormatRef.current();
+            }
+        };
+
+        // Capture phase is crucial to run before browser defaults
+        container.addEventListener('keydown', onKeyDown, { capture: true });
+
+        return () => {
+            container.removeEventListener('keydown', onKeyDown, { capture: true });
+        };
+    }, []);
 
     const extensions = [
         mode === 'css' ? css() : html(),
@@ -90,16 +130,6 @@ export const CodeEditor = React.forwardRef<CodeEditorRef, CodeEditorProps>(({
                 color: "#e2e8f0"
             }
         }, { dark: true }),
-        EditorView.domEventHandlers({
-            keydown: (event) => {
-                if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key === 'f') {
-                    event.preventDefault();
-                    handleFormat();
-                    return true;
-                }
-                return false;
-            }
-        })
     ];
 
     const handleChange = useCallback((val: string) => {
@@ -107,7 +137,7 @@ export const CodeEditor = React.forwardRef<CodeEditorRef, CodeEditorProps>(({
     }, [onChange]);
 
     return (
-        <div className={`${autoHeight ? '' : 'h-full'} overflow-hidden border border-slate-700 rounded ${className}`}>
+        <div ref={containerRef} className={`${autoHeight ? '' : 'h-full'} overflow-hidden border border-slate-700 rounded ${className}`}>
             <CodeMirror
                 ref={editorRef}
                 value={value}
