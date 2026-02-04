@@ -10,18 +10,18 @@ interface SnippetStackItemProps {
     item: ThemeItem;
     themeId: string;
     isCollapsed: boolean;
-    onToggleCollapse: () => void;
+    onToggleCollapse: (id: string) => void;
     isSelected: boolean;
     itemRef: (el: HTMLDivElement | null) => void;
     onKebabClick: (e: React.MouseEvent, itemId: string) => void;
     isEditing: boolean;
-    onSetEditing: (isEditing: boolean) => void;
-    onSelect: () => void;
+    onSetEditing: (id: string, isEditing: boolean) => void;
+    onSelect: (id: string) => void;
     isThemeActive: boolean;
     editorRef?: React.Ref<any>;
 }
 
-export const SnippetStackItem: React.FC<SnippetStackItemProps> = ({
+export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
     item,
     themeId,
     isCollapsed,
@@ -59,7 +59,7 @@ export const SnippetStackItem: React.FC<SnippetStackItemProps> = ({
             `}
             onClick={() => {
                 // Ensure clicking anywhere selects the item (unless handled by child)
-                onSelect();
+                onSelect(item.id);
             }}
         >
             {/* Snippet Header */}
@@ -70,8 +70,8 @@ export const SnippetStackItem: React.FC<SnippetStackItemProps> = ({
                 `}
                 onClick={(e) => {
                     e.stopPropagation();
-                    onSelect();
-                    onToggleCollapse();
+                    onSelect(item.id);
+                    onToggleCollapse(item.id);
                 }}
             >
                 <button className="text-slate-500 hover:text-white transition-colors">
@@ -103,20 +103,20 @@ export const SnippetStackItem: React.FC<SnippetStackItemProps> = ({
                                     if (e.key === 'Enter') {
                                         e.stopPropagation();
                                         e.preventDefault();
-                                        onSetEditing(false); // Done
+                                        onSetEditing(item.id, false); // Done
                                     } else if (e.key === 'Escape') {
                                         e.stopPropagation();
-                                        onSetEditing(false);
+                                        onSetEditing(item.id, false);
                                     }
                                 }}
-                                onBlur={() => onSetEditing(false)}
+                                onBlur={() => onSetEditing(item.id, false)}
                             />
                         ) : (
                             <span
                                 className={`text-xs font-semibold truncate cursor-text hover:text-white border border-transparent hover:border-slate-700 px-1.5 py-0.5 rounded -ml-1.5 transition-colors min-w-0 ${isSelected ? 'text-white' : 'text-slate-400 group-hover:text-slate-300'} ${!item.isEnabled ? 'line-through opacity-75' : ''}`}
                                 onClick={(e: React.MouseEvent) => {
                                     e.stopPropagation();
-                                    onSetEditing(true);
+                                    onSetEditing(item.id, true);
                                 }}
                                 title="Click to rename"
                             >
@@ -312,7 +312,7 @@ export const SnippetStackItem: React.FC<SnippetStackItemProps> = ({
                             mode={s.type}
                             autoHeight={true}
                             onFocus={() => {
-                                onSelect();
+                                onSelect(item.id);
                             }}
                             snippets={snippets}
                         />
@@ -321,4 +321,4 @@ export const SnippetStackItem: React.FC<SnippetStackItemProps> = ({
             }
         </div>
     );
-};
+});

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useStore } from '../store.ts';
 import { SnippetLibrary } from './SnippetLibrary.tsx';
 import { SnippetStackItem } from './ThemeDetail/SnippetStackItem.tsx';
@@ -10,6 +10,7 @@ import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
 import { Trash2, Plus, Box, Play, Pause, Download, Edit } from 'lucide-react';
 import type { SnippetType } from '../types.ts';
 import { exportThemeToJS, exportThemeToCSS } from '../utils/impexp.ts';
+import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
 
 interface ThemeDetailProps {
     themeId: string;
@@ -33,7 +34,9 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
 
     const [collapsedItems, setCollapsedItems] = useState<Set<string>>(new Set());
     const [editingSnippetId, setEditingSnippetId] = useState<string | null>(null); // Added editing state
-    const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
+    // itemRefs not needed for main list with Virtuoso, but keeping for sidebar potentially? 
+    // Actually sidebar uses it. Main list will use Virtuoso handle.
+    const virtuosoRef = useRef<VirtuosoHandle>(null);
     const sidebarItemRefs = useRef<Record<string, HTMLDivElement | null>>({});
     const editorRefs = useRef<Record<string, any>>({});
 
@@ -77,12 +80,20 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
         }
     }, [theme, selectedItemId, activeTab]);
 
+    const filteredItems = useMemo(() => theme ? theme.items.filter(item => {
+        const s = snippets.find(sn => sn.id === item.snippetId);
+        return s?.type === activeTab;
+    }) : [], [theme, snippets, activeTab]);
+
     // Scroll into view when selectedItemId changes
     useEffect(() => {
-        if (selectedItemId && itemRefs.current[selectedItemId]) {
-            itemRefs.current[selectedItemId]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (selectedItemId && virtuosoRef.current) {
+            const index = filteredItems.findIndex(i => i.id === selectedItemId);
+            if (index !== -1) {
+                virtuosoRef.current.scrollToIndex({ index, align: 'start', behavior: 'smooth' });
+            }
         }
-    }, [selectedItemId]);
+    }, [selectedItemId, filteredItems]); // added filteredItems dependency to ensure index is correct after filter change
 
     // Resize Handler
     useEffect(() => {
@@ -138,12 +149,16 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     if (!theme) return <div>Theme not found</div>;
 
     const scrollToItem = (itemId: string) => {
-        // Need to wait for render
+        // Using virtuosoRef in useEffect mostly, but for manual calls:
+        const index = filteredItems.findIndex(i => i.id === itemId);
+        if (index !== -1) {
+            // Defer to ensure render
+            setTimeout(() => {
+                virtuosoRef.current?.scrollToIndex({ index, align: 'center', behavior: 'smooth' });
+            }, 50);
+        }
+
         setTimeout(() => {
-            const el = itemRefs.current[itemId];
-            if (el) {
-                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
             const sideEl = sidebarItemRefs.current[itemId];
             if (sideEl) {
                 sideEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -165,11 +180,6 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
         setSelectedItemId(itemId);
         scrollToItem(itemId);
     };
-
-    const filteredItems = theme ? theme.items.filter(item => {
-        const s = snippets.find(sn => sn.id === item.snippetId);
-        return s?.type === activeTab;
-    }) : [];
 
     const handleReorder = (newFilteredItems: typeof theme.items) => {
         if (!theme) return;
@@ -199,17 +209,17 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
         scrollToItem(itemId);
     };
 
-    const handleContextMenu = (e: React.MouseEvent, itemId: string) => {
+    const handleContextMenu = useCallback((e: React.MouseEvent, itemId: string) => {
         e.preventDefault();
         e.stopPropagation();
         setMenuState({ x: e.pageX, y: e.pageY, itemId });
-    };
+    }, []);
 
-    const handleKebabClick = (e: React.MouseEvent, itemId: string) => {
+    const handleKebabClick = useCallback((e: React.MouseEvent, itemId: string) => {
         e.stopPropagation();
         const rect = e.currentTarget.getBoundingClientRect();
         setMenuState({ x: rect.left, y: rect.bottom, itemId });
-    };
+    }, []);
 
     const handleExport = (type: 'js' | 'css') => {
         if (!theme) return;
@@ -372,6 +382,43 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
         alert(`Imported ${count} variable groups.`);
     };
 
+    // Stable Handlers for SnippetStackItem
+    const handleToggleCollapse = useCallback((itemId: string) => {
+        setCollapsedItems(prev => {
+            const next = new Set(prev);
+            const willExpand = prev.has(itemId);
+            if (willExpand) next.delete(itemId);
+            else next.add(itemId);
+
+            if (willExpand) {
+                requestAnimationFrame(() => {
+                    if (editorRefs.current[itemId]) {
+                        editorRefs.current[itemId]?.focus();
+                    }
+                });
+            }
+            return next;
+        });
+    }, []);
+
+    const handleSelect = useCallback((itemId: string) => {
+        setSelectedItemId(itemId);
+        requestAnimationFrame(() => {
+            if (editorRefs.current[itemId]) {
+                editorRefs.current[itemId]?.focus();
+            }
+        });
+    }, []);
+
+    const handleSetEditing = useCallback((itemId: string, isEditing: boolean) => {
+        setEditingSnippetId(isEditing ? itemId : null);
+    }, []);
+
+    const handleEditorRef = useCallback((itemId: string, el: any) => {
+        editorRefs.current[itemId] = el;
+    }, []);
+
+
     return (
         <div className="flex-1 flex flex-col min-h-0 bg-slate-900 relative overflow-hidden">
             {/* ... (Header) ... */}
@@ -476,10 +523,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                 )}
 
                 {/* Main: Editor */}
-
-
-                {/* Main: Editor */}
-                <div className="flex-1 flex flex-col bg-slate-900 relative overflow-y-auto">
+                <div className="flex-1 flex flex-col bg-slate-900 relative overflow-hidden">
 
 
                     {/* Sticky Subheader - Refreshed */}
@@ -536,51 +580,33 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                         </div>
                     </div>
 
-                    <div className="p-3">
-                        {filteredItems.map(item => (
-                            <SnippetStackItem
-                                key={item.id}
-                                item={item}
-                                themeId={themeId}
-                                isThemeActive={theme.isActive}
-                                isCollapsed={collapsedItems.has(item.id)}
-                                onToggleCollapse={() => {
-                                    const next = new Set(collapsedItems);
-                                    // next is a COPY. collapsedItems has the current state.
-                                    // If collapsedItems.has(item.id), we are removing it -> EXPANDING.
-                                    const willExpand = collapsedItems.has(item.id);
-
-                                    if (collapsedItems.has(item.id)) next.delete(item.id);
-                                    else next.add(item.id);
-                                    setCollapsedItems(next);
-
-                                    if (willExpand) {
-                                        requestAnimationFrame(() => {
-                                            if (editorRefs.current[item.id]) {
-                                                editorRefs.current[item.id]?.focus();
-                                            }
-                                        });
-                                    }
+                    <div className="flex-1 p-3">
+                        {filteredItems.length > 0 ? (
+                            <Virtuoso
+                                ref={virtuosoRef}
+                                totalCount={filteredItems.length}
+                                itemContent={(index) => {
+                                    const item = filteredItems[index];
+                                    return (
+                                        <SnippetStackItem
+                                            key={item.id}
+                                            item={item}
+                                            themeId={themeId}
+                                            isThemeActive={theme.isActive}
+                                            isCollapsed={collapsedItems.has(item.id)}
+                                            onToggleCollapse={handleToggleCollapse}
+                                            isSelected={selectedItemId === item.id}
+                                            itemRef={() => { }} // Not strictly needed for virtualized list unless we want to track DOM nodes manually
+                                            onKebabClick={handleKebabClick}
+                                            isEditing={editingSnippetId === item.id}
+                                            onSetEditing={handleSetEditing}
+                                            onSelect={handleSelect}
+                                            editorRef={(el) => handleEditorRef(item.id, el)}
+                                        />
+                                    );
                                 }}
-                                isSelected={selectedItemId === item.id}
-                                itemRef={(el) => { itemRefs.current[item.id] = el; }}
-                                onKebabClick={(e) => handleKebabClick(e, item.id)}
-                                isEditing={editingSnippetId === item.id}
-                                onSetEditing={(isEditing) => setEditingSnippetId(isEditing ? item.id : null)}
-                                onSelect={() => {
-                                    setSelectedItemId(item.id);
-                                    // Focus on click
-                                    requestAnimationFrame(() => {
-                                        if (editorRefs.current[item.id]) {
-                                            editorRefs.current[item.id]?.focus();
-                                        }
-                                    });
-                                }}
-                                editorRef={(el) => { editorRefs.current[item.id] = el; }}
                             />
-                        ))}
-
-                        {filteredItems.length === 0 && (
+                        ) : (
                             <div className="flex flex-col items-center justify-center py-20 text-slate-500">
                                 <Box size={48} className="mb-4 opacity-20" />
                                 <p>No {activeTab.toUpperCase()} snippets found.</p>
