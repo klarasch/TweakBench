@@ -81,18 +81,20 @@ export const SnippetStackItem: React.FC<SnippetStackItemProps> = ({
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                         {/* Icon based on Type (Always show type icon here) */}
-                        <div className="relative flex-none">
-                            {(s.type as string) === 'js' ? <Terminal size={14} className="text-yellow-500" /> : <FileCode size={14} className="text-blue-400" />}
+                        {!isEditing && (
+                            <div className="relative flex-none">
+                                {(s.type as string) === 'js' ? <Terminal size={14} className="text-yellow-500" /> : <FileCode size={14} className="text-blue-400" />}
 
-                            {item.overrides?.content && (
-                                <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-500 rounded-full border border-slate-900" title="Has Local Override"></div>
-                            )}
-                        </div>
+                                {item.overrides?.content && (
+                                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-500 rounded-full border border-slate-900" title="Has Local Override"></div>
+                                )}
+                            </div>
+                        )}
 
                         {isEditing ? (
                             <input
                                 autoFocus
-                                className="bg-slate-950 text-white text-sm font-medium border border-blue-500 rounded px-1.5 py-0.5 outline-none flex-1 min-w-0"
+                                className="bg-slate-950 text-white text-sm font-medium border border-blue-500 rounded px-1.5 py-0.5 outline-none flex-1 min-w-0 w-full"
                                 value={s.name}
                                 onChange={(e) => updateSnippet(s.id, { name: e.target.value })}
                                 onFocus={(e) => e.target.select()}
@@ -111,7 +113,7 @@ export const SnippetStackItem: React.FC<SnippetStackItemProps> = ({
                             />
                         ) : (
                             <span
-                                className={`text-xs font-semibold truncate cursor-text hover:text-white border border-transparent hover:border-slate-700 px-1.5 py-0.5 rounded -ml-1.5 transition-colors ${isSelected ? 'text-white' : 'text-slate-400 group-hover:text-slate-300'} ${!item.isEnabled ? 'line-through opacity-75' : ''}`}
+                                className={`text-xs font-semibold truncate cursor-text hover:text-white border border-transparent hover:border-slate-700 px-1.5 py-0.5 rounded -ml-1.5 transition-colors min-w-0 ${isSelected ? 'text-white' : 'text-slate-400 group-hover:text-slate-300'} ${!item.isEnabled ? 'line-through opacity-75' : ''}`}
                                 onClick={(e: React.MouseEvent) => {
                                     e.stopPropagation();
                                     onSetEditing(true);
@@ -122,20 +124,23 @@ export const SnippetStackItem: React.FC<SnippetStackItemProps> = ({
                             </span>
                         )}
 
-                        {/* Appended Icons/Badges */}
+                        {/* Appended Icons/Badges (Hide when editing) */}
+                        {!isEditing && (
+                            <>
+                                {/* Library Icon */}
+                                {s.isLibraryItem !== false && (
+                                    <div className="flex items-center text-purple-400 flex-none" title="Library Snippet">
+                                        <BookOpen size={12} />
+                                    </div>
+                                )}
 
-                        {/* Library Icon */}
-                        {s.isLibraryItem && (
-                            <div className="flex items-center text-purple-400" title="Library Snippet">
-                                <BookOpen size={12} />
-                            </div>
-                        )}
-
-                        {/* Override Badge */}
-                        {item.overrides?.content !== undefined && (
-                            <span className="text-[9px] font-bold text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded uppercase tracking-wider">
-                                Override
-                            </span>
+                                {/* Override Badge */}
+                                {item.overrides?.content !== undefined && (
+                                    <span className="text-[9px] font-bold text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded uppercase tracking-wider flex-none">
+                                        Override
+                                    </span>
+                                )}
+                            </>
                         )}
                     </div>
                 </div>

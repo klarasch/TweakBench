@@ -249,8 +249,8 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
                             onContextMenu={(e) => handleContextMenu(e, snippet.id)}
                         >
                             <div className="flex items-center gap-2 overflow-hidden flex-1">
-                                {snippet.type === 'css' ? <Code size={14} className="text-blue-400 flex-none" /> : <FileCode size={14} className="text-orange-400 flex-none" />}
-                                <div className="flex flex-col overflow-hidden w-full">
+                                {!isEditing && (snippet.type === 'css' ? <Code size={14} className="text-blue-400 flex-none" /> : <FileCode size={14} className="text-orange-400 flex-none" />)}
+                                <div className="flex flex-col overflow-hidden w-full items-start">
                                     {isEditing ? (
                                         <input
                                             value={editName}
@@ -267,7 +267,7 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
                                         />
                                     ) : (
                                         <span
-                                            className="text-slate-300 text-sm truncate hover:text-white cursor-text"
+                                            className="text-slate-300 text-sm truncate hover:text-white cursor-text border border-transparent hover:border-slate-700 px-1.5 py-0.5 rounded -ml-1.5 transition-colors min-w-0"
                                             onClick={(e) => handleStartRename(e, snippet)}
                                             title="Click to rename"
                                         >{snippet.name}</span>
