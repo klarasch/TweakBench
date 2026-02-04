@@ -1,7 +1,7 @@
 import React from 'react';
 import { useStore } from '../store.ts';
 import { isDomainMatch } from '../utils/domains.ts';
-import { Network, Check, X, Globe, Power } from 'lucide-react';
+import { Network, Play, Pause, Globe, Power } from 'lucide-react';
 import { Button } from './ui/Button';
 
 interface StatusBarProps {
@@ -61,7 +61,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({ activeUrl }) => {
 
             {/* Right Side: Controls */}
             <div className="flex items-center gap-2 shrink-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                     {/* Page Actions */}
                     {globalEnabled && !isInternal && activeUrl && (
                         <>
@@ -70,8 +70,8 @@ export const StatusBar: React.FC<StatusBarProps> = ({ activeUrl }) => {
                                     size="sm"
                                     variant="outline"
                                     onClick={() => matchingThemes.forEach(t => updateTheme(t.id, { isActive: false }))}
-                                    className="h-6 text-[10px] px-2 border-slate-700 text-slate-400 hover:text-red-400 hover:border-red-900/50 hover:bg-red-900/10"
-                                    icon={<X size={10} />}
+                                    className="h-6 text-[10px] px-2 border-slate-700 text-slate-400 hover:text-amber-400 hover:border-amber-900/50 hover:bg-amber-900/10"
+                                    icon={<Pause size={10} />}
                                 >
                                     Disable URL
                                 </Button>
@@ -85,7 +85,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({ activeUrl }) => {
                                                 variant="outline"
                                                 onClick={() => disabledMatches.forEach(t => updateTheme(t.id, { isActive: true }))}
                                                 className="h-6 text-[10px] px-2 border-slate-700 text-slate-400 hover:text-green-400 hover:border-green-900/50 hover:bg-green-900/10"
-                                                icon={<Check size={10} />}
+                                                icon={<Play size={10} />}
                                             >
                                                 Enable URL
                                             </Button>
@@ -94,20 +94,23 @@ export const StatusBar: React.FC<StatusBarProps> = ({ activeUrl }) => {
                                     return null;
                                 })()
                             )}
-                            <div className="w-px h-4 bg-slate-800 mx-1"></div>
+                            <div className="w-px h-4 bg-slate-800"></div>
                         </>
                     )}
 
-                    <button
-                        onClick={toggleGlobal}
-                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-all shadow-lg ${globalEnabled
-                            ? 'bg-green-500 text-white shadow-green-500/30 hover:bg-green-400'
-                            : 'bg-slate-700 text-slate-400 hover:bg-slate-600 hover:text-white'
-                            }`}
-                        title={globalEnabled ? "System ON" : "System OFF"}
-                    >
-                        <Power size={14} strokeWidth={2.5} />
-                    </button>
+                    {/* Master Switch - Less Prominent Power Icon */}
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={toggleGlobal}
+                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all border ${globalEnabled
+                                ? 'bg-slate-900 border-green-500/50 text-green-500 hover:bg-green-500/10 hover:border-green-400'
+                                : 'bg-slate-900 border-slate-700 text-slate-500 hover:text-slate-300 hover:border-slate-500'
+                                }`}
+                            title={globalEnabled ? "Master Switch: System ON" : "Master Switch: System OFF"}
+                        >
+                            <Power size={14} strokeWidth={2.5} />
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
