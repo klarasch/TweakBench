@@ -87,11 +87,11 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
     };
 
     return (
-        <div className="flex-none flex items-center gap-2 p-4 border-b border-slate-800 bg-slate-900 z-10 relative">
-            <button onClick={onBack} className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white">
+        <div className="flex-none flex items-start gap-2 p-2 sm:p-4 border-b border-slate-800 bg-slate-900 z-10 relative">
+            <button onClick={onBack} className="p-1 mt-0.5 hover:bg-slate-800 rounded text-slate-400 hover:text-white">
                 <ArrowLeft size={18} />
             </button>
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
                 <input
                     className="bg-transparent font-bold text-lg outline-none w-full text-white placeholder-slate-600"
                     value={localName}
@@ -101,7 +101,7 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                     }}
                     placeholder="Theme Name"
                 />
-                <div className="flex items-center gap-2 mt-2">
+                <div className="flex items-center flex-wrap gap-2 mt-2">
                     {/* Domain Config Button - Interactive */}
                     <button
                         className="flex items-center gap-1.5 text-[10px] font-medium text-slate-400 bg-slate-800/50 border border-slate-700/50 px-2 py-1 rounded-md cursor-pointer hover:bg-slate-800 hover:text-slate-200 hover:border-slate-600 transition-all select-none active:scale-95"
@@ -133,7 +133,7 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                 </div>
             </div>
             {/* Theme Toggle & Menu */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mt-0.5">
                 {/* Global Disabled Warning */}
                 {!globalEnabled && (
                     <span
@@ -179,7 +179,7 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                     icon={<BookOpen size={14} />}
                     title="Toggle Snippet Library"
                 >
-                    Library
+                    <span className="hidden sm:inline">Library</span>
                 </Button>
             </div>
 
