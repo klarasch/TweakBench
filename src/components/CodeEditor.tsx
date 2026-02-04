@@ -8,6 +8,9 @@ import * as prettier from "prettier/standalone";
 import * as parserPostcss from "prettier/plugins/postcss";
 import * as parserHtml from "prettier/plugins/html";
 
+import { autocompletion } from '@codemirror/autocomplete';
+import type { Snippet } from '../types';
+
 interface CodeEditorProps {
     value: string;
     onChange: (value: string) => void;
@@ -16,6 +19,7 @@ interface CodeEditorProps {
     className?: string;
     autoHeight?: boolean;
     onFocus?: () => void;
+    snippets?: Snippet[];
 }
 
 // Re-adding CodeEditorRef interface and forwardRef implementation
@@ -24,15 +28,16 @@ export interface CodeEditorRef {
     format: () => Promise<void>;
 }
 
-export const CodeEditor = React.forwardRef<CodeEditorRef, CodeEditorProps>(({
-    value,
-    onChange,
-    mode = 'css',
-    placeholder,
-    className,
-    autoHeight = false,
-    onFocus
-}, ref) => {
+export const CodeEditor = React.forwardRef<CodeEditorRef, CodeEditorProps>((props, ref) => {
+    const {
+        value,
+        onChange,
+        mode = 'css',
+        placeholder,
+        className,
+        autoHeight = false,
+        onFocus,
+    } = props;
     // Re-implemented detailed extensions and imperative handle
     const editorRef = React.useRef<any>(null);
 
@@ -101,6 +106,36 @@ export const CodeEditor = React.forwardRef<CodeEditorRef, CodeEditorProps>(({
         };
     }, []);
 
+    const cssVariableCompletions = useCallback((context: any) => {
+        if (mode !== 'css' || !props.snippets) return null;
+
+        const word = context.matchBefore(/--[\w-]*/);
+        if (!word) return null;
+        if (word.from === word.to && !context.explicit) return null;
+
+        const variables = new Map<string, string>();
+
+        props.snippets.forEach(snippet => {
+            if (snippet.type !== 'css') return;
+            const regex = /--([-\w]+):\s*([^;]+)/g;
+            let match;
+            while ((match = regex.exec(snippet.content)) !== null) {
+                variables.set(`--${match[1]}`, match[2].trim());
+            }
+        });
+
+        const options = Array.from(variables.entries()).map(([name, val]) => ({
+            label: name,
+            type: 'variable',
+            detail: val
+        }));
+
+        return {
+            from: word.from,
+            options
+        };
+    }, [mode, props.snippets]);
+
     const extensions = [
         mode === 'css' ? css() : html(),
         EditorView.theme({
@@ -130,6 +165,7 @@ export const CodeEditor = React.forwardRef<CodeEditorRef, CodeEditorProps>(({
                 color: "#e2e8f0"
             }
         }, { dark: true }),
+        autocompletion({ override: [cssVariableCompletions] }) // Add our custom completion
     ];
 
     const handleChange = useCallback((val: string) => {
@@ -137,7 +173,7 @@ export const CodeEditor = React.forwardRef<CodeEditorRef, CodeEditorProps>(({
     }, [onChange]);
 
     return (
-        <div ref={containerRef} className={`${autoHeight ? '' : 'h-full'} overflow-hidden border border-slate-700 rounded ${className}`}>
+        <div ref={containerRef} className={`${autoHeight ? 'min-h-[50px]' : 'h-full'} overflow-hidden border border-slate-700 rounded ${className}`}>
             <CodeMirror
                 ref={editorRef}
                 value={value}

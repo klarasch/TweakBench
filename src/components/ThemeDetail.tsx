@@ -4,6 +4,7 @@ import { SnippetLibrary } from './SnippetLibrary.tsx';
 import { SnippetStackItem } from './ThemeDetail/SnippetStackItem.tsx';
 import { StructureSidebar } from './ThemeDetail/StructureSidebar.tsx';
 import { ThemeHeader } from './ThemeDetail/ThemeHeader.tsx';
+import { ImportVariablesModal } from './ThemeDetail/ImportVariablesModal.tsx';
 import { Button } from './ui/Button';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
 import { Trash2, Plus, Box, Play, Pause, Download, X, Edit } from 'lucide-react';
@@ -35,6 +36,12 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
     const sidebarItemRefs = useRef<Record<string, HTMLDivElement | null>>({});
     const editorRefs = useRef<Record<string, any>>({});
+
+    // Import Modal State
+    const [importCandidates, setImportCandidates] = useState<{
+        variables: Record<string, Record<string, string>>;
+        domain: string;
+    } | null>(null);
 
     // Responsive & Popover State
     const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
@@ -290,11 +297,84 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
         ];
     };
 
+    const handleImportVariables = async () => {
+        if (!theme) return;
+
+        try {
+            const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+            const activeTab = tabs[0];
+            if (!activeTab?.id) {
+                alert('No active tab found.');
+                return;
+            }
+
+            const url = new URL(activeTab.url || '');
+            const domain = url.hostname;
+
+            chrome.tabs.sendMessage(activeTab.id, { type: 'SCAN_CSS_VARIABLES' }, (response) => {
+                if (chrome.runtime.lastError) {
+                    console.error(chrome.runtime.lastError);
+                    alert('Could not connect to content script. Make sure the extension is running on this page.');
+                    return;
+                }
+
+                if (response && response.variables) {
+                    const variables = response.variables as Record<string, Record<string, string>>;
+                    setImportCandidates({ variables, domain });
+                } else {
+                    alert('No CSS variables found on the page.');
+                }
+            });
+        } catch (e) {
+            console.error(e);
+            alert('Failed to import variables.');
+        }
+    };
+
+    const handleConfirmImport = (selectedScopes: string[]) => {
+        if (!importCandidates || !theme) return;
+        const { variables, domain } = importCandidates;
+
+        const newSnippetIds: string[] = [];
+        let count = 0;
+
+        selectedScopes.forEach(scope => {
+            const vars = variables[scope];
+            if (!vars) return;
+
+            const varLines = Object.entries(vars).map(([name, val]) => `    ${name}: ${val};`).join('\n');
+            const content = `/* Imported from ${domain} */\n${scope} {\n${varLines}\n}`;
+
+            // Check if we should use a simpler name if scope is :root
+            const scopeName = scope === ':root' ? ':root' : scope;
+            const name = `${domain} ${scopeName}`;
+
+            const id = addSnippet({
+                name,
+                type: 'css',
+                content,
+                originalContent: content,
+                relatedSnippetIds: [],
+                isLibraryItem: false
+            });
+            const itemId = addSnippetToTheme(themeId, id);
+            // We want to collapse these by default to avoid UI thrashing
+            newSnippetIds.push(itemId);
+            count++;
+        });
+
+        // Update collapsed items
+        const nextCollapsed = new Set(collapsedItems);
+        newSnippetIds.forEach(id => nextCollapsed.add(id));
+        setCollapsedItems(nextCollapsed);
+
+        setImportCandidates(null);
+        alert(`Imported ${count} variable groups.`);
+    };
+
     return (
         <div className="flex flex-col h-full bg-slate-900 relative">
-            {/* Header */}
-            {/* ... (Existing Header Helper) ... */}
-            {/* Header */}
+            {/* ... (Header) ... */}
             <ThemeHeader
                 theme={theme}
                 onBack={onBack}
@@ -310,9 +390,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                     setMenuState({ x: e.currentTarget.getBoundingClientRect().left, y: e.currentTarget.getBoundingClientRect().bottom, itemId: 'THEME_HEADER_MENU' });
                 }}
             />
-
-            {/* Mega Menu Library Drawer */}
-            {/* Position: If generic (header), top after header. If filtered (tab), top after tabs. */}
+            {/* ... (Library Drawer) ... */}
             {showLibrary && (
                 <div
                     className={`absolute left-0 right-0 h-[50vh] bg-slate-900/95 backdrop-blur-xl border-b border-slate-700 shadow-2xl z-40 flex flex-col transition-all animate-in slide-in-from-top-4 duration-200`}
@@ -353,9 +431,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
             </div>
 
             <div className="flex-1 flex overflow-hidden relative">
-
-
-                {/* Sidebar */}
+                {/* ... (Sidebar) ... */}
                 <div className="flex-1 flex overflow-hidden relative">
                     {/* Sidebar - Only show if viewportWidth > 720 */}
                     {viewportWidth > 720 && (
@@ -370,8 +446,6 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                             >
                                 <div className="w-px h-full bg-slate-800 group-hover:bg-blue-500 mx-auto"></div>
                             </div>
-                            {/* Toolbar */}
-                            {/* Toolbar Removed - Quick Add now in Subheader */}
 
                             {/* Content */}
                             <StructureSidebar
@@ -427,7 +501,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                         )}
 
                         {/* Main: Editor */}
-                        <div className="flex-1 flex flex-col bg-slate-900 relative overflow-y-auto p-3">
+                        <div className="flex-1 flex flex-col bg-slate-900 relative overflow-y-auto">
 
 
                             {/* Sticky Subheader - Refreshed */}
@@ -456,79 +530,105 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                     })()}
                                 </div>
 
-                                <Button
-                                    variant="filled"
-                                    size="sm"
-                                    onClick={() => handleCreateLocal(activeTab)}
-                                    // Make HTML orange button use black text for better contrast against orange-600? Or go darker orange?
-                                    // User requested darker orange with white label (AA contrast)
-                                    className={activeTab === 'css' ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-orange-700 hover:bg-orange-600 text-white font-bold'}
-                                    icon={<Plus size={10} />}
-                                >
-                                    Add {activeTab === 'css' ? 'CSS' : 'HTML'}
-                                </Button>
+                                <div className="flex gap-2">
+                                    {activeTab === 'css' && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={handleImportVariables}
+                                            className="text-slate-400 hover:text-white border-slate-700 hover:border-slate-500"
+                                            icon={<Download size={14} />}
+                                            title="Import CSS Variables from Page"
+                                        >
+                                            Import Vars
+                                        </Button>
+                                    )}
 
+                                    <Button
+                                        variant="filled"
+                                        size="sm"
+                                        onClick={() => handleCreateLocal(activeTab)}
+                                        // Make HTML orange button use black text for better contrast against orange-600? Or go darker orange?
+                                        // User requested darker orange with white label (AA contrast)
+                                        className={activeTab === 'css' ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-orange-700 hover:bg-orange-600 text-white font-bold'}
+                                        icon={<Plus size={10} />}
+                                    >
+                                        Add {activeTab === 'css' ? 'CSS' : 'HTML'}
+                                    </Button>
+                                </div>
                             </div>
 
-                            {filteredItems.map(item => (
-                                <SnippetStackItem
-                                    key={item.id}
-                                    item={item}
-                                    themeId={themeId}
-                                    isThemeActive={theme.isActive}
-                                    isCollapsed={collapsedItems.has(item.id)}
-                                    onToggleCollapse={() => {
-                                        const next = new Set(collapsedItems);
-                                        // next is a COPY. collapsedItems has the current state.
-                                        // If collapsedItems.has(item.id), we are removing it -> EXPANDING.
-                                        const willExpand = collapsedItems.has(item.id);
+                            <div className="p-3">
+                                {filteredItems.map(item => (
+                                    <SnippetStackItem
+                                        key={item.id}
+                                        item={item}
+                                        themeId={themeId}
+                                        isThemeActive={theme.isActive}
+                                        isCollapsed={collapsedItems.has(item.id)}
+                                        onToggleCollapse={() => {
+                                            const next = new Set(collapsedItems);
+                                            // next is a COPY. collapsedItems has the current state.
+                                            // If collapsedItems.has(item.id), we are removing it -> EXPANDING.
+                                            const willExpand = collapsedItems.has(item.id);
 
-                                        if (collapsedItems.has(item.id)) next.delete(item.id);
-                                        else next.add(item.id);
-                                        setCollapsedItems(next);
+                                            if (collapsedItems.has(item.id)) next.delete(item.id);
+                                            else next.add(item.id);
+                                            setCollapsedItems(next);
 
-                                        if (willExpand) {
+                                            if (willExpand) {
+                                                requestAnimationFrame(() => {
+                                                    if (editorRefs.current[item.id]) {
+                                                        editorRefs.current[item.id]?.focus();
+                                                    }
+                                                });
+                                            }
+                                        }}
+                                        isSelected={selectedItemId === item.id}
+                                        itemRef={(el) => { itemRefs.current[item.id] = el; }}
+                                        onKebabClick={(e) => handleKebabClick(e, item.id)}
+                                        isEditing={editingSnippetId === item.id}
+                                        onSetEditing={(isEditing) => setEditingSnippetId(isEditing ? item.id : null)}
+                                        onSelect={() => {
+                                            setSelectedItemId(item.id);
+                                            // Focus on click
                                             requestAnimationFrame(() => {
                                                 if (editorRefs.current[item.id]) {
                                                     editorRefs.current[item.id]?.focus();
                                                 }
                                             });
-                                        }
-                                    }}
-                                    isSelected={selectedItemId === item.id}
-                                    itemRef={(el) => { itemRefs.current[item.id] = el; }}
-                                    onKebabClick={(e) => handleKebabClick(e, item.id)}
-                                    isEditing={editingSnippetId === item.id}
-                                    onSetEditing={(isEditing) => setEditingSnippetId(isEditing ? item.id : null)}
-                                    onSelect={() => {
-                                        setSelectedItemId(item.id);
-                                        // Focus on click
-                                        requestAnimationFrame(() => {
-                                            if (editorRefs.current[item.id]) {
-                                                editorRefs.current[item.id]?.focus();
-                                            }
-                                        });
-                                    }}
-                                    editorRef={(el) => { editorRefs.current[item.id] = el; }}
-                                />
-                            ))}
+                                        }}
+                                        editorRef={(el) => { editorRefs.current[item.id] = el; }}
+                                    />
+                                ))}
 
-                            {filteredItems.length === 0 && (
-                                <div className="flex flex-col items-center justify-center py-20 text-slate-500">
-                                    <Box size={48} className="mb-4 opacity-20" />
-                                    <p>No {activeTab.toUpperCase()} snippets found.</p>
-                                    <button
-                                        onClick={() => handleCreateLocal(activeTab)}
-                                        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 transition-colors"
-                                    >
-                                        Create New {activeTab.toUpperCase()} Snippet
-                                    </button>
-                                </div>
-                            )}
+                                {filteredItems.length === 0 && (
+                                    <div className="flex flex-col items-center justify-center py-20 text-slate-500">
+                                        <Box size={48} className="mb-4 opacity-20" />
+                                        <p>No {activeTab.toUpperCase()} snippets found.</p>
+                                        <button
+                                            onClick={() => handleCreateLocal(activeTab)}
+                                            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 transition-colors"
+                                        >
+                                            Create New {activeTab.toUpperCase()} Snippet
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div >
-        </div >
+                {/* Import Modal */}
+                {
+                    importCandidates && (
+                        <ImportVariablesModal
+                            variables={importCandidates.variables}
+                            onImport={handleConfirmImport}
+                            onClose={() => setImportCandidates(null)}
+                        />
+                    )
+                }
+            </div>
+        </div>
     );
 };

@@ -12,6 +12,45 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
         console.log('TweakBench: PING received');
         sendResponse('PONG');
     }
+
+    if (request.type === 'SCAN_CSS_VARIABLES') {
+        console.log('TweakBench: Scanning CSS Variables');
+        const variables: Record<string, Record<string, string>> = {};
+
+        // Helper to add variable
+        const addVar = (scope: string, name: string, value: string) => {
+            if (!variables[scope]) variables[scope] = {};
+            variables[scope][name] = value;
+        };
+
+        try {
+            for (const sheet of Array.from(document.styleSheets)) {
+                try {
+                    // Check for CORS or access issues
+                    if (!sheet.cssRules) continue;
+
+                    for (const rule of Array.from(sheet.cssRules)) {
+                        if (rule instanceof CSSStyleRule) {
+                            const selector = rule.selectorText;
+                            for (let i = 0; i < rule.style.length; i++) {
+                                const propName = rule.style[i];
+                                if (propName.startsWith('--')) {
+                                    const value = rule.style.getPropertyValue(propName).trim();
+                                    addVar(selector, propName, value);
+                                }
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.warn('TweakBench: Cannot access stylesheet rules (likely CORS)', e);
+                }
+            }
+        } catch (e) {
+            console.error('TweakBench: Error scanning stylesheets', e);
+        }
+
+        sendResponse({ variables });
+    }
 });
 
 import { isDomainMatch } from '../utils/domains.ts';

@@ -13,6 +13,7 @@ export interface Snippet {
     // For linking related snippets (e.g. Button HTML + Button CSS)
     relatedSnippetIds: string[];
     isLibraryItem?: boolean; // If false, it's a "Ghost" snippet (private to a theme)
+    originalContent?: string; // For imported snippets, to allow reset
 
     createdAt: number;
     updatedAt: number;

@@ -52,7 +52,7 @@ export const SnippetStackItem: React.FC<SnippetStackItemProps> = ({
         <div
             ref={itemRef}
             className={`
-                group relative border transition-all rounded-lg mb-4 overflow-hidden
+                group relative border transition-all rounded-lg mb-4 overflow-hidden shrink-0
                 ${isSelected
                     ? 'bg-slate-900 border-blue-500/50 shadow-[0_0_15px_-3px_rgba(59,130,246,0.15)] ring-1 ring-blue-500/20'
                     : item.isEnabled
@@ -154,7 +154,7 @@ export const SnippetStackItem: React.FC<SnippetStackItemProps> = ({
 
                     {!isCollapsed && (
                         <div className="flex items-center gap-2">
-                            {s.isLibraryItem === false ? (
+                            {(s.isLibraryItem === false && !s.originalContent) ? (
                                 <Button
                                     size="sm"
                                     variant="outline"
@@ -191,7 +191,6 @@ export const SnippetStackItem: React.FC<SnippetStackItemProps> = ({
                                             Push
                                         </Button>
 
-                                        {/* Removed redundant "Modified" badge as per user request */}
                                         <Button
                                             size="sm"
                                             variant="ghost"
@@ -208,6 +207,24 @@ export const SnippetStackItem: React.FC<SnippetStackItemProps> = ({
                                         </Button>
                                     </>
                                 )
+                            )}
+
+                            {/* Allow Reset for Non-Library Imported Snippets too */}
+                            {s.isLibraryItem === false && s.originalContent && s.content !== s.originalContent && (
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (confirm('Reset snippet to its original imported state? This will discard all changes.')) {
+                                            updateSnippet(s.id, { content: s.originalContent });
+                                        }
+                                    }}
+                                    className="h-5 text-[10px] px-1.5 text-slate-500 hover:text-yellow-400"
+                                    title="Reset to Original Import"
+                                >
+                                    Reset
+                                </Button>
                             )}
                         </div>
                     )}
@@ -293,6 +310,7 @@ export const SnippetStackItem: React.FC<SnippetStackItemProps> = ({
                             onFocus={() => {
                                 onSelect();
                             }}
+                            snippets={snippets}
                         />
                     </div>
                 )
