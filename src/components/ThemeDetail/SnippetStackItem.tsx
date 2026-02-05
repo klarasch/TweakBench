@@ -68,7 +68,6 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
             }}
             style={style}
             {...attributes}
-            {...listeners}
             className={`
                 group relative border transition-all rounded-lg mb-4 overflow-hidden shrink-0 scroll-mt-14 cursor-default
                 ${isSelected
@@ -86,17 +85,18 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
         >
             {/* Snippet Header */}
             <div
+                {...listeners}
                 className={`
-                    flex items-center gap-3 px-3 py-2 select-none transition-colors
+                    flex items-center gap-3 px-3 py-2 select-none transition-colors outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset
                     ${isCollapsed ? 'hover:bg-slate-800' : 'bg-slate-800/30 border-b border-slate-800/50'}
+                    ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}
                 `}
                 onClick={(e) => {
                     if (isSelectionMode) {
                         onSelect(item.id);
                         return;
                     }
-                    e.stopPropagation(); // Stop propagation? Wait, original onClick logic... output of step 60 line 91
-                    // The original code uses onSelect(item.id) and onToggleCollapse(item.id).
+                    e.stopPropagation();
                     onSelect(item.id);
                     onToggleCollapse(item.id);
                 }}

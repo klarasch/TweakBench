@@ -26,6 +26,8 @@ interface CodeEditorProps {
 export interface CodeEditorRef {
     focus: () => void;
     format: () => Promise<void>;
+    getCursorPosition: () => { from: number; to: number } | null;
+    setCursorPosition: (from: number, to: number) => void;
 }
 
 export const CodeEditor = React.forwardRef<CodeEditorRef, CodeEditorProps>((props, ref) => {
@@ -63,7 +65,20 @@ export const CodeEditor = React.forwardRef<CodeEditorRef, CodeEditorProps>((prop
         focus: () => {
             editorRef.current?.view?.focus();
         },
-        format: handleFormat
+        format: handleFormat,
+        getCursorPosition: () => {
+            const view = editorRef.current?.view;
+            if (!view) return null;
+            const selection = view.state.selection.main;
+            return { from: selection.from, to: selection.to };
+        },
+        setCursorPosition: (from: number, to: number) => {
+            const view = editorRef.current?.view;
+            if (!view) return;
+            view.dispatch({
+                selection: { anchor: from, head: to }
+            });
+        }
     }));
 
     // Native brute-force listener to intercept before browser

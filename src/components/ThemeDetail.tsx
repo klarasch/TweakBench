@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from 'react';
 import { useStore } from '../store.ts';
 import { SnippetLibrary } from './SnippetLibrary.tsx';
 import { SnippetStackItem } from './ThemeDetail/SnippetStackItem.tsx';
@@ -48,6 +48,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     const [libraryFilter, setLibraryFilter] = useState<'css' | 'html' | null>(null);
     const [activeTab, setActiveTab] = useState<'css' | 'html'>('css'); // Added activeTab state
 
+    const [pendingScrollItemId, setPendingScrollItemId] = useState<string | null>(null);
     const [collapsedItems, setCollapsedItems] = useState<Set<string>>(new Set());
     const [editingSnippetId, setEditingSnippetId] = useState<string | null>(null); // Added editing state
     // itemRefs not needed for main list with Virtuoso, but keeping for sidebar potentially? 
@@ -55,6 +56,12 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     const virtuosoRef = useRef<VirtuosoHandle>(null);
     const sidebarItemRefs = useRef<Record<string, HTMLDivElement | null>>({});
     const editorRefs = useRef<Record<string, any>>({});
+
+    // Control Flags
+    const scrollSourceRef = useRef<'sidebar' | 'main' | null>(null); // Tracks where selection change originated
+    const scrollTriggerRef = useRef(0); // Incremented to force scroll even when selectedItemId doesn't change
+    const pendingFocusRef = useRef<string | null>(null);
+    const cursorPositionsRef = useRef<Record<string, { from: number; to: number }>>({});
 
     // Drag Ref to track auto-collapsed items (all items that were expanded before drag)
     const preDragExpandedItemsRef = useRef<Set<string>>(new Set());
@@ -184,15 +191,26 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
         return s?.type === activeTab;
     }) : [], [theme, snippets, activeTab]);
 
-    // Scroll into view when selectedItemId changes
+    // Phase 1: Detect sidebar scroll request and set pending state
     useEffect(() => {
-        if (selectedItemId && virtuosoRef.current && !justDroppedId) {
-            const index = filteredItems.findIndex(i => i.id === selectedItemId);
+        if (selectedItemId && scrollSourceRef.current === 'sidebar' && !justDroppedId) {
+            setPendingScrollItemId(selectedItemId);
+            // DON'T reset scrollSourceRef here - it causes the ref to be null when this effect re-runs
+        }
+    }, [selectedItemId, justDroppedId, scrollTriggerRef.current]);
+
+    // Phase 2: Execute scroll after DOM has updated (runs synchronously after render)
+    useLayoutEffect(() => {
+        if (pendingScrollItemId && virtuosoRef.current) {
+            const index = filteredItems.findIndex(i => i.id === pendingScrollItemId);
             if (index !== -1) {
+                // Scroll Virtuoso to the index
                 virtuosoRef.current.scrollToIndex({ index, align: 'start', behavior: 'smooth' });
             }
+            setPendingScrollItemId(null); // Clear pending scroll
+            scrollSourceRef.current = null; // Reset source after scroll
         }
-    }, [selectedItemId, filteredItems, justDroppedId]);
+    }, [pendingScrollItemId, filteredItems]);
 
     // Handle scroll on drop
     useEffect(() => {
@@ -201,8 +219,16 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
             if (index !== -1) {
                 // Wait for expansion/layout measurement
                 const timer = setTimeout(() => {
-                    virtuosoRef.current?.scrollToIndex({ index, align: 'center', behavior: 'smooth' });
+                    virtuosoRef.current?.scrollToIndex({ index, align: 'start', behavior: 'smooth' });
                     setJustDroppedId(null);
+
+                    // Robust Focus after Drop
+                    if (pendingFocusRef.current === justDroppedId) {
+                        if (editorRefs.current[justDroppedId]) {
+                            editorRefs.current[justDroppedId]?.focus();
+                            pendingFocusRef.current = null;
+                        }
+                    }
                 }, 200);
                 return () => clearTimeout(timer);
             }
@@ -292,6 +318,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
         setShowLibrary(false);
         setLibraryFilter(null);
         setSelectedItemId(itemId);
+        scrollSourceRef.current = 'sidebar'; // Programmatic addition should scroll
         scrollToItem(itemId);
     };
 
@@ -333,6 +360,12 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
         // Trigger scroll on next render via effect
         setJustDroppedId(itemId);
 
+        // Check if item ended up visible (expanded), if so, queue focus
+        if (!collapsedItems.has(itemId)) { // Note: collapsedItems might not be fully updated here if we use preDrag logic? 
+            // Actually we just updated it above.
+            pendingFocusRef.current = itemId;
+        }
+
         if (active.id !== over?.id) {
             const oldIndex = filteredItems.findIndex((item) => item.id === active.id);
             const newIndex = filteredItems.findIndex((item) => item.id === over?.id);
@@ -369,6 +402,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
 
         // Auto-select and scroll
         setSelectedItemId(itemId);
+        scrollSourceRef.current = 'sidebar'; // Programmatic addition should scroll
         scrollToItem(itemId);
     };
 
@@ -573,11 +607,20 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
         alert(`Imported ${count} variable groups.`);
     };
 
-    // Stable Handlers for SnippetStackItem
     const handleToggleCollapse = useCallback((itemId: string) => {
         setCollapsedItems(prev => {
             const next = new Set(prev);
             const willExpand = prev.has(itemId);
+
+            // Store cursor position before collapsing
+            if (!willExpand && editorRefs.current[itemId]) {
+                const cursorPos = editorRefs.current[itemId]?.getCursorPosition?.();
+                console.log('[CURSOR DEBUG] Saving cursor position for', itemId, ':', cursorPos);
+                if (cursorPos) {
+                    cursorPositionsRef.current[itemId] = cursorPos;
+                }
+            }
+
             if (willExpand) next.delete(itemId);
             else next.add(itemId);
 
@@ -585,6 +628,13 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                 requestAnimationFrame(() => {
                     if (editorRefs.current[itemId]) {
                         editorRefs.current[itemId]?.focus();
+
+                        // Restore cursor position if we have one saved
+                        const savedPos = cursorPositionsRef.current[itemId];
+                        console.log('[CURSOR DEBUG] Restoring cursor position for', itemId, ':', savedPos);
+                        if (savedPos) {
+                            editorRefs.current[itemId]?.setCursorPosition?.(savedPos.from, savedPos.to);
+                        }
                     }
                 });
             }
@@ -597,7 +647,14 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
             handleToggleSelection(itemId);
             return;
         }
+
+        // Only reset source if it's not already 'sidebar' (don't interfere with sidebar scroll)
+        if (scrollSourceRef.current !== 'sidebar') {
+            scrollSourceRef.current = null;
+        }
         setSelectedItemId(itemId);
+
+        // Focus if needed (though clicking generally focuses)
         requestAnimationFrame(() => {
             if (editorRefs.current[itemId]) {
                 editorRefs.current[itemId]?.focus();
@@ -611,6 +668,11 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
 
     const handleEditorRef = useCallback((itemId: string, el: any) => {
         editorRefs.current[itemId] = el;
+        // Check pending focus on mount/ref assign
+        if (pendingFocusRef.current === itemId && el) {
+            el.focus();
+            pendingFocusRef.current = null;
+        }
     }, []);
 
 
@@ -696,10 +758,33 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                     handleToggleSelection(id);
                                 } else {
                                     setSelectedItemId(id);
-                                    // Focus editor on sidebar click
+
+                                    // Force Expand
+                                    setCollapsedItems(prev => {
+                                        const next = new Set(prev);
+                                        next.delete(id);
+                                        return next;
+                                    });
+
+                                    // Mark source as sidebar and trigger scroll (even if same item)
+                                    scrollSourceRef.current = 'sidebar';
+                                    scrollTriggerRef.current++; // Force effect to run
+
+                                    // Robust Focus (Sidebar Click)
+                                    pendingFocusRef.current = id;
+
+                                    // Try immediate focus if already mounted
                                     requestAnimationFrame(() => {
                                         if (editorRefs.current[id]) {
                                             editorRefs.current[id]?.focus();
+                                            pendingFocusRef.current = null;
+
+                                            // Restore cursor position if we have one saved
+                                            const savedPos = cursorPositionsRef.current[id];
+                                            console.log('[CURSOR DEBUG] Restoring cursor position for', id, ':', savedPos);
+                                            if (savedPos) {
+                                                editorRefs.current[id]?.setCursorPosition?.(savedPos.from, savedPos.to);
+                                            }
                                         }
                                     });
                                 }
