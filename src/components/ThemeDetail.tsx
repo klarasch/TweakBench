@@ -997,9 +997,27 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                         ) : (
                             <div className="flex flex-col items-center justify-center py-20 text-center">
                                 <Box size={48} className="mb-4 text-slate-700" />
-                                <h3 className="text-slate-300 font-medium mb-1">Start Customizing</h3>
+                                <h3 className="text-slate-300 font-medium mb-1">
+                                    {(() => {
+                                        const otherTab = activeTab === 'css' ? 'html' : 'css';
+                                        const hasOtherContent = theme.items.some(item => {
+                                            const s = snippets.find(sn => sn.id === item.snippetId);
+                                            return s?.type === otherTab;
+                                        });
+                                        return hasOtherContent ? `No ${activeTab.toUpperCase()} snippets yet` : 'Start Customizing';
+                                    })()}
+                                </h3>
                                 <p className="text-slate-500 text-sm mb-6 max-w-xs">
-                                    This theme is empty. Add your first {activeTab.toUpperCase()} snippet to get started.
+                                    {(() => {
+                                        const otherTab = activeTab === 'css' ? 'html' : 'css';
+                                        const hasOtherContent = theme.items.some(item => {
+                                            const s = snippets.find(sn => sn.id === item.snippetId);
+                                            return s?.type === otherTab;
+                                        });
+                                        return hasOtherContent
+                                            ? `Add your first ${activeTab.toUpperCase()} snippet to complement your ${otherTab.toUpperCase()}.`
+                                            : `This theme is empty. Add your first ${activeTab.toUpperCase()} snippet to get started.`;
+                                    })()}
                                 </p>
                                 <div className="flex gap-3">
                                     <Button
