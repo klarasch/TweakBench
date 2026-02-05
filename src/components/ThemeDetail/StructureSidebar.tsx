@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Toggle } from '../ui/Toggle';
 import { Reorder } from "framer-motion";
 import { GripVertical, BookOpen, Trash2, MoreVertical } from 'lucide-react';
 import type { Theme, ThemeItem, Snippet } from '../../types.ts';
 import { useStore } from '../../store.ts';
+import { ConfirmDialog } from '../ui/Dialog';
 
 interface StructureSidebarProps {
     items: ThemeItem[];
@@ -31,6 +32,9 @@ export const StructureSidebar: React.FC<StructureSidebarProps> = ({
     isResizing
 }) => {
     const { toggleThemeItem, removeSnippetFromTheme } = useStore();
+    const [itemToRemove, setItemToRemove] = useState<string | null>(null);
+
+    const itemToRemoveName = itemToRemove ? snippets.find(s => s.id === items.find(i => i.id === itemToRemove)?.snippetId)?.name : '';
 
     return (
         <div className="flex-1 overflow-y-auto p-4">
@@ -93,12 +97,7 @@ export const StructureSidebar: React.FC<StructureSidebarProps> = ({
                                                 className="p-1 text-slate-500 hover:text-red-400 rounded hover:bg-slate-700"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    if (confirm('Remove snippet from theme?')) {
-                                                        removeSnippetFromTheme(theme.id, item.id);
-                                                        // Note: Parent handles selection update via store listener or we might need callback.
-                                                        // But parent will re-render, filteredItems will update.
-                                                        // If selected was removed, we just need to ensure parent handles null check.
-                                                    }
+                                                    setItemToRemove(item.id);
                                                 }}
                                                 title="Remove Snippet"
                                             >
@@ -124,6 +123,19 @@ export const StructureSidebar: React.FC<StructureSidebarProps> = ({
                     </div>
                 </Reorder.Group>
             </div>
+
+            <ConfirmDialog
+                isOpen={!!itemToRemove}
+                onClose={() => setItemToRemove(null)}
+                onConfirm={() => {
+                    if (itemToRemove) removeSnippetFromTheme(theme.id, itemToRemove);
+                }}
+                title="Remove Snippet"
+                message={<>Remove snippet <strong>{itemToRemoveName}</strong> from this theme?</>}
+                confirmLabel="Remove"
+                cancelLabel="Cancel"
+            />
         </div>
     );
 };
+

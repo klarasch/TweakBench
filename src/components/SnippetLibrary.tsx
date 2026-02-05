@@ -3,6 +3,7 @@ import { useStore } from '../store.ts';
 import { Plus, Search, Code, FileCode, Trash2, MoreVertical, X } from 'lucide-react';
 import type { SnippetType, Snippet } from '../types.ts';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
+import { ConfirmDialog } from './ui/Dialog';
 
 interface SnippetLibraryProps {
     onSelectSnippet?: (id: string) => void;
@@ -21,6 +22,9 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
     // Renaming State
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editName, setEditName] = useState('');
+
+    // Dialog State
+    const [snippetToDelete, setSnippetToDelete] = useState<string | null>(null);
 
     // Context Menu State
     const [menuState, setMenuState] = useState<{ x: number; y: number; snippetId: string | null }>({ x: 0, y: 0, snippetId: null });
@@ -81,7 +85,7 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
         const snippet = snippets.find(s => s.id === snippetId);
         if (!snippet) return [];
 
-        const usageCount = themes.reduce((acc, t) => acc + t.items.filter(i => i.snippetId === snippet.id).length, 0);
+        if (!snippet) return [];
 
         return [
             {
@@ -105,14 +109,7 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
                 label: 'Delete Snippet',
                 icon: <Trash2 size={14} />,
                 danger: true,
-                onClick: () => {
-                    if (usageCount > 0) {
-                        if (!confirm(`Warning: This snippet is used in ${usageCount} themes. Deleting it will break those themes. Continue?`)) return;
-                    } else {
-                        if (!confirm('Delete this snippet from library?')) return;
-                    }
-                    deleteSnippet(snippetId);
-                }
+                onClick: () => setSnippetToDelete(snippetId)
             }
         ];
     };
@@ -140,10 +137,13 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isCreating, editingId]);
 
+    const snippetToDeleteObj = snippetToDelete ? snippets.find(s => s.id === snippetToDelete) : null;
+    const usageCountToDelete = snippetToDelete ? themes.reduce((acc, t) => acc + t.items.filter(i => i.snippetId === snippetToDelete).length, 0) : 0;
+
     return (
         <div className="flex flex-col h-full bg-slate-900">
             <div className="p-4 border-b border-slate-800 bg-slate-900 flex justify-between items-center shrink-0">
-                <h3 className="font-bold text-slate-200 text-lg">Library</h3>
+                <h3 className="font-semibold text-slate-200 text-lg">Library</h3>
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => setIsCreating(true)}
@@ -220,6 +220,27 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
                 </div>
             )}
 
+            <ConfirmDialog
+                isOpen={!!snippetToDelete}
+                onClose={() => setSnippetToDelete(null)}
+                onConfirm={() => {
+                    if (snippetToDelete) deleteSnippet(snippetToDelete);
+                }}
+                title="Delete Snippet"
+                message={
+                    <div className="flex flex-col gap-2">
+                        <p>Are you sure you want to delete <strong>"{snippetToDeleteObj?.name}"</strong>?</p>
+                        {usageCountToDelete > 0 && (
+                            <div className="bg-amber-500/10 border border-amber-500/20 text-amber-200 p-2 rounded text-xs">
+                                Warning: This snippet is used in {usageCountToDelete} theme{usageCountToDelete > 1 ? 's' : ''}. Deleting it will break those themes.
+                            </div>
+                        )}
+                    </div>
+                }
+                confirmLabel="Delete"
+                isDangerous
+            />
+
             <div className="p-2">
                 <div className="flex items-center bg-slate-800 rounded px-2 py-1 mb-2">
                     <Search size={14} className="text-slate-500 mr-2" />
@@ -283,12 +304,7 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
                                             className="p-1 hover:bg-red-900/50 rounded text-slate-600 hover:text-red-400"
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                if (usageCount > 0) {
-                                                    if (!confirm(`Warning: This snippet is used in ${usageCount} themes. Deleting it will break those themes. Continue?`)) return;
-                                                } else {
-                                                    if (!confirm('Delete this snippet from library?')) return;
-                                                }
-                                                deleteSnippet(snippet.id);
+                                                setSnippetToDelete(snippet.id);
                                             }}
                                             title="Delete"
                                         >

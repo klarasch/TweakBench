@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../store.ts';
-import { Plus, Trash2, Play, Pause, MoreVertical, Upload, Download, Globe, X } from 'lucide-react';
+import { Plus, Trash2, Play, Pause, MoreVertical, Upload, Download, Globe } from 'lucide-react';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
 import { exportThemeToJS, exportThemeToCSS, parseThemeFromJS } from '../utils/impexp.ts';
 import { isDomainMatch, getDomainFromUrl } from '../utils/domains.ts';
 import { Button } from './ui/Button';
+import { Modal } from './ui/Modal';
+import { ConfirmDialog, AlertDialog } from './ui/Dialog';
 
 interface ThemeListProps {
     onSelectTheme: (id: string) => void;
@@ -19,6 +21,10 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
     const [newThemeName, setNewThemeName] = useState('');
     const [scannedDomain, setScannedDomain] = useState<string | null>(null);
     const [limitToDomain, setLimitToDomain] = useState(false);
+
+    // Dialog States
+    const [themeToDelete, setThemeToDelete] = useState<string | null>(null);
+    const [alertMessage, setAlertMessage] = useState<string | null>(null);
 
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -91,9 +97,9 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                     });
                     addSnippetToTheme(newThemeId, newSnippetId);
                 });
-                alert(`Imported theme: ${importedData.name}`);
+                setAlertMessage(`Imported theme: ${importedData.name}`);
             } else {
-                alert('Failed to parse theme from file.');
+                setAlertMessage('Failed to parse theme from file.');
             }
         };
         reader.readAsText(file);
@@ -158,14 +164,12 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                 label: 'Delete Theme',
                 icon: <Trash2 size={14} />,
                 danger: true,
-                onClick: () => {
-                    if (confirm(`Are you sure you want to delete theme "${theme.name}"?`)) {
-                        deleteTheme(themeId);
-                    }
-                }
+                onClick: () => setThemeToDelete(themeId)
             }
         ];
     };
+
+    const themeToDeleteDetails = themeToDelete ? themes.find(t => t.id === themeToDelete) : null;
 
     return (
         <div className="flex flex-col gap-4 relative">
@@ -183,74 +187,89 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
             </div>
 
             {/* Create Theme Modal */}
-            {isCreating && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div
-                        className="w-full max-w-sm bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="p-4 border-b border-slate-800 flex justify-between items-center">
-                            <h3 className="font-semibold text-white">Create New Theme</h3>
-                            <button onClick={() => setIsCreating(false)} className="text-slate-500 hover:text-white">
-                                <X size={18} />
-                            </button>
-                        </div>
+            <Modal
+                isOpen={isCreating}
+                onClose={() => setIsCreating(false)}
+                title="Create New Theme"
+                size="sm"
+                footer={
+                    <>
+                        <Button variant="ghost" size="sm" onClick={() => setIsCreating(false)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="filled"
+                            size="sm"
+                            onClick={handleCreate}
+                            disabled={!newThemeName.trim()}
+                        >
+                            Create Theme
+                        </Button>
+                    </>
+                }
+            >
+                <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-semibold text-slate-400 uppercase">Theme Name</label>
+                        <input
+                            type="text"
+                            value={newThemeName}
+                            onChange={(e) => setNewThemeName(e.target.value)}
+                            placeholder="My Awesome Theme"
+                            className="w-full bg-slate-950 border border-slate-800 rounded p-2 text-sm text-white focus:border-blue-500 focus:outline-none transition-colors"
+                            autoFocus
+                            onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+                        />
+                    </div>
 
-                        <div className="p-4 flex flex-col gap-4">
-                            <div className="flex flex-col gap-1.5">
-                                <label className="text-xs font-semibold text-slate-400 uppercase">Theme Name</label>
+                    {scannedDomain && (
+                        <div className="flex items-start gap-3 p-3 bg-slate-800/50 rounded border border-slate-800/50">
+                            <div className="mt-0.5">
                                 <input
-                                    type="text"
-                                    value={newThemeName}
-                                    onChange={(e) => setNewThemeName(e.target.value)}
-                                    placeholder="My Awesome Theme"
-                                    className="w-full bg-slate-950 border border-slate-800 rounded p-2 text-sm text-white focus:border-blue-500 focus:outline-none transition-colors"
-                                    autoFocus
-                                    onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+                                    type="checkbox"
+                                    id="limitDomain"
+                                    checked={limitToDomain}
+                                    onChange={(e) => setLimitToDomain(e.target.checked)}
+                                    className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-blue-500 focus:ring-offset-slate-900"
                                 />
                             </div>
-
-                            {scannedDomain && (
-                                <div className="flex items-start gap-3 p-3 bg-slate-800/50 rounded border border-slate-800/50">
-                                    <div className="mt-0.5">
-                                        <input
-                                            type="checkbox"
-                                            id="limitDomain"
-                                            checked={limitToDomain}
-                                            onChange={(e) => setLimitToDomain(e.target.checked)}
-                                            className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-blue-500 focus:ring-offset-slate-900"
-                                        />
-                                    </div>
-                                    <label htmlFor="limitDomain" className="flex flex-col cursor-pointer select-none">
-                                        <span className="text-sm font-medium text-slate-200 flex items-center gap-1.5">
-                                            Limit to {scannedDomain}
-                                            <Globe size={12} className="text-slate-500" />
-                                        </span>
-                                        <span className="text-xs text-slate-500 mt-0.5">
-                                            This theme will only activate on this domain. You can change this later.
-                                        </span>
-                                    </label>
-                                </div>
-                            )}
+                            <label htmlFor="limitDomain" className="flex flex-col cursor-pointer select-none">
+                                <span className="text-sm font-medium text-slate-200 flex items-center gap-1.5">
+                                    Limit to {scannedDomain}
+                                    <Globe size={12} className="text-slate-500" />
+                                </span>
+                                <span className="text-xs text-slate-500 mt-0.5">
+                                    This theme will only activate on this domain. You can change this later.
+                                </span>
+                            </label>
                         </div>
-
-                        <div className="p-4 bg-slate-900/50 border-t border-slate-800 flex justify-end gap-2">
-                            <Button variant="ghost" size="sm" onClick={() => setIsCreating(false)}>
-                                Cancel
-                            </Button>
-                            <Button
-                                variant="filled"
-                                size="sm"
-                                onClick={handleCreate}
-                                disabled={!newThemeName.trim()}
-                                className="bg-blue-600 hover:bg-blue-500 text-white"
-                            >
-                                Create Theme
-                            </Button>
-                        </div>
-                    </div>
+                    )}
                 </div>
-            )}
+            </Modal>
+
+            {/* Delete Confirmation */}
+            <ConfirmDialog
+                isOpen={!!themeToDelete}
+                onClose={() => setThemeToDelete(null)}
+                onConfirm={() => {
+                    if (themeToDelete) deleteTheme(themeToDelete);
+                }}
+                title="Delete Theme"
+                message={
+                    <span>
+                        Are you sure you want to delete theme <strong>"{themeToDeleteDetails?.name}"</strong>? This action cannot be undone.
+                    </span>
+                }
+                confirmLabel="Delete"
+                isDangerous
+            />
+
+            {/* Alert Dialog */}
+            <AlertDialog
+                isOpen={!!alertMessage}
+                onClose={() => setAlertMessage(null)}
+                message={alertMessage}
+            />
 
             <div className="flex flex-col gap-2">
                 {themes.length === 0 && !isCreating && (
@@ -315,9 +334,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                if (confirm(`Are you sure you want to delete theme "${theme.name}"?`)) {
-                                                    deleteTheme(theme.id);
-                                                }
+                                                setThemeToDelete(theme.id);
                                             }}
                                             className="p-1 rounded text-slate-600 hover:text-red-400 hover:bg-slate-700 transition-colors"
                                             title="Delete Theme"
@@ -357,3 +374,4 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
         </div>
     );
 };
+
