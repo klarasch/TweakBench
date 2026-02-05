@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 
 export interface ContextMenuItem {
     label?: string;
@@ -20,7 +21,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
     const menuRef = useRef<HTMLDivElement>(null);
 
     // State to store calculated position
-    const [position, setPosition] = React.useState<{ top: number; left: number }>({ top: y, left: x });
+    const [position, setPosition] = React.useState<{ top: number; left: number; transformOrigin?: string }>({ top: y, left: x });
 
     React.useLayoutEffect(() => {
         if (!menuRef.current) return;
@@ -32,26 +33,43 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
         let newTop = y;
         let newLeft = x;
 
+        // Origin calculation
+        let verticalOrigin = 'top';
+        let horizontalOrigin = 'left';
+
         // Check right edge
         if (x + rect.width > viewportWidth) {
             newLeft = x - rect.width;
+            horizontalOrigin = 'right';
         }
 
         // Check bottom edge
         if (y + rect.height > viewportHeight) {
             newTop = y - rect.height;
+            verticalOrigin = 'bottom';
         }
 
         // Ensure it doesn't go off top/left
-        if (newLeft < 0) newLeft = 0;
-        if (newTop < 0) newTop = 0;
+        if (newLeft < 0) {
+            newLeft = 0;
+            horizontalOrigin = 'left'; // Reset if pushed back
+        }
+        if (newTop < 0) {
+            newTop = 0;
+            verticalOrigin = 'top'; // Reset if pushed back
+        }
 
-        setPosition({ top: newTop, left: newLeft });
+        setPosition({
+            top: newTop,
+            left: newLeft,
+            transformOrigin: `${verticalOrigin} ${horizontalOrigin}`
+        });
     }, [x, y, items]); // Recalculate if items change as height changes
 
     const style: React.CSSProperties = {
         top: position.top,
         left: position.left,
+        transformOrigin: position.transformOrigin
     };
 
     // Close on Escape
@@ -75,11 +93,14 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
             <div className="absolute inset-0 z-40" onClick={onClose} />
 
             {/* Menu */}
-            <div
+            <motion.div
                 ref={menuRef}
-                className="absolute z-50 bg-slate-800 border border-slate-700 shadow-xl rounded-md py-1 min-w-[160px] animate-in fade-in zoom-in-95 duration-100"
+                className="absolute z-50 bg-slate-800 border border-slate-700 shadow-xl rounded-md py-1 min-w-[160px]"
                 style={style}
                 onClick={(e) => e.stopPropagation()}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.1, ease: "easeOut" }}
             >
                 {items.map((item, index) => {
                     if (item.separator) {
@@ -106,7 +127,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
                         </button>
                     );
                 })}
-            </div>
+            </motion.div>
         </div>
     );
 };

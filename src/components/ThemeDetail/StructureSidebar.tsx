@@ -15,6 +15,7 @@ interface StructureSidebarProps {
     onReorder: (newItems: ThemeItem[]) => void;
     onContextMenu: (e: React.MouseEvent, itemId: string) => void;
     itemRefs: React.MutableRefObject<{ [key: string]: HTMLDivElement | null }>;
+    isResizing: boolean;
 }
 
 export const StructureSidebar: React.FC<StructureSidebarProps> = ({
@@ -26,7 +27,8 @@ export const StructureSidebar: React.FC<StructureSidebarProps> = ({
     onSelect,
     onReorder,
     onContextMenu,
-    itemRefs
+    itemRefs,
+    isResizing
 }) => {
     const { toggleThemeItem, removeSnippetFromTheme } = useStore();
 
@@ -44,7 +46,8 @@ export const StructureSidebar: React.FC<StructureSidebarProps> = ({
                                 <Reorder.Item
                                     key={item.id}
                                     value={item}
-                                    className={`mb-1 bg-slate-900 border-l-2 rounded cursor-default group relative flex items-center ${selectedItemId === item.id ? 'border-blue-500 bg-slate-800' : 'border-transparent hover:bg-slate-800'} ${!item.isEnabled ? 'opacity-50 grayscale-[0.5]' : ''}`}
+                                    layout={!isResizing as any}
+                                    className={`mb-1 bg-slate-900 border-l-2 rounded cursor-default group relative flex items-center ${selectedItemId === item.id ? 'border-blue-500 bg-slate-800' : 'border-transparent hover:bg-slate-800'} ${!item.isEnabled ? 'opacity-50 grayscale-[0.5]' : ''} ${isResizing ? '!transform-none !transition-none' : ''}`}
                                     onClick={() => onSelect(item.id)}
                                     onContextMenu={(e) => onContextMenu(e, item.id)}
                                 >

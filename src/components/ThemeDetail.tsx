@@ -479,7 +479,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                 {viewportWidth > 720 && (
                     <div
                         className="flex flex-col bg-slate-900 z-20 shrink-0 relative border-r border-slate-800"
-                        style={{ width: sidebarWidth }}
+                        style={{ width: sidebarWidth, transition: 'none' }}
                     >
                         {/* Resize Handle */}
                         <div
@@ -508,6 +508,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                             onReorder={handleReorder}
                             onContextMenu={handleContextMenu}
                             itemRefs={sidebarItemRefs}
+                            isResizing={isResizing}
                         />
                     </div>
                 )}
