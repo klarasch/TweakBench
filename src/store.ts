@@ -119,17 +119,19 @@ export const useStore = create<Store>((set) => ({
 
         const newTheme: Theme = {
             ...themeData,
-            items: (themeData.items && themeData.items.length > 0) ? themeData.items : [themeItem],
+            items: themeData.items ?? [themeItem],
             id: themeId,
             createdAt: Date.now(),
             updatedAt: Date.now(),
         };
 
         set((state) => {
+            // Only add mainSnippet if we actually used it (i.e. themeData.items was undefined)
+            const shouldUseDefault = !themeData.items;
             const newState = {
                 ...state,
                 themes: [...state.themes, newTheme],
-                snippets: (themeData.items && themeData.items.length > 0) ? state.snippets : [...state.snippets, mainSnippet]
+                snippets: shouldUseDefault ? [...state.snippets, mainSnippet] : state.snippets
             };
             storageService.save(newState);
             return newState;

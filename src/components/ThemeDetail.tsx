@@ -530,7 +530,8 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                     <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-800 p-2 flex items-center justify-between">
                         <div className="flex gap-2">
                             {(() => {
-                                const isAllCollapsed = filteredItems.length > 0 && filteredItems.every(i => collapsedItems.has(i.id));
+                                if (filteredItems.length === 0) return null;
+                                const isAllCollapsed = filteredItems.every(i => collapsedItems.has(i.id));
                                 return (
                                     <Button
                                         variant="ghost"
@@ -608,15 +609,29 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                 }}
                             />
                         ) : (
-                            <div className="flex flex-col items-center justify-center py-20 text-slate-500">
-                                <Box size={48} className="mb-4 opacity-20" />
-                                <p>No {activeTab.toUpperCase()} snippets found.</p>
-                                <button
-                                    onClick={() => handleCreateLocal(activeTab)}
-                                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 transition-colors"
-                                >
-                                    Create New {activeTab.toUpperCase()} Snippet
-                                </button>
+                            <div className="flex flex-col items-center justify-center py-20 text-center">
+                                <Box size={48} className="mb-4 text-slate-700" />
+                                <h3 className="text-slate-300 font-medium mb-1">Start Customizing</h3>
+                                <p className="text-slate-500 text-sm mb-6 max-w-xs">
+                                    This theme is empty. Add your first {activeTab.toUpperCase()} snippet to get started.
+                                </p>
+                                <div className="flex gap-3">
+                                    <Button
+                                        variant="filled"
+                                        onClick={() => handleCreateLocal(activeTab)}
+                                        className={activeTab === 'css' ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-orange-700 hover:bg-orange-600 text-white font-bold'}
+                                        icon={<Plus size={16} />}
+                                    >
+                                        Add {activeTab === 'css' ? 'CSS' : 'HTML'}
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => setShowLibrary(true)}
+                                        className="text-slate-400 hover:text-white border-slate-700 hover:border-slate-500"
+                                    >
+                                        Choose from Library
+                                    </Button>
+                                </div>
                             </div>
                         )}
                     </div>

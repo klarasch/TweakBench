@@ -5,7 +5,7 @@ import { Button } from '../ui/Button';
 import { Toggle } from '../ui/Toggle';
 import type { Theme } from '../../types.ts';
 import { useActiveTab } from '../../hooks/useActiveTab.ts';
-import { isDomainMatch } from '../../utils/domains.ts';
+import { isDomainMatch, getDomainFromUrl } from '../../utils/domains.ts';
 
 interface ThemeHeaderProps {
     theme: Theme;
@@ -38,6 +38,7 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
     const [newDomain, setNewDomain] = useState('');
 
     const isMatch = activeUrl ? isDomainMatch(theme.domainPatterns, activeUrl) : false;
+    const currentDomain = activeUrl ? getDomainFromUrl(activeUrl) : null;
 
     useEffect(() => {
         setLocalName(theme.name);
@@ -264,6 +265,19 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                                     <p className="text-[10px] text-slate-500 px-1">
                                         Enter a domain (e.g. <code className="bg-slate-800 px-1 rounded">google.com</code>) or pattern (<code className="bg-slate-800 px-1 rounded">*.gov</code>).
                                     </p>
+
+                                    {currentDomain && (!theme.domainPatterns || !theme.domainPatterns.includes(currentDomain)) && (
+                                        <button
+                                            onClick={() => {
+                                                const current = theme.domainPatterns || [];
+                                                updateTheme(theme.id, { domainPatterns: [...current, currentDomain] });
+                                            }}
+                                            className="text-xs text-blue-400 hover:text-blue-300 hover:underline text-left px-1 flex items-center gap-1"
+                                        >
+                                            <Plus size={10} />
+                                            Add current: {currentDomain}
+                                        </button>
+                                    )}
                                 </div>
 
                                 <div className="space-y-2 max-h-[240px] overflow-y-auto pr-1">

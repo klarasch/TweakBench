@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '../store.ts';
-import { Plus, Trash2, Play, Pause, MoreVertical, Upload, Download } from 'lucide-react';
+import { Plus, Trash2, Play, Pause, MoreVertical, Upload, Download, Globe, X } from 'lucide-react';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
 import { exportThemeToJS, exportThemeToCSS, parseThemeFromJS } from '../utils/impexp.ts';
-import { isDomainMatch } from '../utils/domains.ts';
+import { isDomainMatch, getDomainFromUrl } from '../utils/domains.ts';
+import { Button } from './ui/Button';
 
 interface ThemeListProps {
     onSelectTheme: (id: string) => void;
@@ -12,23 +13,51 @@ interface ThemeListProps {
 
 export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }) => {
     const { themes, snippets, addTheme, deleteTheme, updateTheme, addSnippet, addSnippetToTheme, globalEnabled } = useStore();
+
+    // Creation Modal State
     const [isCreating, setIsCreating] = useState(false);
     const [newThemeName, setNewThemeName] = useState('');
+    const [scannedDomain, setScannedDomain] = useState<string | null>(null);
+    const [limitToDomain, setLimitToDomain] = useState(false);
+
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     // Context Menu State
     const [menuState, setMenuState] = useState<{ x: number; y: number; themeId: string | null }>({ x: 0, y: 0, themeId: null });
 
+    useEffect(() => {
+        if (isCreating && activeUrl) {
+            try {
+                const domain = getDomainFromUrl(activeUrl);
+                setScannedDomain(domain);
+                // Default to unchecked as per UX requirement ("quick option")
+                setLimitToDomain(false);
+            } catch (e) {
+                setScannedDomain(null);
+            }
+        }
+    }, [isCreating, activeUrl]);
+
     const handleCreate = () => {
         if (!newThemeName.trim()) return;
-        addTheme({
-            name: newThemeName,
-            domainPatterns: ['<all_urls>'],
+
+        const domainPatterns = limitToDomain && scannedDomain
+            ? [scannedDomain]
+            : ['<all_urls>'];
+
+        const newId = addTheme({
+            name: newThemeName.trim(),
+            domainPatterns,
             items: [],
             isActive: true,
         });
+
         setNewThemeName('');
         setIsCreating(false);
+        setLimitToDomain(false);
+
+        // Direct navigation to the new theme
+        onSelectTheme(newId);
     };
 
     // ... (Import/Export logic kept same)
@@ -139,7 +168,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
     };
 
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 relative">
             <div className="flex justify-between items-center">
                 <h2 className="text-lg font-semibold text-slate-200">Themes</h2>
                 <div className="flex gap-2">
@@ -153,25 +182,92 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                 </div>
             </div>
 
+            {/* Create Theme Modal */}
             {isCreating && (
-                <div className="flex gap-2 p-2 bg-slate-800 rounded border border-slate-700">
-                    <input
-                        type="text"
-                        value={newThemeName}
-                        onChange={(e) => setNewThemeName(e.target.value)}
-                        placeholder="Theme Name..."
-                        className="flex-1 bg-transparent outline-none text-sm"
-                        autoFocus
-                        onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-                    />
-                    <button onClick={handleCreate} className="text-xs bg-blue-600 px-2 rounded">Add</button>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div
+                        className="w-full max-w-sm bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="p-4 border-b border-slate-800 flex justify-between items-center">
+                            <h3 className="font-semibold text-white">Create New Theme</h3>
+                            <button onClick={() => setIsCreating(false)} className="text-slate-500 hover:text-white">
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <div className="p-4 flex flex-col gap-4">
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-xs font-semibold text-slate-400 uppercase">Theme Name</label>
+                                <input
+                                    type="text"
+                                    value={newThemeName}
+                                    onChange={(e) => setNewThemeName(e.target.value)}
+                                    placeholder="My Awesome Theme"
+                                    className="w-full bg-slate-950 border border-slate-800 rounded p-2 text-sm text-white focus:border-blue-500 focus:outline-none transition-colors"
+                                    autoFocus
+                                    onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+                                />
+                            </div>
+
+                            {scannedDomain && (
+                                <div className="flex items-start gap-3 p-3 bg-slate-800/50 rounded border border-slate-800/50">
+                                    <div className="mt-0.5">
+                                        <input
+                                            type="checkbox"
+                                            id="limitDomain"
+                                            checked={limitToDomain}
+                                            onChange={(e) => setLimitToDomain(e.target.checked)}
+                                            className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-blue-500 focus:ring-offset-slate-900"
+                                        />
+                                    </div>
+                                    <label htmlFor="limitDomain" className="flex flex-col cursor-pointer select-none">
+                                        <span className="text-sm font-medium text-slate-200 flex items-center gap-1.5">
+                                            Limit to {scannedDomain}
+                                            <Globe size={12} className="text-slate-500" />
+                                        </span>
+                                        <span className="text-xs text-slate-500 mt-0.5">
+                                            This theme will only activate on this domain. You can change this later.
+                                        </span>
+                                    </label>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="p-4 bg-slate-900/50 border-t border-slate-800 flex justify-end gap-2">
+                            <Button variant="ghost" size="sm" onClick={() => setIsCreating(false)}>
+                                Cancel
+                            </Button>
+                            <Button
+                                variant="filled"
+                                size="sm"
+                                onClick={handleCreate}
+                                disabled={!newThemeName.trim()}
+                                className="bg-blue-600 hover:bg-blue-500 text-white"
+                            >
+                                Create Theme
+                            </Button>
+                        </div>
+                    </div>
                 </div>
             )}
 
             <div className="flex flex-col gap-2">
                 {themes.length === 0 && !isCreating && (
-                    <div className="text-center p-4 text-slate-500 text-sm">
-                        No themes yet. Create one!
+                    <div className="text-center p-8 border border-dashed border-slate-800 rounded-lg text-slate-500 flex flex-col items-center gap-2">
+                        <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-2">
+                            <Plus size={24} className="opacity-50" />
+                        </div>
+                        <p className="font-medium text-slate-400">No themes yet</p>
+                        <p className="text-xs max-w-[200px] mx-auto">Create a theme to start customizing your web experience.</p>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="mt-2"
+                            onClick={() => setIsCreating(true)}
+                        >
+                            Create First Theme
+                        </Button>
                     </div>
                 )}
                 {themes.map(theme => {

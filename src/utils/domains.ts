@@ -35,3 +35,12 @@ export function isDomainMatch(patterns: string[], url: string): boolean {
         return false;
     }
 }
+
+export function getDomainFromUrl(url: string): string | null {
+    try {
+        const u = new URL(url);
+        return u.hostname;
+    } catch (e) {
+        return null;
+    }
+}
