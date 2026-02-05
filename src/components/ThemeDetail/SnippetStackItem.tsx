@@ -5,6 +5,8 @@ import { MoreVertical, ChevronDown, ChevronRight, Terminal, FileCode, Upload, Bo
 import type { ThemeItem } from '../../types.ts';
 import { Button } from '../ui/Button';
 import { Toggle } from '../ui/Toggle';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface SnippetStackItemProps {
     item: ThemeItem;
@@ -38,24 +40,42 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
     const { snippets, updateSnippet, updateThemeItem, toggleThemeItem } = useStore();
     const s = snippets.find(sn => sn.id === item.snippetId);
 
-    // Local State
-    // const [editingSnippetId, setEditingSnippetId] = useState<string | null>(null); // Lifted up
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging
+    } = useSortable({ id: item.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition: isDragging ? undefined : transition, // Remove transition when dragging for snappy feel
+        zIndex: isDragging ? 10 : 'auto', // High Z-Index when dragging
+        opacity: isDragging ? 0.8 : 1,
+    };
 
     if (!s) return null;
 
-
-
     return (
         <div
-            ref={itemRef}
+            ref={(node) => {
+                setNodeRef(node);
+                itemRef(node);
+            }}
+            style={style}
+            {...attributes}
+            {...listeners}
             className={`
-                group relative border transition-all rounded-lg mb-4 overflow-hidden shrink-0 scroll-mt-14
+                group relative border transition-all rounded-lg mb-4 overflow-hidden shrink-0 scroll-mt-14 cursor-default
                 ${isSelected
                     ? 'bg-slate-900 border-blue-500/50 shadow-[0_0_15px_-3px_rgba(59,130,246,0.15)] ring-1 ring-blue-500/20'
                     : item.isEnabled
                         ? 'bg-slate-900 border-slate-700 shadow-sm'
                         : 'bg-slate-900/50 border-slate-800 opacity-75 grayscale-[0.3]'
                 }
+                ${isDragging ? 'shadow-2xl border-blue-500 scale-[1.02] z-50 cursor-grabbing' : ''}
             `}
             onClick={() => {
                 // Ensure clicking anywhere selects the item (unless handled by child)
@@ -65,7 +85,7 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
             {/* Snippet Header */}
             <div
                 className={`
-                    flex items-center gap-3 px-3 py-2 cursor-pointer select-none transition-colors
+                    flex items-center gap-3 px-3 py-2 select-none transition-colors
                     ${isCollapsed ? 'hover:bg-slate-800' : 'bg-slate-800/30 border-b border-slate-800/50'}
                 `}
                 onClick={(e) => {

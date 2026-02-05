@@ -1,12 +1,12 @@
 # What needs to be done
 
-[ ] don't start with a library snippet (just local)
-[ ] domain mgmt
+[x] don't start with a library snippet (just local)
+[x] domain mgmt
     * when creating a new theme, it should offer making it for a the domain of active tab
     * same for domain management — when adding a new domain, it should offer making it for a the domain of active tab
-[ ] add domain management trigger from the initial screen
-[ ] change browser dialogues to in-UI
-[ ] clean up overflow menus
-[ ] remove weird framer animations (side panel)
-[ ] enable reorder in stack
+[x] add domain management trigger from the initial screen
+[x] change browser dialogues to in-UI
+[x] clean up overflow menus
+[x] remove weird framer animations (side panel)
+[x] enable reorder in stack
 [ ] make it possible to export the whole workspace

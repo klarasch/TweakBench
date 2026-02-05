@@ -11,6 +11,22 @@ import { Trash2, Plus, Box, Play, Pause, Download, Edit } from 'lucide-react';
 import type { SnippetType } from '../types.ts';
 import { exportThemeToJS, exportThemeToCSS } from '../utils/impexp.ts';
 import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 
 interface ThemeDetailProps {
     themeId: string;
@@ -40,6 +56,9 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     const sidebarItemRefs = useRef<Record<string, HTMLDivElement | null>>({});
     const editorRefs = useRef<Record<string, any>>({});
 
+    // Drag Ref to track auto-collapsed items (all items that were expanded before drag)
+    const preDragExpandedItemsRef = useRef<Set<string>>(new Set());
+
     // Import Modal State
     const [importCandidates, setImportCandidates] = useState<{
         variables: Record<string, Record<string, string>>;
@@ -61,7 +80,21 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
 
 
     // Context Menu State
-    const [menuState, setMenuState] = useState<{ x: number; y: number; itemId: string | null }>({ x: 0, y: 0, itemId: null });
+    const [menuState, setMenuState] = useState<{ x: number; y: number; itemId: string | null; source?: 'sidebar' | 'stack' }>({ x: 0, y: 0, itemId: null });
+    const [renamingSidebarItemId, setRenamingSidebarItemId] = useState<string | null>(null);
+    const [justDroppedId, setJustDroppedId] = useState<string | null>(null);
+
+    // DnD Sensors
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8,
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
 
     const activeItem = theme?.items.find(i => i.id === selectedItemId);
     const activeSnippet = activeItem ? snippets.find(s => s.id === activeItem.snippetId) : null;
@@ -87,13 +120,28 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
 
     // Scroll into view when selectedItemId changes
     useEffect(() => {
-        if (selectedItemId && virtuosoRef.current) {
+        if (selectedItemId && virtuosoRef.current && !justDroppedId) {
             const index = filteredItems.findIndex(i => i.id === selectedItemId);
             if (index !== -1) {
                 virtuosoRef.current.scrollToIndex({ index, align: 'start', behavior: 'smooth' });
             }
         }
-    }, [selectedItemId, filteredItems]); // added filteredItems dependency to ensure index is correct after filter change
+    }, [selectedItemId, filteredItems, justDroppedId]);
+
+    // Handle scroll on drop
+    useEffect(() => {
+        if (justDroppedId) {
+            const index = filteredItems.findIndex(i => i.id === justDroppedId);
+            if (index !== -1) {
+                // Wait for expansion/layout measurement
+                const timer = setTimeout(() => {
+                    virtuosoRef.current?.scrollToIndex({ index, align: 'center', behavior: 'smooth' });
+                    setJustDroppedId(null);
+                }, 200);
+                return () => clearTimeout(timer);
+            }
+        }
+    }, [justDroppedId, filteredItems, collapsedItems]);
 
     // Resize Handler
     useEffect(() => {
@@ -181,16 +229,65 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
         scrollToItem(itemId);
     };
 
-    const handleReorder = (newFilteredItems: typeof theme.items) => {
-        if (!theme) return;
-        // Get items NOT in the current tab
-        const otherItems = theme.items.filter(item => {
-            const s = snippets.find(sn => sn.id === item.snippetId);
-            return s?.type !== activeTab;
+    const handleReorder = (newItems: typeof theme.items) => {
+        useStore.getState().reorderThemeItems(theme.id, newItems);
+    };
+
+    const handleDragStart = () => {
+        // Collect ALL currently expanded items in the current view
+        const expandedIds = new Set<string>();
+        filteredItems.forEach(item => {
+            if (!collapsedItems.has(item.id)) {
+                expandedIds.add(item.id);
+            }
         });
-        // Concatenate: New Order for Current Tab + Other Items
-        // This effectively groups items by type in the storage, which is fine.
-        useStore.getState().reorderThemeItems(theme.id, [...newFilteredItems, ...otherItems]);
+
+        preDragExpandedItemsRef.current = expandedIds;
+
+        // Collapse ALL items
+        setCollapsedItems(prev => {
+            const next = new Set(prev);
+            filteredItems.forEach(item => next.add(item.id));
+            return next;
+        });
+    };
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+        const itemId = active.id as string;
+
+        // Restore expanded state for items that were expanded before drag
+        setCollapsedItems(prev => {
+            const next = new Set(prev);
+            preDragExpandedItemsRef.current.forEach(id => next.delete(id));
+            return next;
+        });
+        preDragExpandedItemsRef.current.clear();
+
+        // Trigger scroll on next render via effect
+        setJustDroppedId(itemId);
+
+        if (active.id !== over?.id) {
+            const oldIndex = filteredItems.findIndex((item) => item.id === active.id);
+            const newIndex = filteredItems.findIndex((item) => item.id === over?.id);
+
+            if (oldIndex !== -1 && newIndex !== -1) {
+                const newFilteredItems = arrayMove(filteredItems, oldIndex, newIndex);
+                // We need to merge this back into the full list
+                // get items NOT in current filtered view
+                const otherItems = theme.items.filter(item => !filteredItems.find(fi => fi.id === item.id));
+                // We need to maintain relative order of other items? 
+                // Actually the simplest way:
+                // Reconstruct the full list.
+                // But wait, arrayMove only moves within the filtered list.
+                // We just need to save the new order of filtered items + original other items.
+                // But we must be careful not to lose items or duplicate.
+                // Actually, handleReorder in my previous code (lines 184-194) did a similar logic but slightly different param.
+                // Let's reuse logic.
+
+                handleReorder([...newFilteredItems, ...otherItems]);
+            }
+        }
     };
 
     const handleCreateLocal = (type: SnippetType) => {
@@ -209,16 +306,16 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
         scrollToItem(itemId);
     };
 
-    const handleContextMenu = useCallback((e: React.MouseEvent, itemId: string) => {
+    const handleContextMenu = useCallback((e: React.MouseEvent, itemId: string, source: 'sidebar' | 'stack' = 'stack') => {
         e.preventDefault();
         e.stopPropagation();
-        setMenuState({ x: e.pageX, y: e.pageY, itemId });
+        setMenuState({ x: e.pageX, y: e.pageY, itemId, source });
     }, []);
 
     const handleKebabClick = useCallback((e: React.MouseEvent, itemId: string) => {
         e.stopPropagation();
         const rect = e.currentTarget.getBoundingClientRect();
-        setMenuState({ x: rect.left, y: rect.bottom, itemId });
+        setMenuState({ x: rect.left, y: rect.bottom, itemId, source: 'stack' });
     }, []);
 
     const handleExport = (type: 'js' | 'css') => {
@@ -286,7 +383,13 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
             {
                 label: 'Rename',
                 icon: <Edit size={14} />,
-                onClick: () => setEditingSnippetId(itemId)
+                onClick: () => {
+                    if (menuState.source === 'sidebar') {
+                        setRenamingSidebarItemId(itemId);
+                    } else {
+                        setEditingSnippetId(itemId);
+                    }
+                }
             },
             {
                 label: item.isEnabled ? 'Disable Snippet' : 'Enable Snippet',
@@ -434,7 +537,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                 toggleGlobal={toggleGlobal}
                 onContextMenu={(e) => {
                     e.stopPropagation();
-                    setMenuState({ x: e.currentTarget.getBoundingClientRect().left, y: e.currentTarget.getBoundingClientRect().bottom, itemId: 'THEME_HEADER_MENU' });
+                    setMenuState({ x: e.currentTarget.getBoundingClientRect().left, y: e.currentTarget.getBoundingClientRect().bottom, itemId: 'THEME_HEADER_MENU', source: 'stack' });
                 }}
             />
             {/* ... (Library Drawer) ... */}
@@ -509,6 +612,8 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                             onContextMenu={handleContextMenu}
                             itemRefs={sidebarItemRefs}
                             isResizing={isResizing}
+                            renamingItemId={renamingSidebarItemId}
+                            onRenameCancel={() => setRenamingSidebarItemId(null)}
                         />
                     </div>
                 )}
@@ -584,31 +689,44 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
 
                     <div className="flex-1 p-3">
                         {filteredItems.length > 0 ? (
-                            <Virtuoso
-                                style={{ height: '100%' }}
-                                ref={virtuosoRef}
-                                totalCount={filteredItems.length}
-                                itemContent={(index) => {
-                                    const item = filteredItems[index];
-                                    return (
-                                        <SnippetStackItem
-                                            key={item.id}
-                                            item={item}
-                                            themeId={themeId}
-                                            isThemeActive={theme.isActive}
-                                            isCollapsed={collapsedItems.has(item.id)}
-                                            onToggleCollapse={handleToggleCollapse}
-                                            isSelected={selectedItemId === item.id}
-                                            itemRef={() => { }} // Not strictly needed for virtualized list unless we want to track DOM nodes manually
-                                            onKebabClick={handleKebabClick}
-                                            isEditing={editingSnippetId === item.id}
-                                            onSetEditing={handleSetEditing}
-                                            onSelect={handleSelect}
-                                            editorRef={(el) => handleEditorRef(item.id, el)}
-                                        />
-                                    );
-                                }}
-                            />
+                            <DndContext
+                                sensors={sensors}
+                                collisionDetection={closestCenter}
+                                onDragStart={handleDragStart}
+                                onDragEnd={handleDragEnd}
+                                modifiers={[restrictToVerticalAxis]}
+                            >
+                                <SortableContext
+                                    items={filteredItems.map(i => i.id)}
+                                    strategy={verticalListSortingStrategy}
+                                >
+                                    <Virtuoso
+                                        style={{ height: '100%' }}
+                                        ref={virtuosoRef}
+                                        totalCount={filteredItems.length}
+                                        itemContent={(index) => {
+                                            const item = filteredItems[index];
+                                            return (
+                                                <SnippetStackItem
+                                                    key={item.id}
+                                                    item={item}
+                                                    themeId={themeId}
+                                                    isThemeActive={theme.isActive}
+                                                    isCollapsed={collapsedItems.has(item.id)}
+                                                    onToggleCollapse={handleToggleCollapse}
+                                                    isSelected={selectedItemId === item.id}
+                                                    itemRef={() => { }} // Modified in child to use dnd ref
+                                                    onKebabClick={handleKebabClick}
+                                                    isEditing={editingSnippetId === item.id}
+                                                    onSetEditing={handleSetEditing}
+                                                    onSelect={handleSelect}
+                                                    editorRef={(el) => handleEditorRef(item.id, el)}
+                                                />
+                                            );
+                                        }}
+                                    />
+                                </SortableContext>
+                            </DndContext>
                         ) : (
                             <div className="flex flex-col items-center justify-center py-20 text-center">
                                 <Box size={48} className="mb-4 text-slate-700" />
