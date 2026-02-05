@@ -158,7 +158,7 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
 
                     {!isCollapsed && (
                         <div className="flex items-center gap-2">
-                            {(s.isLibraryItem === false && !s.originalContent) ? (
+                            {(s.isLibraryItem === false) ? (
                                 <Button
                                     size="sm"
                                     variant="outline"
