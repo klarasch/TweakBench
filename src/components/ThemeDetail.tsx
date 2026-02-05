@@ -6,6 +6,7 @@ import { StructureSidebar } from './ThemeDetail/StructureSidebar.tsx';
 import { ThemeHeader } from './ThemeDetail/ThemeHeader.tsx';
 import { ImportVariablesModal } from './ThemeDetail/ImportVariablesModal.tsx';
 import { Button } from './ui/Button';
+import { ConfirmDialog } from './ui/Dialog';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
 import { Trash2, Plus, Box, Play, Pause, Download, Edit, X, MoreVertical } from 'lucide-react';
 import type { SnippetType } from '../types.ts';
@@ -155,6 +156,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     // Context Menu State
     const [menuState, setMenuState] = useState<{ x: number; y: number; itemId: string | null; source?: 'sidebar' | 'stack' }>({ x: 0, y: 0, itemId: null });
     const [renamingSidebarItemId, setRenamingSidebarItemId] = useState<string | null>(null);
+    const [itemToRemove, setItemToRemove] = useState<string | null>(null);
     const [justDroppedId, setJustDroppedId] = useState<string | null>(null);
 
     // DnD Sensors
@@ -318,8 +320,27 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
         setShowLibrary(false);
         setLibraryFilter(null);
         setSelectedItemId(itemId);
+
+        // Ensure item is expanded
+        setCollapsedItems(prev => {
+            const next = new Set(prev);
+            next.delete(itemId);
+            return next;
+        });
+
+        // Set pending focus for the editor
+        pendingFocusRef.current = itemId;
+
         scrollSourceRef.current = 'sidebar'; // Programmatic addition should scroll
         scrollToItem(itemId);
+
+        // Use setTimeout to allow editor to fully mount (especially from empty state)
+        setTimeout(() => {
+            if (editorRefs.current[itemId]) {
+                editorRefs.current[itemId]?.focus();
+                pendingFocusRef.current = null;
+            }
+        }, 100);
     };
 
     const handleReorder = (newItems: typeof theme.items) => {
@@ -402,8 +423,27 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
 
         // Auto-select and scroll
         setSelectedItemId(itemId);
+
+        // Ensure item is expanded
+        setCollapsedItems(prev => {
+            const next = new Set(prev);
+            next.delete(itemId);
+            return next;
+        });
+
+        // Set pending focus for the editor
+        pendingFocusRef.current = itemId;
+
         scrollSourceRef.current = 'sidebar'; // Programmatic addition should scroll
         scrollToItem(itemId);
+
+        // Use setTimeout to allow editor to fully mount (especially from empty state)
+        setTimeout(() => {
+            if (editorRefs.current[itemId]) {
+                editorRefs.current[itemId]?.focus();
+                pendingFocusRef.current = null;
+            }
+        }, 100);
     };
 
     const handleContextMenu = useCallback((e: React.MouseEvent, itemId: string, source: 'sidebar' | 'stack' = 'stack') => {
@@ -522,12 +562,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                 label: 'Remove from Theme',
                 icon: <Trash2 size={14} />,
                 danger: true,
-                onClick: () => {
-                    if (confirm('Remove snippet from theme?')) {
-                        useStore.getState().removeSnippetFromTheme(theme.id, itemId);
-                        if (selectedItemId === itemId) setSelectedItemId(null);
-                    }
-                }
+                onClick: () => setItemToRemove(itemId)
             }
         ];
     };
@@ -1050,6 +1085,28 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                         />
                     )
                 }
+
+                {/* Remove Snippet Confirmation */}
+                <ConfirmDialog
+                    isOpen={!!itemToRemove}
+                    onClose={() => setItemToRemove(null)}
+                    onConfirm={() => {
+                        if (itemToRemove) {
+                            useStore.getState().removeSnippetFromTheme(theme.id, itemToRemove);
+                            if (selectedItemId === itemToRemove) setSelectedItemId(null);
+                            setItemToRemove(null);
+                        }
+                    }}
+                    title="Remove Snippet"
+                    message={(() => {
+                        if (!itemToRemove) return '';
+                        const item = theme.items.find(i => i.id === itemToRemove);
+                        const snippet = item ? snippets.find(s => s.id === item.snippetId) : null;
+                        return `Remove "${snippet?.name || 'this snippet'}" from the theme?`;
+                    })()}
+                    confirmLabel="Remove"
+                    isDangerous
+                />
             </div>
         </div>
     );
