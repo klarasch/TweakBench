@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useStore } from '../store.ts';
 import { Plus, Trash2, Play, Pause, MoreVertical, Upload, Download, Globe, X } from 'lucide-react';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
-import { exportThemeToJS, exportThemeToCSS, parseThemeFromJS } from '../utils/impexp.ts';
+import { exportThemeToJS, exportThemeToCSS, parseThemeFromJS, exportAllData, importAllData } from '../utils/impexp.ts';
 import { isDomainMatch, getDomainFromUrl } from '../utils/domains.ts';
 import { Button } from './ui/Button';
 import { Modal } from './ui/Modal';
@@ -14,7 +14,7 @@ interface ThemeListProps {
 }
 
 export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }) => {
-    const { themes, snippets, addTheme, deleteTheme, updateTheme, addSnippet, addSnippetToTheme, globalEnabled } = useStore();
+    const { themes, snippets, addTheme, deleteTheme, updateTheme, addSnippet, addSnippetToTheme, globalEnabled, importAllData: importData } = useStore();
 
     // Creation Modal State
     const [isCreating, setIsCreating] = useState(false);
@@ -27,6 +27,12 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
     const [alertMessage, setAlertMessage] = useState<string | null>(null);
 
     const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const allDataFileInputRef = React.useRef<HTMLInputElement>(null);
+
+    // Import All Data State
+    const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+    const [importMode, setImportMode] = useState<'merge' | 'replace' | 'skip-duplicates'>('merge');
+    const [pendingImportData, setPendingImportData] = useState<{ themes: any[], snippets: any[], globalEnabled: boolean } | null>(null);
 
     // Selection State
     const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -124,6 +130,58 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
         };
         reader.readAsText(file);
         e.target.value = '';
+    };
+
+    const handleExportAllData = () => {
+        const content = exportAllData(themes, snippets, globalEnabled);
+        const blob = new Blob([content], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `TweakBench_Backup_${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const handleImportAllDataClick = () => {
+        allDataFileInputRef.current?.click();
+    };
+
+    const handleAllDataFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const content = event.target?.result as string;
+            const importedData = importAllData(content);
+            if (importedData) {
+                setPendingImportData(importedData);
+                setIsImportDialogOpen(true);
+            } else {
+                setAlertMessage('Failed to parse import file. Please ensure it\'s a valid TweakBench backup.');
+            }
+        };
+        reader.readAsText(file);
+        e.target.value = '';
+    };
+
+    const handleConfirmImport = () => {
+        if (!pendingImportData) return;
+
+        const result = importData(pendingImportData, importMode);
+        setIsImportDialogOpen(false);
+        setPendingImportData(null);
+
+        let message = '';
+        if (importMode === 'replace') {
+            message = `Replaced all data: ${result.themesAdded} themes, ${result.snippetsAdded} snippets`;
+        } else if (importMode === 'merge') {
+            message = `Imported: ${result.themesAdded} themes, ${result.snippetsAdded} snippets`;
+        } else {
+            message = `Imported: ${result.themesAdded} themes, ${result.snippetsAdded} snippets (${result.skipped} duplicates skipped)`;
+        }
+        setAlertMessage(message);
     };
 
     const handleExport = (themeId: string, type: 'js' | 'css') => {
@@ -261,6 +319,19 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
 
     const themeToDeleteDetails = themeToDelete ? themes.find(t => t.id === themeToDelete) : null;
 
+    const getMenuItemsForHeader = (): ContextMenuItem[] => [
+        {
+            label: 'Export All Data',
+            icon: <Download size={14} className="text-blue-400" />,
+            onClick: handleExportAllData
+        },
+        {
+            label: 'Import All Data',
+            icon: <Upload size={14} className="text-green-400" />,
+            onClick: handleImportAllDataClick
+        }
+    ];
+
     return (
         <div className="flex flex-col gap-4 relative pb-20">
             <div className="flex justify-between items-center">
@@ -280,8 +351,20 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                 <Upload size={20} />
                             </button>
                             <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".js" />
+                            <input type="file" ref={allDataFileInputRef} onChange={handleAllDataFileChange} className="hidden" accept=".json" />
                             <button onClick={() => setIsCreating(true)} className="p-1 rounded hover:bg-slate-700 text-slate-300" title="Create Theme">
                                 <Plus size={20} />
+                            </button>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    setMenuState({ x: rect.left, y: rect.bottom, themeId: 'HEADER_MENU' });
+                                }}
+                                className="p-1 rounded hover:bg-slate-700 text-slate-300"
+                                title="Import/Export All Data"
+                            >
+                                <MoreVertical size={20} />
                             </button>
                         </>
                     ) : (
@@ -381,6 +464,87 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                 onClose={() => setAlertMessage(null)}
                 message={alertMessage}
             />
+
+            {/* Import Mode Selection Dialog */}
+            <Modal
+                isOpen={isImportDialogOpen}
+                onClose={() => {
+                    setIsImportDialogOpen(false);
+                    setPendingImportData(null);
+                }}
+                title="Import All Data"
+                size="sm"
+                footer={
+                    <>
+                        <Button variant="ghost" size="sm" onClick={() => {
+                            setIsImportDialogOpen(false);
+                            setPendingImportData(null);
+                        }}>
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="filled"
+                            size="sm"
+                            onClick={handleConfirmImport}
+                        >
+                            Import
+                        </Button>
+                    </>
+                }
+            >
+                <div className="flex flex-col gap-4">
+                    <p className="text-sm text-slate-300">
+                        Choose how to import the data:
+                    </p>
+
+                    <div className="flex flex-col gap-2">
+                        <label className="flex items-start gap-3 p-3 bg-slate-800/50 rounded border border-slate-700 cursor-pointer hover:border-blue-500/50 transition-colors">
+                            <input
+                                type="radio"
+                                name="importMode"
+                                value="merge"
+                                checked={importMode === 'merge'}
+                                onChange={(e) => setImportMode(e.target.value as 'merge')}
+                                className="mt-0.5"
+                            />
+                            <div className="flex flex-col">
+                                <span className="text-sm font-semibold text-slate-200">Merge (Recommended)</span>
+                                <span className="text-xs text-slate-400">Add imported items alongside existing ones</span>
+                            </div>
+                        </label>
+
+                        <label className="flex items-start gap-3 p-3 bg-slate-800/50 rounded border border-slate-700 cursor-pointer hover:border-blue-500/50 transition-colors">
+                            <input
+                                type="radio"
+                                name="importMode"
+                                value="skip-duplicates"
+                                checked={importMode === 'skip-duplicates'}
+                                onChange={(e) => setImportMode(e.target.value as 'skip-duplicates')}
+                                className="mt-0.5"
+                            />
+                            <div className="flex flex-col">
+                                <span className="text-sm font-semibold text-slate-200">Skip Duplicates</span>
+                                <span className="text-xs text-slate-400">Only import items with unique names</span>
+                            </div>
+                        </label>
+
+                        <label className="flex items-start gap-3 p-3 bg-slate-800/50 rounded border border-red-900/50 cursor-pointer hover:border-red-500/50 transition-colors">
+                            <input
+                                type="radio"
+                                name="importMode"
+                                value="replace"
+                                checked={importMode === 'replace'}
+                                onChange={(e) => setImportMode(e.target.value as 'replace')}
+                                className="mt-0.5"
+                            />
+                            <div className="flex flex-col">
+                                <span className="text-sm font-semibold text-red-400">Replace All</span>
+                                <span className="text-xs text-slate-400">⚠️ Delete all existing data and replace with import</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </Modal>
 
             <div className="flex flex-col gap-2">
                 {themes.length === 0 && !isCreating && (
@@ -563,7 +727,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                 <ContextMenu
                     x={menuState.x}
                     y={menuState.y}
-                    items={getMenuItems(menuState.themeId)}
+                    items={menuState.themeId === 'HEADER_MENU' ? getMenuItemsForHeader() : getMenuItems(menuState.themeId)}
                     onClose={() => setMenuState({ ...menuState, themeId: null })}
                 />
             )}

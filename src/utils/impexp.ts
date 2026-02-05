@@ -192,3 +192,61 @@ export const parseThemeFromJS = (jsContent: string): ImportedThemeData | null =>
         snippets
     };
 };
+
+// === EXPORT/IMPORT ALL DATA ===
+
+export interface ExportedData {
+    version: string;
+    exportedAt: number;
+    data: {
+        themes: Theme[];
+        snippets: Snippet[];
+        globalEnabled: boolean;
+    };
+}
+
+export const exportAllData = (themes: Theme[], snippets: Snippet[], globalEnabled: boolean): string => {
+    const exportData: ExportedData = {
+        version: '1.0',
+        exportedAt: Date.now(),
+        data: {
+            themes,
+            snippets,
+            globalEnabled
+        }
+    };
+    return JSON.stringify(exportData, null, 2);
+};
+
+export const importAllData = (jsonContent: string): ExportedData['data'] | null => {
+    try {
+        const parsed = JSON.parse(jsonContent) as ExportedData;
+
+        // Validate structure
+        if (!parsed.version || !parsed.data) {
+            return null;
+        }
+
+        if (!Array.isArray(parsed.data.themes) || !Array.isArray(parsed.data.snippets)) {
+            return null;
+        }
+
+        // Basic validation of required fields
+        const hasValidThemes = parsed.data.themes.every(t =>
+            t.id && t.name && Array.isArray(t.domainPatterns) && Array.isArray(t.items)
+        );
+
+        const hasValidSnippets = parsed.data.snippets.every(s =>
+            s.id && s.name && s.type && s.content !== undefined
+        );
+
+        if (!hasValidThemes || !hasValidSnippets) {
+            return null;
+        }
+
+        return parsed.data;
+    } catch (e) {
+        console.error('Failed to parse import data:', e);
+        return null;
+    }
+};

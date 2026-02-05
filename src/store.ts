@@ -20,6 +20,7 @@ interface Store extends AppState {
     updateThemeItem: (themeId: string, itemId: string, updates: Partial<import('./types.ts').ThemeItem>) => void;
     reorderThemeItems: (themeId: string, newItems: import('./types.ts').ThemeItem[]) => void;
     toggleGlobal: () => void;
+    importAllData: (data: { themes: Theme[], snippets: Snippet[], globalEnabled: boolean }, mode: 'merge' | 'replace' | 'skip-duplicates') => { themesAdded: number, snippetsAdded: number, skipped: number };
 }
 
 export const useStore = create<Store>((set) => ({
@@ -269,5 +270,122 @@ export const useStore = create<Store>((set) => ({
             storageService.save(newState);
             return newState;
         });
+    },
+
+    importAllData: (data, mode) => {
+        let themesAdded = 0;
+        let snippetsAdded = 0;
+        let skipped = 0;
+
+        set((state) => {
+            let newThemes: Theme[] = [];
+            let newSnippets: Snippet[] = [];
+
+            if (mode === 'replace') {
+                // Replace mode: use imported data directly with updated timestamps
+                newThemes = data.themes.map(t => ({ ...t, updatedAt: Date.now() }));
+                newSnippets = data.snippets.map(s => ({ ...s, updatedAt: Date.now() }));
+                themesAdded = newThemes.length;
+                snippetsAdded = newSnippets.length;
+            } else if (mode === 'merge') {
+                // Merge mode: add all imported items with new IDs
+                newSnippets = [...state.snippets];
+                newThemes = [...state.themes];
+
+                // Create ID mapping for snippets
+                const snippetIdMap = new Map<string, string>();
+                data.snippets.forEach(snippet => {
+                    const newId = uuidv4();
+                    snippetIdMap.set(snippet.id, newId);
+                    newSnippets.push({
+                        ...snippet,
+                        id: newId,
+                        updatedAt: Date.now(),
+                        createdAt: Date.now()
+                    });
+                    snippetsAdded++;
+                });
+
+                // Import themes with remapped snippet IDs
+                data.themes.forEach(theme => {
+                    const newThemeId = uuidv4();
+                    const remappedItems = theme.items.map(item => ({
+                        ...item,
+                        id: uuidv4(),
+                        snippetId: snippetIdMap.get(item.snippetId) || item.snippetId
+                    }));
+                    newThemes.push({
+                        ...theme,
+                        id: newThemeId,
+                        items: remappedItems,
+                        updatedAt: Date.now(),
+                        createdAt: Date.now()
+                    });
+                    themesAdded++;
+                });
+            } else if (mode === 'skip-duplicates') {
+                // Skip duplicates mode: only add items with unique names
+                newSnippets = [...state.snippets];
+                newThemes = [...state.themes];
+
+                const existingSnippetNames = new Set(state.snippets.map(s => s.name.toLowerCase()));
+                const existingThemeNames = new Set(state.themes.map(t => t.name.toLowerCase()));
+                const snippetIdMap = new Map<string, string>();
+
+                // Import snippets
+                data.snippets.forEach(snippet => {
+                    if (existingSnippetNames.has(snippet.name.toLowerCase())) {
+                        skipped++;
+                        return;
+                    }
+                    const newId = uuidv4();
+                    snippetIdMap.set(snippet.id, newId);
+                    newSnippets.push({
+                        ...snippet,
+                        id: newId,
+                        updatedAt: Date.now(),
+                        createdAt: Date.now()
+                    });
+                    snippetsAdded++;
+                    existingSnippetNames.add(snippet.name.toLowerCase());
+                });
+
+                // Import themes
+                data.themes.forEach(theme => {
+                    if (existingThemeNames.has(theme.name.toLowerCase())) {
+                        skipped++;
+                        return;
+                    }
+                    const newThemeId = uuidv4();
+                    const remappedItems = theme.items
+                        .filter(item => snippetIdMap.has(item.snippetId))
+                        .map(item => ({
+                            ...item,
+                            id: uuidv4(),
+                            snippetId: snippetIdMap.get(item.snippetId)!
+                        }));
+                    newThemes.push({
+                        ...theme,
+                        id: newThemeId,
+                        items: remappedItems,
+                        updatedAt: Date.now(),
+                        createdAt: Date.now()
+                    });
+                    themesAdded++;
+                    existingThemeNames.add(theme.name.toLowerCase());
+                });
+            }
+
+            const newState = {
+                ...state,
+                themes: newThemes,
+                snippets: newSnippets,
+                globalEnabled: mode === 'replace' ? data.globalEnabled : state.globalEnabled
+            };
+            storageService.save(newState);
+            return newState;
+        });
+
+        return { themesAdded, snippetsAdded, skipped };
     }
 }));
