@@ -7,7 +7,7 @@ import { ThemeHeader } from './ThemeDetail/ThemeHeader.tsx';
 import { ImportVariablesModal } from './ThemeDetail/ImportVariablesModal.tsx';
 import { Button } from './ui/Button';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
-import { Trash2, Plus, Box, Play, Pause, Download, Edit } from 'lucide-react';
+import { Trash2, Plus, Box, Play, Pause, Download, Edit, X, MoreVertical } from 'lucide-react';
 import type { SnippetType } from '../types.ts';
 import { exportThemeToJS, exportThemeToCSS } from '../utils/impexp.ts';
 import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
@@ -64,6 +64,72 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
         variables: Record<string, Record<string, string>>;
         domain: string;
     } | null>(null);
+
+    const [selectionState, setSelectionState] = useState<{
+        css: { isSelectionMode: boolean; selectedIds: Set<string> };
+        html: { isSelectionMode: boolean; selectedIds: Set<string> };
+    }>({
+        css: { isSelectionMode: false, selectedIds: new Set() },
+        html: { isSelectionMode: false, selectedIds: new Set() }
+    });
+
+    const isSelectionMode = selectionState[activeTab].isSelectionMode;
+    const selectedSnippetIds = selectionState[activeTab].selectedIds;
+
+    const setIsSelectionMode = (value: boolean) => {
+        setSelectionState(prev => ({
+            ...prev,
+            [activeTab]: { ...prev[activeTab], isSelectionMode: value }
+        }));
+    };
+
+    const setSelectedSnippetIds = (newSet: Set<string> | ((prev: Set<string>) => Set<string>)) => {
+        setSelectionState(prev => {
+            const currentSet = prev[activeTab].selectedIds;
+            const nextSet = typeof newSet === 'function' ? newSet(currentSet) : newSet;
+            return {
+                ...prev,
+                [activeTab]: { ...prev[activeTab], selectedIds: nextSet }
+            };
+        });
+    };
+
+    // Clear selection when exiting selection mode
+    useEffect(() => {
+        if (!isSelectionMode) {
+            setSelectedSnippetIds(new Set());
+        }
+    }, [isSelectionMode]);
+
+    const handleToggleSelection = (id: string) => {
+        setSelectedSnippetIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    };
+
+    const handleBulkDelete = () => {
+        if (selectedSnippetIds.size === 0) return;
+        if (confirm(`Remove ${selectedSnippetIds.size} snippets from this theme?`)) {
+            const { removeSnippetFromTheme } = useStore.getState();
+            selectedSnippetIds.forEach(id => removeSnippetFromTheme(themeId, id));
+            setSelectedSnippetIds(new Set());
+            setIsSelectionMode(false);
+        }
+    };
+
+    const handleBulkEnable = (enable: boolean) => {
+        // We need a direct updateThemeItem call to force enable/disable.
+        const { updateThemeItem } = useStore.getState();
+
+        selectedSnippetIds.forEach(id => {
+            updateThemeItem(themeId, id, { isEnabled: enable });
+        });
+    };
+
+    // ... (rest of imports/logic)
 
     // Responsive & Popover State
     const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
@@ -376,6 +442,28 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
             ];
         }
 
+        if (itemId === 'BULK_ACTIONS_MENU') {
+            return [
+                {
+                    label: 'Enable Selected',
+                    icon: <Play size={14} className="text-green-400" />,
+                    onClick: () => handleBulkEnable(true)
+                },
+                {
+                    label: 'Disable Selected',
+                    icon: <Pause size={14} className="text-slate-400" />,
+                    onClick: () => handleBulkEnable(false)
+                },
+                { separator: true },
+                {
+                    label: `Delete ${selectedSnippetIds.size} Snippets`,
+                    icon: <Trash2 size={14} />,
+                    danger: true,
+                    onClick: handleBulkDelete
+                }
+            ];
+        }
+
         const item = theme.items.find(i => i.id === itemId);
         if (!item) return [];
 
@@ -505,13 +593,17 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     }, []);
 
     const handleSelect = useCallback((itemId: string) => {
+        if (isSelectionMode) {
+            handleToggleSelection(itemId);
+            return;
+        }
         setSelectedItemId(itemId);
         requestAnimationFrame(() => {
             if (editorRefs.current[itemId]) {
                 editorRefs.current[itemId]?.focus();
             }
         });
-    }, []);
+    }, [isSelectionMode]);
 
     const handleSetEditing = useCallback((itemId: string, isEditing: boolean) => {
         setEditingSnippetId(isEditing ? itemId : null);
@@ -600,13 +692,17 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                             theme={theme}
                             selectedItemId={selectedItemId}
                             onSelect={(id) => {
-                                setSelectedItemId(id);
-                                // Focus editor on sidebar click
-                                requestAnimationFrame(() => {
-                                    if (editorRefs.current[id]) {
-                                        editorRefs.current[id]?.focus();
-                                    }
-                                });
+                                if (isSelectionMode) {
+                                    handleToggleSelection(id);
+                                } else {
+                                    setSelectedItemId(id);
+                                    // Focus editor on sidebar click
+                                    requestAnimationFrame(() => {
+                                        if (editorRefs.current[id]) {
+                                            editorRefs.current[id]?.focus();
+                                        }
+                                    });
+                                }
                             }}
                             onReorder={handleReorder}
                             onContextMenu={handleContextMenu}
@@ -614,6 +710,8 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                             isResizing={isResizing}
                             renamingItemId={renamingSidebarItemId}
                             onRenameCancel={() => setRenamingSidebarItemId(null)}
+                            isSelectionMode={isSelectionMode}
+                            selectedItemIds={selectedSnippetIds}
                         />
                     </div>
                 )}
@@ -639,22 +737,44 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                 if (filteredItems.length === 0) return null;
                                 const isAllCollapsed = filteredItems.every(i => collapsedItems.has(i.id));
                                 return (
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => {
-                                            const next = new Set(collapsedItems);
-                                            if (isAllCollapsed) {
-                                                filteredItems.forEach(i => next.delete(i.id));
-                                            } else {
-                                                filteredItems.forEach(i => next.add(i.id));
-                                            }
-                                            setCollapsedItems(next);
-                                        }}
-                                        className="text-slate-500 hover:text-white"
-                                    >
-                                        {isAllCollapsed ? 'Expand All' : 'Collapse All'}
-                                    </Button>
+                                    <>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => {
+                                                const next = new Set(collapsedItems);
+                                                if (isAllCollapsed) {
+                                                    filteredItems.forEach(i => next.delete(i.id));
+                                                } else {
+                                                    filteredItems.forEach(i => next.add(i.id));
+                                                }
+                                                setCollapsedItems(next);
+                                            }}
+                                            className="text-slate-500 hover:text-white"
+                                        >
+                                            {isAllCollapsed ? 'Expand All' : 'Collapse All'}
+                                        </Button>
+                                        <div className="h-6 w-px bg-slate-800 mx-1"></div>
+                                        {!isSelectionMode ? (
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => setIsSelectionMode(true)}
+                                                className="text-slate-500 hover:text-white"
+                                            >
+                                                Select
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => setIsSelectionMode(false)}
+                                                className="text-blue-400 font-medium"
+                                            >
+                                                Done
+                                            </Button>
+                                        )}
+                                    </>
                                 );
                             })()}
                         </div>
@@ -687,6 +807,67 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                         </div>
                     </div>
 
+                    {/* Bulk Actions Bar for Theme Detail */}
+                    {isSelectionMode && selectedSnippetIds.size > 0 && (
+                        <div className="absolute bottom-4 left-4 right-4 bg-slate-800 border border-slate-700 rounded-lg p-2 shadow-2xl flex items-center justify-between z-50 animate-in slide-in-from-bottom-2">
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 rounded-full hover:bg-slate-700 text-slate-400 hover:text-white bg-slate-700/50"
+                                    onClick={() => setSelectedSnippetIds(new Set())}
+                                    title="Deselect All"
+                                >
+                                    <X size={16} />
+                                </Button>
+                                <div className="text-sm text-slate-300 font-medium">
+                                    {selectedSnippetIds.size} selected
+                                </div>
+                            </div>
+
+                            <div className="flex gap-2">
+                                <div className="h-6 w-px bg-slate-700 mx-1"></div>
+
+                                {viewportWidth > 600 ? (
+                                    <>
+                                        <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(true)} title="Enable Selected">
+                                            <Play size={14} className="mr-1.5 text-green-400" /> Enable
+                                        </Button>
+                                        <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(false)} title="Disable Selected">
+                                            <Pause size={14} className="mr-1.5 text-slate-400" /> Disable
+                                        </Button>
+                                        <div className="h-6 w-px bg-slate-700 mx-1"></div>
+                                        <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-900/20" onClick={handleBulkDelete}>
+                                            <Trash2 size={14} className="mr-1.5" /> Delete
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (menuState.itemId === 'BULK_ACTIONS_MENU') {
+                                                setMenuState({ x: 0, y: 0, itemId: null });
+                                                return;
+                                            }
+                                            const rect = e.currentTarget.getBoundingClientRect();
+                                            setMenuState({
+                                                // Center horizontally relative to button, display ABOVE the button
+                                                x: rect.left,
+                                                y: rect.top,
+                                                itemId: 'BULK_ACTIONS_MENU',
+                                                source: 'stack'
+                                            });
+                                        }}
+                                    >
+                                        <MoreVertical size={16} />
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     <div className="flex-1 p-3">
                         {filteredItems.length > 0 ? (
                             <DndContext
@@ -714,13 +895,14 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                                     isThemeActive={theme.isActive}
                                                     isCollapsed={collapsedItems.has(item.id)}
                                                     onToggleCollapse={handleToggleCollapse}
-                                                    isSelected={selectedItemId === item.id}
+                                                    isSelected={isSelectionMode ? selectedSnippetIds.has(item.id) : selectedItemId === item.id}
                                                     itemRef={() => { }} // Modified in child to use dnd ref
                                                     onKebabClick={handleKebabClick}
                                                     isEditing={editingSnippetId === item.id}
                                                     onSetEditing={handleSetEditing}
                                                     onSelect={handleSelect}
                                                     editorRef={(el) => handleEditorRef(item.id, el)}
+                                                    isSelectionMode={isSelectionMode}
                                                 />
                                             );
                                         }}

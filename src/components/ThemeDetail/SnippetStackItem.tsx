@@ -21,6 +21,7 @@ interface SnippetStackItemProps {
     onSelect: (id: string) => void;
     isThemeActive: boolean;
     editorRef?: React.Ref<any>;
+    isSelectionMode?: boolean;
 }
 
 export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
@@ -35,7 +36,8 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
     onSetEditing,
     onSelect,
     isThemeActive,
-    editorRef
+    editorRef,
+    isSelectionMode
 }) => {
     const { snippets, updateSnippet, updateThemeItem, toggleThemeItem } = useStore();
     const s = snippets.find(sn => sn.id === item.snippetId);
@@ -89,12 +91,33 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                     ${isCollapsed ? 'hover:bg-slate-800' : 'bg-slate-800/30 border-b border-slate-800/50'}
                 `}
                 onClick={(e) => {
-                    e.stopPropagation();
+                    if (isSelectionMode) {
+                        onSelect(item.id);
+                        return;
+                    }
+                    e.stopPropagation(); // Stop propagation? Wait, original onClick logic... output of step 60 line 91
+                    // The original code uses onSelect(item.id) and onToggleCollapse(item.id).
                     onSelect(item.id);
                     onToggleCollapse(item.id);
                 }}
             >
-                <button className="text-slate-500 hover:text-white transition-colors">
+                {/* Selection Checkbox */}
+                {isSelectionMode && (
+                    <div
+                        className={`mr-3 w-4 h-4 rounded border flex items-center justify-center transition-colors cursor-pointer ${isSelected ? 'bg-blue-500 border-blue-500' : 'border-slate-600 bg-transparent'}`}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onSelect(item.id);
+                        }}
+                    >
+                        {isSelected && <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                    </div>
+                )}
+
+                <button className="text-slate-500 hover:text-white transition-colors" onClick={(e) => {
+                    e.stopPropagation(); // prevent triggering selection if just collapsing
+                    onToggleCollapse(item.id);
+                }}>
                     {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
                 </button>
 

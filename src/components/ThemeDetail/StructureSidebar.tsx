@@ -19,6 +19,8 @@ interface StructureSidebarProps {
     isResizing: boolean;
     renamingItemId?: string | null;
     onRenameCancel?: () => void;
+    isSelectionMode?: boolean;
+    selectedItemIds?: Set<string>;
 }
 
 export const StructureSidebar: React.FC<StructureSidebarProps> = ({
@@ -33,7 +35,9 @@ export const StructureSidebar: React.FC<StructureSidebarProps> = ({
     itemRefs,
     isResizing,
     renamingItemId,
-    onRenameCancel
+    onRenameCancel,
+    isSelectionMode = false,
+    selectedItemIds = new Set()
 }) => {
     const { toggleThemeItem, removeSnippetFromTheme, updateSnippet } = useStore();
     const [itemToRemove, setItemToRemove] = useState<string | null>(null);
@@ -51,21 +55,45 @@ export const StructureSidebar: React.FC<StructureSidebarProps> = ({
                             const s = snippets.find(sn => sn.id === item.snippetId);
                             if (!s) return null;
                             const isRenaming = renamingItemId === item.id;
+                            const isSelected = isSelectionMode ? selectedItemIds.has(item.id) : selectedItemId === item.id;
 
                             return (
                                 <Reorder.Item
                                     key={item.id}
                                     value={item}
                                     layout={!isResizing as any}
-                                    className={`mb-1 bg-slate-900 border-l-2 rounded cursor-default group relative flex items-center ${selectedItemId === item.id ? 'border-blue-500 bg-slate-800' : 'border-transparent hover:bg-slate-800'} ${!item.isEnabled ? 'opacity-50 grayscale-[0.5]' : ''} ${isResizing ? '!transform-none !transition-none' : ''}`}
+                                    dragListener={!isSelectionMode}
+                                    className={`mb-1 bg-slate-900 border-l-2 rounded cursor-default group relative flex items-center transition-colors 
+                                        ${isSelected
+                                            ? (isSelectionMode ? 'border-transparent bg-slate-800' : 'border-blue-500 bg-slate-800')
+                                            : 'border-transparent hover:bg-slate-800'
+                                        } 
+                                        ${!item.isEnabled && !isSelected ? 'opacity-50 grayscale-[0.5]' : ''} 
+                                        ${isResizing ? '!transform-none !transition-none' : ''}`}
                                     onClick={() => onSelect(item.id)}
                                     onContextMenu={(e) => onContextMenu(e, item.id, 'sidebar')}
                                 >
                                     {/* Render Logic Ref Wrapper because Reorder.Item might not accept ref or interfere */}
                                     <div ref={el => { itemRefs.current[item.id] = el; }} className="contents">
-                                        {/* Drag Handle */}
-                                        <div className="pl-2 text-slate-600 cursor-grab active:cursor-grabbing hover:text-slate-400">
-                                            <GripVertical size={14} />
+                                        {/* Drag Handle or Checkbox */}
+                                        <div
+                                            className="pl-2 text-slate-600 cursor-grab active:cursor-grabbing hover:text-slate-400 flex items-center"
+                                            onClick={(e) => {
+                                                if (isSelectionMode) {
+                                                    e.stopPropagation();
+                                                    onSelect(item.id);
+                                                }
+                                            }}
+                                        >
+                                            {isSelectionMode ? (
+                                                <div
+                                                    className={`w-3.5 h-3.5 rounded border flex items-center justify-center transition-colors cursor-pointer ${isSelected ? 'bg-blue-500 border-blue-500' : 'border-slate-500 bg-transparent'}`}
+                                                >
+                                                    {isSelected && <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                                                </div>
+                                            ) : (
+                                                <GripVertical size={14} />
+                                            )}
                                         </div>
 
                                         <div className="flex-1 min-w-0 p-2 pl-2">
@@ -96,8 +124,9 @@ export const StructureSidebar: React.FC<StructureSidebarProps> = ({
                                                     />
                                                 ) : (
                                                     <span
-                                                        className={`text-sm font-medium truncate ${selectedItemId === item.id ? 'text-white' : 'text-slate-400'} ${!item.isEnabled ? 'line-through opacity-75' : ''}`}
+                                                        className={`text-sm font-medium truncate ${isSelected ? 'text-white' : 'text-slate-400'} ${!item.isEnabled ? 'line-through opacity-75' : ''}`}
                                                         onDoubleClick={(e) => {
+                                                            if (isSelectionMode) return;
                                                             e.stopPropagation();
                                                             // We need a way to trigger rename from here if not using context menu
                                                             // But prop 'onRenameStart' is not passed. 
