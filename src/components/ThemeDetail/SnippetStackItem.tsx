@@ -47,6 +47,7 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
     const [confirmPush, setConfirmPush] = useState(false);
     const [confirmRevert, setConfirmRevert] = useState(false);
     const [confirmReset, setConfirmReset] = useState(false);
+    const [confirmSave, setConfirmSave] = useState(false);
 
     const {
         attributes,
@@ -214,8 +215,7 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                                     variant="outline"
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        const newName = prompt('Enter name for Library:', s.name);
-                                        if (newName) updateSnippet(s.id, { name: newName, isLibraryItem: true });
+                                        setConfirmSave(true);
                                     }}
                                     className="h-5 text-[10px] px-1.5 border-slate-700 text-slate-400 hover:text-purple-300 hover:border-purple-500/50"
                                     title="Save to library"
@@ -403,6 +403,18 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                 message="Reset snippet to its original imported state? This will discard all changes."
                 confirmLabel="Reset"
                 isDangerous
+            />
+
+            <ConfirmDialog
+                isOpen={confirmSave}
+                onClose={() => setConfirmSave(false)}
+                onConfirm={() => {
+                    updateSnippet(s.id, { isLibraryItem: true });
+                    setConfirmSave(false);
+                }}
+                title="Save to Library"
+                message={`Save "${s.name}" to the library?`}
+                confirmLabel="Save"
             />
         </div>
     );
