@@ -1,7 +1,8 @@
 import React from 'react';
-import { Trash2, MoreVertical, Globe } from 'lucide-react';
+import { MoreVertical, Globe } from 'lucide-react';
 import type { Theme } from '../types';
 import { isDomainMatch } from '../utils/domains';
+import { Toggle } from './ui/Toggle';
 
 export interface ThemeItemProps {
     theme: Theme;
@@ -17,6 +18,7 @@ export interface ThemeItemProps {
     onDeleteClick: (e: React.MouseEvent) => void;
     onDomainClick?: (e: React.MouseEvent) => void;
     isOtherInGroupActive?: boolean;
+    isNested?: boolean;
     // DnD props passed from parent wrapper
     dragHandleProps?: any;
     isDragging?: boolean;
@@ -35,9 +37,9 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
     onContextMenu,
     onKebabClick,
     onUpdateTheme,
-    onDeleteClick,
     onDomainClick,
     isOtherInGroupActive,
+    isNested,
     dragHandleProps,
     isDragging,
     setNodeRef,
@@ -45,21 +47,22 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
 }) => {
     const isMatch = activeUrl ? isDomainMatch(theme.domainPatterns, activeUrl) : false;
     const isActiveOnTab = theme.isActive && globalEnabled && isMatch;
-    const isSystemDisabled = !globalEnabled;
 
     return (
         <div
             ref={setNodeRef}
             style={style}
             {...dragHandleProps}
-            className={`p-3 rounded border flex flex-col gap-2 cursor-pointer transition-all active:scale-[0.99]
+            className={`p-3 rounded-lg border flex flex-col gap-2 cursor-pointer transition-all active:scale-[0.99] group
                 ${isSelected
                     ? 'bg-blue-900/20 border-blue-500/50'
                     : isActiveOnTab
                         ? 'bg-slate-800 border-green-500/50 shadow-[0_0_10px_-2px_rgba(34,197,94,0.15)]'
-                        : 'bg-slate-800 border-slate-700 hover:border-slate-500'
+                        : isNested
+                            ? 'border-transparent hover:bg-slate-700/30'
+                            : 'bg-slate-800 border-slate-700 hover:border-slate-500'
                 }
-                ${!theme.isActive && !isSelected && 'opacity-75'}
+                ${!theme.isActive && !isNested && !isSelected && 'opacity-75'}
                 ${isDragging ? 'shadow-xl ring-2 ring-blue-500/50 z-10' : ''}
             `}
             onClick={() => {
@@ -80,7 +83,7 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
                             </div>
                         </div>
                     )}
-                    <span className={`font-medium truncate ${isActiveOnTab ? 'text-green-400' : 'text-slate-200'} ${isSelected ? 'text-white' : ''}`}>
+                    <span className={`text-sm font-medium truncate ${isActiveOnTab ? 'text-green-400' : 'text-slate-200'} ${isSelected ? 'text-white' : ''}`}>
                         {theme.name}
                     </span>
                     {!theme.groupId && onDomainClick && (
@@ -102,56 +105,35 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
                 </div>
                 <div className="flex gap-1 items-center">
                     {isActiveOnTab ? (
-                        <div className="flex items-center gap-1.5 text-[10px] font-medium px-2 py-1 rounded-full text-green-400/90 bg-green-500/5">
-                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]"></div>
+                        <div className="flex items-center gap-1.5 text-[10px] font-medium px-2 py-1 rounded-full text-green-400/90 bg-green-500/10">
                             Active on this tab
                         </div>
                     ) : (isMatch && theme.groupId && !theme.isActive && isOtherInGroupActive) ? (
                         <div className="flex items-center gap-1.5 text-[10px] font-medium px-2 py-1 rounded-full text-amber-500/90 bg-amber-500/5" title="Another theme in this group is active on this tab">
-                            <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
+                            <div className="w-1.2 h-1.2 rounded-full bg-amber-500/50"></div>
                             Group active
                         </div>
                     ) : null}
-                    <div className="flex gap-1">
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                if (!globalEnabled) return;
-                                onUpdateTheme({ isActive: !theme.isActive });
-                            }}
-                            onPointerDown={e => e.stopPropagation()}
+                    <div className="flex gap-1 items-center ml-2">
+                        <Toggle
+                            checked={theme.isActive}
+                            isActive={isActiveOnTab}
+                            onChange={(checked) => onUpdateTheme({ isActive: checked })}
                             disabled={!globalEnabled}
-                            className={`p-1 rounded flex items-center gap-1.5 px-2 transition-colors ${isSystemDisabled
-                                ? 'bg-slate-800/50 text-slate-600 cursor-not-allowed opacity-50'
-                                : theme.isActive
-                                    ? 'bg-green-500/10 text-green-400 border border-green-500/20'
-                                    : 'bg-slate-700/50 text-slate-500 hover:bg-slate-700 hover:text-slate-300'
-                                }`}
-                            title={isSystemDisabled ? "System disabled" : (theme.isActive ? "Disable theme" : "Enable theme")}
-                        >
-                            <div className={`w-1.5 h-1.5 rounded-full ${isSystemDisabled ? 'bg-slate-600' : (theme.isActive ? 'bg-green-400 animate-pulse' : 'bg-slate-500')}`}></div>
-                            <span className="text-[10px] font-bold uppercase">{theme.isActive ? 'ON' : 'OFF'}</span>
-                        </button>
+                            size="sm"
+                        />
                         {!isSelectionMode && (
-                            <button
-                                onClick={onDeleteClick}
-                                onPointerDown={e => e.stopPropagation()}
-                                className="p-1 rounded text-slate-600 hover:text-red-400 hover:bg-slate-700 transition-colors"
-                                title="Delete theme"
-                            >
-                                <Trash2 size={14} />
-                            </button>
+                            <div className="flex items-center gap-1">
+                                <button
+                                    onClick={onKebabClick}
+                                    onPointerDown={e => e.stopPropagation()}
+                                    className="p-1 rounded text-slate-500 hover:text-white hover:bg-slate-700"
+                                >
+                                    <MoreVertical size={16} />
+                                </button>
+                            </div>
                         )}
                     </div>
-                    {!isSelectionMode && (
-                        <button
-                            onClick={onKebabClick}
-                            onPointerDown={e => e.stopPropagation()}
-                            className="p-1 rounded text-slate-500 hover:text-white hover:bg-slate-700"
-                        >
-                            <MoreVertical size={16} />
-                        </button>
-                    )}
                 </div>
             </div>
         </div>

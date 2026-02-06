@@ -102,27 +102,22 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
             {...listeners} // Drag handle is entire group for now, or maybe just header?
             // Let's make entire group draggable for ease, unless interacting with internal items
             className={`
-                rounded-lg border overflow-hidden mb-2
-                ${isCollapsed && isActiveOnTab
-                    ? 'border-green-500/50 bg-slate-800 shadow-[0_0_10px_-2px_rgba(34,197,94,0.15)]'
-                    : 'border-blue-900/30 bg-slate-900/50'
+                rounded-lg border overflow-hidden transition-all
+                ${isActiveOnTab
+                    ? isCollapsed
+                        ? 'border-green-500/50 bg-slate-800 shadow-[0_0_10px_-2px_rgba(34,197,94,0.15)]'
+                        : 'border-green-500/25 bg-slate-900/50'
+                    : 'border-slate-800 bg-slate-900/50'
                 }
                 ${isDragging ? 'shadow-xl ring-2 ring-blue-500/50 z-10' : ''}
             `}
         >
             {/* Group Header */}
             <div
-                className="flex items-center justify-between p-2 bg-slate-800/80 border-b border-blue-900/30 cursor-pointer hover:bg-slate-800"
+                className={`flex items-center justify-between p-2 bg-slate-800/80 cursor-pointer hover:bg-slate-800 transition-colors ${!isCollapsed ? 'border-b border-slate-700/50' : ''}`}
                 onClick={handleHeaderClick}
             >
                 <div className="flex items-center gap-2 min-w-0">
-                    <div
-                        className="p-1 rounded bg-blue-500/10 text-blue-400"
-                        title="Switch Group: Only one theme active at a time"
-                    >
-                        <LinkIcon size={12} />
-                    </div>
-
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
@@ -134,6 +129,13 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
                     >
                         <ChevronDown size={14} className={`transition-transform ${isCollapsed ? '-rotate-90' : ''}`} />
                     </button>
+
+                    <div
+                        className="p-1 rounded bg-blue-500/10 text-blue-400"
+                        title="Switch Group: Only one theme active at a time"
+                    >
+                        <LinkIcon size={12} />
+                    </div>
 
                     <button
                         onClick={(e) => {
@@ -251,37 +253,30 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
 
             {/* Themes List */}
             {!isCollapsed && (
-                <div className="p-1 flex flex-col gap-1">
-                    {themes.map(theme => (
-                        <ThemeItem
-                            key={theme.id}
-                            theme={theme}
-                            activeUrl={activeUrl}
-                            isSelectionMode={isSelectionMode}
-                            isSelected={selectedThemeIds.has(theme.id)}
-                            globalEnabled={globalEnabled}
-                            onSelect={() => onSelectTheme(theme.id)}
-                            onToggleSelection={() => onToggleSelection(theme.id)}
-                            onContextMenu={(e) => onContextMenu(e, theme.id)}
-                            onKebabClick={(e) => {
-                                e.stopPropagation();
-                                // We need to pass this up, but the prop signature on ThemeItem expects void or simple event
-                                // ThemeItem calls: onKebabClick(e)
-                                // We need to trigger the parent's context menu handler logic.
-                                // The parent `ThemeList` passed `handleContextMenu` to `onContextMenu`.
-                                // It passed `handleKebabClick` (which calculates rect) to `onKebabClick` for single items.
-                                // But here we need to invoke `onContextMenu` with the right ID, 
-                                // OR we need to accept a separate onKebabClick prop in ThemeGroup.
-                                // IMPORTANT: ThemeList passes `onContextMenu` which expects (e, id).
-                                // Let's reuse onContextMenu for the kebab click since it opens the same menu.
-                                onContextMenu(e, theme.id);
-                            }}
-                            onUpdateTheme={(updates) => onUpdateTheme(theme.id, updates)}
-                            onDeleteClick={(e) => onDeleteTheme(e, theme.id)}
-                            isOtherInGroupActive={themes.some(t => t.isActive && t.id !== theme.id)}
-                            // NOT passing dragHandleProps, so items aren't draggable individually (for now)
-                            style={{}} // Static position relative to group
-                        />
+                <div className="flex flex-col">
+                    {themes.map((theme, index) => (
+                        <div key={theme.id}>
+                            {index > 0 && <div className="mx-4 h-px bg-slate-800/50" />}
+                            <ThemeItem
+                                theme={theme}
+                                activeUrl={activeUrl}
+                                isSelectionMode={isSelectionMode}
+                                isSelected={selectedThemeIds.has(theme.id)}
+                                globalEnabled={globalEnabled}
+                                onSelect={() => onSelectTheme(theme.id)}
+                                onToggleSelection={() => onToggleSelection(theme.id)}
+                                onContextMenu={(e) => onContextMenu(e, theme.id)}
+                                onKebabClick={(e) => {
+                                    e.stopPropagation();
+                                    onContextMenu(e, theme.id);
+                                }}
+                                onUpdateTheme={(updates) => onUpdateTheme(theme.id, updates)}
+                                onDeleteClick={(e) => onDeleteTheme(e, theme.id)}
+                                isOtherInGroupActive={themes.some(t => t.isActive && t.id !== theme.id)}
+                                isNested={true}
+                                style={{}}
+                            />
+                        </div>
                     ))}
                 </div>
             )}

@@ -2,6 +2,7 @@ import React from 'react';
 
 interface ToggleProps {
     checked: boolean;
+    isActive?: boolean; // New prop for "Active on this tab"
     onChange: (checked: boolean) => void;
     labelOn?: string;
     labelOff?: string;
@@ -12,6 +13,7 @@ interface ToggleProps {
 
 export const Toggle: React.FC<ToggleProps> = ({
     checked,
+    isActive = false,
     onChange,
     labelOn = 'ON',
     labelOff = 'OFF',
@@ -20,6 +22,15 @@ export const Toggle: React.FC<ToggleProps> = ({
     title
 }) => {
     const isSm = size === 'sm';
+
+    // Tooltip logic
+    const getTooltip = () => {
+        if (title) return title;
+        if (disabled) return "System disabled";
+        if (!checked) return "Theme disabled";
+        if (isActive) return "Enabled and active on this tab";
+        return "Enabled but inactive on this tab";
+    };
 
     return (
         <button
@@ -38,7 +49,7 @@ export const Toggle: React.FC<ToggleProps> = ({
                         : 'bg-slate-700/50 text-slate-500 border-transparent hover:bg-slate-700 hover:text-slate-300'
                 }
             `}
-            title={title}
+            title={getTooltip()}
         >
             <div className={`
                 rounded-full transition-all
@@ -46,7 +57,9 @@ export const Toggle: React.FC<ToggleProps> = ({
                 ${disabled
                     ? 'bg-slate-600'
                     : checked
-                        ? 'bg-green-400 animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.6)]'
+                        ? isActive
+                            ? 'bg-green-400 animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.6)]'
+                            : 'bg-slate-500 shadow-none'
                         : 'bg-slate-500'
                 }
             `}></div>

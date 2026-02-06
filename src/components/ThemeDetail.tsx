@@ -10,6 +10,8 @@ import { Button } from './ui/Button';
 import { ConfirmDialog } from './ui/Dialog';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
 import { Trash2, Plus, Box, Play, Pause, Download, Edit, X, MoreVertical, Unlink, Copy } from 'lucide-react';
+import { useActiveTab } from '../hooks/useActiveTab.ts';
+import { isDomainMatch } from '../utils/domains.ts';
 import { useToast } from './ui/Toast';
 import type { SnippetType } from '../types.ts';
 import { exportThemeToJS, exportThemeToCSS } from '../utils/impexp.ts';
@@ -136,15 +138,14 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
     };
 
     const handleBulkEnable = (enable: boolean) => {
-        // We need a direct updateThemeItem call to force enable/disable.
         const { updateThemeItem } = useStore.getState();
-
         selectedSnippetIds.forEach(id => {
             updateThemeItem(themeId, id, { isEnabled: enable });
         });
     };
 
-    // ... (rest of imports/logic)
+    const activeUrl = useActiveTab();
+    const isMatch = activeUrl && theme ? isDomainMatch(theme.domainPatterns, activeUrl) : false;
 
     // Responsive & Popover State
     const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
@@ -1415,11 +1416,22 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
                                     </Button>
                                 )}
 
+                                <Button
+                                    variant="filled"
+                                    size="sm"
+                                    onClick={() => handleCreateLocal(activeTab)}
+                                    className={activeTab === 'css' ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-orange-700 hover:bg-orange-600 text-white font-bold'}
+                                    icon={<Plus size={viewportWidth > 500 ? 10 : 14} />}
+                                    title={`Add ${activeTab.toUpperCase()}`}
+                                >
+                                    {viewportWidth > 500 && `Add ${activeTab === 'css' ? 'CSS' : 'HTML'}`}
+                                </Button>
+
                                 {viewportWidth <= 500 && (
                                     <Button
-                                        variant="outline"
+                                        variant="ghost"
                                         size="sm"
-                                        className="text-slate-400 hover:text-white border-slate-700 hover:border-slate-500"
+                                        className="text-slate-400 hover:text-white"
                                         onClick={(e) => {
                                             const rect = e.currentTarget.getBoundingClientRect();
                                             setMenuState({
@@ -1434,17 +1446,6 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
                                         <MoreVertical size={16} />
                                     </Button>
                                 )}
-
-                                <Button
-                                    variant="filled"
-                                    size="sm"
-                                    onClick={() => handleCreateLocal(activeTab)}
-                                    className={activeTab === 'css' ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-orange-700 hover:bg-orange-600 text-white font-bold'}
-                                    icon={<Plus size={viewportWidth > 500 ? 10 : 14} />}
-                                    title={`Add ${activeTab.toUpperCase()}`}
-                                >
-                                    {viewportWidth > 500 && `Add ${activeTab === 'css' ? 'CSS' : 'HTML'}`}
-                                </Button>
                             </div>
                         )}
                     </div>
@@ -1545,7 +1546,8 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
                                                         // SnippetStackItem handles its own internal focus for editor.
                                                     }
                                                 }}
-                                                isThemeActive={true}
+                                                isThemeActive={theme?.isActive ?? false}
+                                                isMatch={isMatch}
                                                 editorRef={(el: any) => editorRefs.current[item.id] = el}
                                                 isSelectionMode={isSelectionMode}
                                                 searchQuery={searchQuery}

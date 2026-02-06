@@ -23,6 +23,7 @@ interface SnippetStackItemProps {
     onSetEditing: (id: string, isEditing: boolean) => void;
     onSelect: (id: string) => void;
     isThemeActive: boolean;
+    isMatch: boolean;
     editorRef?: React.Ref<any>;
     isSelectionMode?: boolean;
     searchQuery?: string;
@@ -41,6 +42,7 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
     onSetEditing,
     onSelect,
     isThemeActive,
+    isMatch,
     editorRef,
     isSelectionMode,
     searchQuery,
@@ -248,11 +250,10 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                                         e.stopPropagation();
                                         setConfirmSave(true);
                                     }}
-                                    className="h-5 text-[10px] px-1.5 border-slate-700 text-slate-400 hover:text-purple-300 hover:border-purple-500/50"
-                                    title="Save to library"
-                                    icon={<Upload size={10} />}
+                                    className="h-5 text-[10px] px-2 border-slate-700 text-slate-400 hover:text-purple-300 hover:border-purple-500/50"
+                                    title="Publish to library"
                                 >
-                                    Save
+                                    Publish
                                 </Button>
                             ) : (
                                 item.overrides?.content !== undefined && (
@@ -307,10 +308,10 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                     {/* Toggle Switch */}
                     <Toggle
                         checked={item.isEnabled}
+                        isActive={isThemeActive && item.isEnabled && isMatch}
                         onChange={() => toggleThemeItem(themeId, item.id)}
                         size="sm"
                         disabled={!isThemeActive}
-                        title={!isThemeActive ? "Enable theme to toggle snippets" : "Toggle snippet"}
                     />
 
                     {/* Kebab Menu */}
@@ -489,9 +490,9 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                     updateSnippet(s.id, { isLibraryItem: true });
                     setConfirmSave(false);
                 }}
-                title="Save to library"
-                message={`Save "${s.name}" to the library?`}
-                confirmLabel="Save"
+                title="Publish to library"
+                message={`Publish "${s.name}" to the library?`}
+                confirmLabel="Publish"
             />
         </div>
     );

@@ -90,7 +90,7 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                         <div
                             className={`flex items-center gap-1.5 text-[10px] font-medium px-2 py-1 rounded-full ${isMatch
                                 ? theme.isActive
-                                    ? 'text-green-400/90 bg-green-500/5'
+                                    ? 'text-green-400/90 bg-green-500/10'
                                     : 'text-amber-500/90 bg-amber-500/5'
                                 : 'text-slate-500'
                                 }`}
@@ -104,12 +104,6 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                                     : "Theme does not run on this tab"
                             }
                         >
-                            <div className={`w-1.5 h-1.5 rounded-full ${isMatch
-                                ? theme.isActive
-                                    ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]'
-                                    : 'bg-amber-500'
-                                : 'bg-slate-600'
-                                }`}></div>
                             {isMatch
                                 ? theme.isActive
                                     ? "Active on this tab"
@@ -135,14 +129,14 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                 )}
 
                 {!globalEnabled ? (
-                    <Toggle checked={false} onChange={() => { }} disabled labelOff="OFF" title="System disabled via master switch" />
+                    <Toggle checked={false} onChange={() => { }} disabled labelOff="OFF" />
                 ) : (
                     <Toggle
                         checked={theme.isActive}
+                        isActive={isMatch}
                         onChange={() => updateTheme(theme.id, { isActive: !theme.isActive })}
                         labelOn="ON"
                         labelOff="OFF"
-                        title={theme.isActive ? "Disable theme" : "Enable theme"}
                     />
                 )}
 

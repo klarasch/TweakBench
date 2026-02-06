@@ -14,9 +14,17 @@
 - **Copy**: Use sentence case for all UI labels, buttons, and copy.
 
 ## Current Task
-- Improving theme application performance.
+- General maintenance and UI refinements.
 
 ## Decisions & Changes
 - **Storage Optimization**: Added `immediate` flag to `storageService.save` to bypass debounce for UI actions. Reduced default debounce from 1000ms to 300ms.
 - **Immediate Feedback**: Implemented `broadcastStateUpdate` messaging in `src/utils/messaging.ts` to push state changes to content scripts instantly.
 - **Content Script Efficiency**: Refactored `updateStyles` in `src/content/index.ts` to use a Map for snippet lookups ($O(1)$) and added a message listener for `STATE_UPDATED`.
+- **UI Cleanup (Modernization)**:
+    - Replaced ON/OFF status buttons with modern switch toggles.
+    - Implemented smart toggles that distinguish between "enabled" and "active on current tab" (pulsing green vs neutral dot).
+    - Replaced redundant status badge dot with clearer switch-based feedback.
+    - Standardized corner radius to `rounded-lg` across the theme list for visual consistency.
+    - Reorganized group headers to swap Expand/Collapse and Group Label positions.
+    - Theme names now use standard `text-sm` font size.
+    - Moved "Delete" action into the overflow menu to reduce visual weight.
