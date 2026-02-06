@@ -62,14 +62,14 @@ export const StructureSidebar: React.FC<StructureSidebarProps> = ({
                                     key={item.id}
                                     value={item}
                                     layout={!isResizing as any}
-                                    dragListener={!isSelectionMode}
+                                    dragListener={!isSelectionMode && !isRenaming}
                                     className={`mb-1 bg-slate-900 border-l-2 rounded cursor-default group relative flex items-center transition-colors 
-                                        ${isSelected
+                                            ${isSelected
                                             ? (isSelectionMode ? 'border-transparent bg-slate-800' : 'border-blue-500 bg-slate-800')
                                             : 'border-transparent hover:bg-slate-800'
                                         } 
-                                        ${!item.isEnabled && !isSelected ? 'opacity-50 grayscale-[0.5]' : ''} 
-                                        ${isResizing ? '!transform-none !transition-none' : ''}`}
+                                            ${!item.isEnabled && !isSelected ? 'opacity-50 grayscale-[0.5]' : ''} 
+                                            ${isResizing ? '!transform-none !transition-none' : ''}`}
                                     onClick={() => onSelect(item.id)}
                                     onContextMenu={(e) => onContextMenu(e, item.id, 'sidebar')}
                                 >
@@ -121,6 +121,7 @@ export const StructureSidebar: React.FC<StructureSidebarProps> = ({
                                                             onRenameCancel?.();
                                                         }}
                                                         onClick={(e) => e.stopPropagation()}
+                                                        onPointerDown={(e) => e.stopPropagation()}
                                                     />
                                                 ) : (
                                                     <span

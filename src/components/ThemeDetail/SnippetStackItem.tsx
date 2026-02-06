@@ -83,12 +83,12 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
         transform,
         transition,
         isDragging
-    } = useSortable({ id: item.id });
+    } = useSortable({ id: item.id, disabled: isEditing });
 
     const style = {
         transform: CSS.Transform.toString(transform),
         transition: isDragging ? undefined : transition, // Remove transition when dragging for snappy feel
-        zIndex: isDragging ? 10 : 'auto', // High Z-Index when dragging
+        zIndex: isDragging ? 20 : 'auto', // High Z-Index when dragging
         opacity: isDragging ? 0.8 : 1,
         cursor: isDragging ? 'grabbing' : undefined,
     };
@@ -177,6 +177,7 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                                 onChange={(e) => updateSnippet(s.id, { name: e.target.value })}
                                 onFocus={(e) => e.target.select()}
                                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                                onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
                                 onKeyDown={(e: React.KeyboardEvent) => {
                                     if (e.key === ' ' || e.key === 'Spacebar') {
                                         e.stopPropagation();

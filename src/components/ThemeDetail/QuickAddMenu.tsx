@@ -107,7 +107,7 @@ export const QuickAddMenu: React.FC<QuickAddMenuProps> = ({ x, y, type, onClose,
                                             {type === 'css' ? <Code size={12} className="text-blue-400 shrink-0" /> : <FileCode size={12} className="text-orange-400 shrink-0" />}
                                             <span className="text-sm text-slate-200 font-medium truncate group-hover:text-white transition-colors">{snippet.name}</span>
                                         </div>
-                                        {usageCount > 0 && <span className="text-[10px] text-slate-500 ml-5">Used in {usageCount} themes</span>}
+                                        {usageCount > 0 && <span className="text-[10px] text-slate-500 ml-5">Used in {usageCount} theme{usageCount !== 1 ? 's' : ''}</span>}
                                     </div>
                                     <Plus size={14} className="text-slate-500 group-hover:text-white opacity-0 group-hover:opacity-100 transition-all" />
                                 </button>
