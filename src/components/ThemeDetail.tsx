@@ -1204,7 +1204,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                                         if (selectedSnippetIds.size > 0) {
                                                             setSelectedSnippetIds(new Set());
                                                         } else {
-                                                            const allIds = new Set(filteredItems.map(item => item.id));
+                                                            const allIds = new Set(displayedItems.map(item => item.id));
                                                             setSelectedSnippetIds(allIds);
                                                         }
                                                     }}
@@ -1228,7 +1228,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                             })()}
                         </div>
 
-                        {!isSelectionMode && (
+                        {!isSelectionMode && !isSearchOpen && (
                             <div className="flex gap-2">
                                 {activeTab === 'css' && (
                                     <Button

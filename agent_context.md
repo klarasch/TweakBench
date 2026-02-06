@@ -11,6 +11,7 @@
 - Uses TypeScript.
 - Uses React for UI.
 - Communicates between panel/popup and content scripts via messaging.
+- **Copy**: Use sentence case for all UI labels, buttons, and copy.
 
 ## Current Task
 - Improving theme application performance.

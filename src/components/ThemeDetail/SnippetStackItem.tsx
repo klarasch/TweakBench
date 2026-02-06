@@ -488,7 +488,7 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                     updateSnippet(s.id, { isLibraryItem: true });
                     setConfirmSave(false);
                 }}
-                title="Save to Library"
+                title="Save to library"
                 message={`Save "${s.name}" to the library?`}
                 confirmLabel="Save"
             />
