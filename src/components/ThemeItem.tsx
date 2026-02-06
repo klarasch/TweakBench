@@ -16,6 +16,7 @@ export interface ThemeItemProps {
     onUpdateTheme: (updates: Partial<Theme>) => void;
     onDeleteClick: (e: React.MouseEvent) => void;
     onDomainClick?: (e: React.MouseEvent) => void;
+    isOtherInGroupActive?: boolean;
     // DnD props passed from parent wrapper
     dragHandleProps?: any;
     isDragging?: boolean;
@@ -36,6 +37,7 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
     onUpdateTheme,
     onDeleteClick,
     onDomainClick,
+    isOtherInGroupActive,
     dragHandleProps,
     isDragging,
     setNodeRef,
@@ -104,7 +106,7 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
                             <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]"></div>
                             Active on this tab
                         </div>
-                    ) : (isMatch && theme.groupId && !theme.isActive) ? (
+                    ) : (isMatch && theme.groupId && !theme.isActive && isOtherInGroupActive) ? (
                         <div className="flex items-center gap-1.5 text-[10px] font-medium px-2 py-1 rounded-full text-amber-500/90 bg-amber-500/5" title="Another theme in this group is active on this tab">
                             <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
                             Group active

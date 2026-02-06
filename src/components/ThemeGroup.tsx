@@ -278,6 +278,7 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
                             }}
                             onUpdateTheme={(updates) => onUpdateTheme(theme.id, updates)}
                             onDeleteClick={(e) => onDeleteTheme(e, theme.id)}
+                            isOtherInGroupActive={themes.some(t => t.isActive && t.id !== theme.id)}
                             // NOT passing dragHandleProps, so items aren't draggable individually (for now)
                             style={{}} // Static position relative to group
                         />

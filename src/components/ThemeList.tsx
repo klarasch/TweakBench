@@ -49,6 +49,7 @@ interface SortableThemeItemProps {
     onUpdateTheme: (updates: Partial<Theme>) => void;
     onDeleteClick: (e: React.MouseEvent) => void;
     onDomainClick?: (e: React.MouseEvent) => void;
+    isOtherInGroupActive: boolean;
 }
 
 // Wrapper for Sortable functionality for generic items
@@ -243,9 +244,16 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
     const handleCreate = () => {
         if (!newThemeName.trim()) return;
 
-        const domainPatterns = limitToDomain && scannedDomain
-            ? [scannedDomain]
-            : ['<all_urls>'];
+        let domainPatterns: string[];
+        if (newThemeGroupId) {
+            // Inherit from group
+            const groupTheme = themes.find(t => t.groupId === newThemeGroupId);
+            domainPatterns = groupTheme ? [...groupTheme.domainPatterns] : ['<all_urls>'];
+        } else {
+            domainPatterns = limitToDomain && scannedDomain
+                ? [scannedDomain]
+                : ['<all_urls>'];
+        }
 
         const newId = addTheme({
             name: newThemeName.trim(),
@@ -748,7 +756,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
             <Modal
                 isOpen={isCreating}
                 onClose={() => setIsCreating(false)}
-                title="Create new theme"
+                title={newThemeGroupId ? "Add theme to group" : "Create new theme"}
                 size="sm"
                 footer={
                     <>
@@ -761,7 +769,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                             onClick={handleCreate}
                             disabled={!newThemeName.trim()}
                         >
-                            Create theme
+                            {newThemeGroupId ? "Add to group" : "Create theme"}
                         </Button>
                     </>
                 }
@@ -780,7 +788,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                         />
                     </div>
 
-                    {scannedDomain && (
+                    {!newThemeGroupId && scannedDomain && (
                         <div className="flex items-start gap-3 p-3 bg-slate-800/50 rounded border border-slate-800/50">
                             <div className="mt-0.5">
                                 <input
@@ -1018,6 +1026,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                     <SortableThemeItemWrapper
                                         key={item.id}
                                         theme={item.data}
+                                        isOtherInGroupActive={false}
                                         activeUrl={activeUrl}
                                         isSelectionMode={isSelectionMode}
                                         isSelected={selectedThemeIds.has(item.id)}
