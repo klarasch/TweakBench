@@ -400,30 +400,52 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     const toggleItemExpand = (id: string) => {
         setCollapsedItems(prev => {
             const next = new Set(prev);
-            if (next.has(id)) next.delete(id);
-            else next.add(id);
+            if (next.has(id)) {
+                // Expanding
+                next.delete(id);
+
+                // Restore Focus & Cursor
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        if (editorRefs.current[id]) {
+                            editorRefs.current[id]?.focus();
+                            const savedPos = cursorPositionsRef.current[id];
+                            if (savedPos) {
+                                editorRefs.current[id]?.setCursorPosition?.(savedPos.from, savedPos.to);
+                            }
+                        }
+                    });
+                });
+            } else {
+                // Collapsing
+                // Save Cursor Position before unmounting editor
+                if (editorRefs.current[id]) {
+                    const cursorPos = editorRefs.current[id]?.getCursorPosition?.();
+                    if (cursorPos) {
+                        cursorPositionsRef.current[id] = cursorPos;
+                    }
+                }
+                next.add(id);
+            }
             return next;
         });
     };
 
-    const handleDragStart = (event: any) => {
+    const handleDragStart = () => {
         setIsDragging(true);
-        const draggedItemId = event.active.id as string;
-
-        if (!collapsedItems.has(draggedItemId) && selectedItemId === draggedItemId) {
-            if (editorRefs.current[draggedItemId]) {
-                const cursorPos = editorRefs.current[draggedItemId]?.getCursorPosition?.();
-                if (cursorPos) {
-                    cursorPositionsRef.current[draggedItemId] = cursorPos;
-                }
-            }
-        }
 
         // Collect ALL currently expanded items in the current view
         const expandedIds = new Set<string>();
         filteredItems.forEach(item => {
             if (!collapsedItems.has(item.id)) {
                 expandedIds.add(item.id);
+                // Save cursor position for ALL expanded items
+                if (editorRefs.current[item.id]) {
+                    const cursorPos = editorRefs.current[item.id]?.getCursorPosition?.();
+                    if (cursorPos) {
+                        cursorPositionsRef.current[item.id] = cursorPos;
+                    }
+                }
             }
         });
 
@@ -458,27 +480,38 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
         // Trigger scroll on next render via effect
         setJustDroppedId(itemId);
 
-        // Restore focus and cursor if item was expanded before drag
-        if (shouldRestoreFocus) {
-            pendingFocusRef.current = itemId;
+        // Restore focus and cursor for ALL expanded items
+        if (preDragExpandedItemsRef.current.size > 0) {
+            // If the dragged item was expanded, we want to focus it specifically
+            if (shouldRestoreFocus) {
+                pendingFocusRef.current = itemId;
+            }
 
             // Use requestAnimationFrame to wait for editor to mount
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
-                    if (editorRefs.current[itemId]) {
-                        editorRefs.current[itemId]?.focus();
-                        const savedPos = cursorPositionsRef.current[itemId];
-                        if (savedPos) {
-                            editorRefs.current[itemId]?.setCursorPosition?.(savedPos.from, savedPos.to);
+                    // Restore cursor positions for ALL items that were expanded
+                    preDragExpandedItemsRef.current.forEach(expandedId => {
+                        if (editorRefs.current[expandedId]) {
+                            const savedPos = cursorPositionsRef.current[expandedId];
+                            if (savedPos) {
+                                editorRefs.current[expandedId]?.setCursorPosition?.(savedPos.from, savedPos.to);
+                            }
                         }
+                    });
+
+                    // Restore focus ONLY to the dragged item if it was expanded
+                    if (shouldRestoreFocus && editorRefs.current[itemId]) {
+                        editorRefs.current[itemId]?.focus();
                         pendingFocusRef.current = null;
                     }
-                    // Clear the ref after focus restoration
+
+                    // Clear the ref after restoration
                     preDragExpandedItemsRef.current.clear();
                 });
             });
         } else {
-            // Clear immediately if no focus restoration needed
+            // Clear immediately if no restoration needed
             preDragExpandedItemsRef.current.clear();
         }
 
