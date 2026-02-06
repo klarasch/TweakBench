@@ -8,7 +8,7 @@ import { ImportVariablesModal } from './ThemeDetail/ImportVariablesModal.tsx';
 import { Button } from './ui/Button';
 import { ConfirmDialog } from './ui/Dialog';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
-import { Trash2, Plus, Box, Play, Pause, Download, Edit, X, MoreVertical } from 'lucide-react';
+import { Trash2, Plus, Box, Play, Pause, Download, Edit, X, MoreVertical, Unlink } from 'lucide-react';
 import { useToast } from './ui/Toast';
 import type { SnippetType } from '../types.ts';
 import { exportThemeToJS, exportThemeToCSS } from '../utils/impexp.ts';
@@ -681,6 +681,11 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                 label: item.isEnabled ? 'Disable snippet' : 'Enable snippet',
                 onClick: () => toggleThemeItem(theme.id, itemId)
             },
+            ...(snippets.find(s => s.id === item.snippetId)?.isLibraryItem !== false ? [{
+                label: 'Detach from Library',
+                icon: <Unlink size={14} />,
+                onClick: () => handleDetachSnippet(itemId)
+            }] : []),
             { separator: true },
             {
                 label: 'Remove from theme',
@@ -772,7 +777,35 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
 
 
 
+    const handleDetachSnippet = (itemId: string) => {
+        const item = theme.items.find(i => i.id === itemId);
+        if (!item) return;
 
+        const snippet = snippets.find(s => s.id === item.snippetId);
+        if (!snippet) return;
+
+        // Determine content: use override if exists, otherwise use snippet's original content
+        const contentToUse = item.overrides?.content ?? snippet.content;
+
+        // Create new local snippet
+        const newSnippetId = addSnippet({
+            name: `${snippet.name}`, // Keep same name
+            type: snippet.type,
+            content: contentToUse,
+            relatedSnippetIds: [],
+            isLibraryItem: false
+        });
+
+        // Update ThemeItem to point to new snippet and Link
+        // We need to update the item to point to the new snippet ID
+        // AND clear any overrides since they are now baked in
+        useStore.getState().updateThemeItem(themeId, itemId, {
+            snippetId: newSnippetId,
+            overrides: undefined // Clear overrides
+        });
+
+        showToast('Snippet detached to local copy', 'success');
+    };
 
 
     return (
