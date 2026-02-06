@@ -348,7 +348,7 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
     };
 
     const snippetToDeleteObj = snippetToDelete ? snippets.find(s => s.id === snippetToDelete) : null;
-    const usageCountToDelete = snippetToDelete ? themes.reduce((acc, t) => acc + t.items.filter(i => i.snippetId === snippetToDelete).length, 0) : 0;
+    const usageCountToDelete = snippetToDelete ? themes.filter(t => t.items.some(i => i.snippetId === snippetToDelete)).length : 0;
 
     return (
         <div className="flex flex-col h-full bg-slate-900">
@@ -511,7 +511,7 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
                         strategy={verticalListSortingStrategy}
                     >
                         {filteredSnippets.map(snippet => {
-                            const usageCount = themes.reduce((acc, t) => acc + t.items.filter(i => i.snippetId === snippet.id).length, 0);
+                            const usageCount = themes.filter(t => t.items.some(i => i.snippetId === snippet.id)).length;
                             const isEditing = editingId === snippet.id;
 
                             return (
