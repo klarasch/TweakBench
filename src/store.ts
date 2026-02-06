@@ -23,6 +23,8 @@ interface Store extends AppState {
     reorderSnippets: (newSnippets: Snippet[]) => void;
     toggleGlobal: () => void;
     importAllData: (data: { themes: Theme[], snippets: Snippet[], globalEnabled: boolean }, mode: 'merge' | 'replace' | 'skip-duplicates') => { themesAdded: number, snippetsAdded: number, skipped: number };
+
+    updateSnippetAndPropagate: (id: string, newContent: string, options: { mode: 'soft' | 'force', originItemId?: string }) => void;
 }
 
 export const useStore = create<Store>((set) => ({
@@ -411,5 +413,47 @@ export const useStore = create<Store>((set) => ({
         });
 
         return { themesAdded, snippetsAdded, skipped };
+    },
+
+    updateSnippetAndPropagate: (id, newContent, options) => {
+        set((state) => {
+            // 1. Update the master snippet
+            const updatedSnippets = state.snippets.map(s =>
+                s.id === id ? { ...s, content: newContent, updatedAt: Date.now() } : s
+            );
+
+            // 2. Propagate based on mode
+            const updatedThemes = state.themes.map(theme => {
+                const hasUsage = theme.items.some(i => i.snippetId === id);
+                if (!hasUsage) return theme;
+
+                const updatedItems = theme.items.map(item => {
+                    if (item.snippetId !== id) return item;
+
+                    // If this is the origin item (the one initiating the push), ALWAYS clear override
+                    if (options.originItemId && item.id === options.originItemId) {
+                        return { ...item, overrides: { ...item.overrides, content: undefined } };
+                    }
+
+                    // If mode is FORCE, clear overrides for ALL usages
+                    if (options.mode === 'force') {
+                        return { ...item, overrides: { ...item.overrides, content: undefined } };
+                    }
+
+                    // If mode is SOFT, leave other overrides alone
+                    return item;
+                });
+
+                return { ...theme, items: updatedItems, updatedAt: Date.now() };
+            });
+
+            const newState = {
+                ...state,
+                snippets: updatedSnippets,
+                themes: updatedThemes
+            };
+            storageService.save(newState);
+            return newState;
+        });
     }
 }));

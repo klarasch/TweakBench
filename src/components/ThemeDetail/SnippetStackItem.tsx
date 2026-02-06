@@ -8,6 +8,8 @@ import { Toggle } from '../ui/Toggle';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ConfirmDialog } from '../ui/Dialog';
+import { Modal } from '../ui/Modal';
+import { HelpCircle } from 'lucide-react';
 
 interface SnippetStackItemProps {
     item: ThemeItem;
@@ -40,14 +42,35 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
     editorRef,
     isSelectionMode
 }) => {
-    const { snippets, updateSnippet, updateThemeItem, toggleThemeItem } = useStore();
+    const { snippets, updateSnippet, updateThemeItem, toggleThemeItem, themes, updateSnippetAndPropagate } = useStore();
     const s = snippets.find(sn => sn.id === item.snippetId);
 
     // Confirmation dialogs
-    const [confirmPush, setConfirmPush] = useState(false);
+    const [confirmPush, setConfirmPush] = useState(false); // Standard push (no conflicts)
+    const [confirmConflict, setConfirmConflict] = useState<{ count: number } | null>(null); // Conflict detected
     const [confirmRevert, setConfirmRevert] = useState(false);
     const [confirmReset, setConfirmReset] = useState(false);
     const [confirmSave, setConfirmSave] = useState(false);
+
+    const handlePushClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!s) return;
+
+        // Check for other overrides
+        const otherOverridesCount = themes.reduce((acc, t) => {
+            return acc + t.items.filter(i =>
+                i.snippetId === s.id &&
+                i.overrides?.content !== undefined &&
+                i.id !== item.id // exclude self
+            ).length;
+        }, 0);
+
+        if (otherOverridesCount > 0) {
+            setConfirmConflict({ count: otherOverridesCount });
+        } else {
+            setConfirmPush(true);
+        }
+    };
 
     const {
         attributes,
@@ -229,10 +252,7 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                                         <Button
                                             size="sm"
                                             variant="outline"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setConfirmPush(true);
-                                            }}
+                                            onClick={handlePushClick}
                                             className="h-5 text-[10px] px-1.5 border-purple-500/30 text-purple-300 hover:bg-purple-500/10 hover:border-purple-500/60 mr-1"
                                             title="Update library snippet"
                                             icon={<Upload size={10} />}
@@ -361,21 +381,68 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                 )
             }
 
-            {/* Confirmation Dialogs */}
+            {/* Standard Push (No Conflicts) */}
             <ConfirmDialog
                 isOpen={confirmPush}
                 onClose={() => setConfirmPush(false)}
                 onConfirm={() => {
                     if (item.overrides?.content) {
-                        updateSnippet(s.id, { content: item.overrides.content });
-                        updateThemeItem(themeId, item.id, { overrides: undefined });
+                        // No conflicts, so we can FORCE updates (clearing overrides for everyone, which is just us + clean usages)
+                        updateSnippetAndPropagate(s.id, item.overrides.content, { mode: 'force', originItemId: item.id });
                     }
                     setConfirmPush(false);
                 }}
                 title="Update library snippet"
-                message="Update library snippet with local changes?"
-                confirmLabel="Update"
+                message="Update library snippet with local changes? This will affect all usages."
+                confirmLabel="Update library"
             />
+
+            {/* Conflict Push (Has Overrides) */}
+            <Modal
+                isOpen={!!confirmConflict}
+                onClose={() => setConfirmConflict(null)}
+                title="Conflicting overrides detected"
+                size="sm"
+                footer={
+                    <div className="flex gap-2 justify-end w-full">
+                        <Button variant="ghost" onClick={() => setConfirmConflict(null)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="outline" // Secondary
+                            onClick={() => {
+                                if (item.overrides?.content) {
+                                    updateSnippetAndPropagate(s.id, item.overrides.content, { mode: 'soft', originItemId: item.id });
+                                }
+                                setConfirmConflict(null);
+                            }}
+                        >
+                            Keep other overrides
+                        </Button>
+                        <Button
+                            variant="filled" // Primary
+                            onClick={() => {
+                                if (item.overrides?.content) {
+                                    updateSnippetAndPropagate(s.id, item.overrides.content, { mode: 'force', originItemId: item.id });
+                                }
+                                setConfirmConflict(null);
+                            }}
+                        >
+                            Overwrite all
+                        </Button>
+                    </div>
+                }
+            >
+                <div className="flex gap-3 text-slate-300">
+                    <div className="shrink-0 mt-0.5">
+                        <HelpCircle className="text-yellow-400" size={24} />
+                    </div>
+                    <div>
+                        This snippet has {confirmConflict?.count} other usage(s) with local overrides.
+                        How do you want to propagate changes?
+                    </div>
+                </div>
+            </Modal>
 
             <ConfirmDialog
                 isOpen={confirmRevert}
