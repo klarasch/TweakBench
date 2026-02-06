@@ -93,13 +93,13 @@ export const DomainListEditor: React.FC<DomainListEditorProps> = ({ domainPatter
                     </div>
                 )}
                 {domainPatterns.map((p, i) => (
-                    <div key={i} className="flex items-center justify-between p-3 bg-slate-800/50 hover:bg-slate-800 rounded-lg border border-slate-800/50 group transition-colors">
-                        <div className="flex items-center gap-3 flex-1">
-                            <Globe size={14} className="text-slate-500 group-hover:text-blue-400 transition-colors" />
+                    <div key={i} className="flex items-center justify-between p-3 bg-slate-800/50 hover:bg-slate-800 rounded-lg border border-slate-800/50 group transition-colors min-w-0">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <Globe size={14} className="text-slate-500 group-hover:text-blue-400 transition-colors shrink-0" />
 
                             {editingIndex === i ? (
                                 <input
-                                    className="flex-1 bg-slate-900 border border-blue-500/50 rounded px-2 py-1 text-sm text-white focus:outline-none"
+                                    className="flex-1 bg-slate-900 border border-blue-500/50 rounded px-2 py-1 text-sm text-white focus:outline-none min-w-0"
                                     value={editValue}
                                     onChange={(e) => setEditValue(e.target.value)}
                                     onKeyDown={(e) => {
@@ -113,19 +113,19 @@ export const DomainListEditor: React.FC<DomainListEditorProps> = ({ domainPatter
                                 />
                             ) : (
                                 <div
-                                    className="flex-1 flex items-center justify-between group/item cursor-pointer"
+                                    className="flex-1 flex items-center justify-between group/item cursor-pointer min-w-0"
                                     onClick={(e) => { e.stopPropagation(); startEditing(i, p); }}
                                 >
                                     <span className="text-sm font-medium text-slate-300 group-hover:text-white font-mono truncate">
                                         {p}
                                     </span>
-                                    <Edit2 size={12} className="text-slate-600 opacity-0 group-hover/item:opacity-100 transition-opacity ml-2" />
+                                    <Edit2 size={12} className="text-slate-600 opacity-0 group-hover/item:opacity-100 transition-opacity ml-2 shrink-0" />
                                 </div>
                             )}
                         </div>
                         <button
                             onClick={(e) => { e.stopPropagation(); handleRemove(p); }}
-                            className="p-1.5 rounded hover:bg-red-500/20 text-slate-500 hover:text-red-400 transition-colors ml-2"
+                            className="p-1.5 rounded hover:bg-red-500/20 text-slate-500 hover:text-red-400 transition-colors ml-2 shrink-0"
                             title="Remove domain"
                         >
                             <X size={14} />
