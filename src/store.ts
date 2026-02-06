@@ -19,6 +19,8 @@ interface Store extends AppState {
     removeSnippetFromTheme: (themeId: string, itemId: string) => void;
     updateThemeItem: (themeId: string, itemId: string, updates: Partial<import('./types.ts').ThemeItem>) => void;
     reorderThemeItems: (themeId: string, newItems: import('./types.ts').ThemeItem[]) => void;
+    reorderThemes: (newThemes: Theme[]) => void;
+    reorderSnippets: (newSnippets: Snippet[]) => void;
     toggleGlobal: () => void;
     importAllData: (data: { themes: Theme[], snippets: Snippet[], globalEnabled: boolean }, mode: 'merge' | 'replace' | 'skip-duplicates') => { themesAdded: number, snippetsAdded: number, skipped: number };
 }
@@ -255,6 +257,28 @@ export const useStore = create<Store>((set) => ({
                     if (t.id !== themeId) return t;
                     return { ...t, items: newItems, updatedAt: Date.now() };
                 })
+            };
+            storageService.save(newState);
+            return newState;
+        });
+    },
+
+    reorderThemes: (newThemes) => {
+        set((state) => {
+            const newState = {
+                ...state,
+                themes: newThemes.map(t => ({ ...t, updatedAt: Date.now() }))
+            };
+            storageService.save(newState);
+            return newState;
+        });
+    },
+
+    reorderSnippets: (newSnippets) => {
+        set((state) => {
+            const newState = {
+                ...state,
+                snippets: newSnippets.map(s => ({ ...s, updatedAt: Date.now() }))
             };
             storageService.save(newState);
             return newState;
