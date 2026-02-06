@@ -419,14 +419,35 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
                         </span>
                     </div>
                 )}
-                <div className="flex items-center bg-slate-800 rounded px-2 py-1 mb-2">
-                    <Search size={14} className="text-slate-500 mr-2" />
+                <div className="bg-slate-800 rounded px-2 py-1 mb-2 relative group focus-within:ring-1 focus-within:ring-blue-500/50 flex items-center">
+                    <Search size={14} className="text-slate-500 mr-2 shrink-0" />
                     <input
-                        className="bg-transparent text-sm text-white outline-none w-full"
+                        autoFocus
+                        className="bg-transparent text-sm text-white outline-none w-full placeholder:text-slate-600"
                         placeholder="Search..."
                         value={filter}
                         onChange={e => setFilter(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Escape') {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                if (filter) {
+                                    setFilter('');
+                                } else if (onClose) {
+                                    onClose();
+                                }
+                            }
+                        }}
                     />
+                    {filter && (
+                        <button
+                            className="text-slate-500 hover:text-white p-0.5"
+                            onClick={() => setFilter('')}
+                            title="Clear search"
+                        >
+                            <X size={14} />
+                        </button>
+                    )}
                 </div>
             </div>
 

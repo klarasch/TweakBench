@@ -174,6 +174,9 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                                 onFocus={(e) => e.target.select()}
                                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
                                 onKeyDown={(e: React.KeyboardEvent) => {
+                                    if (e.key === ' ' || e.key === 'Spacebar') {
+                                        e.stopPropagation();
+                                    }
                                     if (e.key === 'Enter') {
                                         e.stopPropagation();
                                         e.preventDefault();
