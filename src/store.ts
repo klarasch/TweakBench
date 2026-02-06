@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { AppState, Snippet, Theme } from './types.ts';
 import { storageService } from './services/storage.ts';
 import { v4 as uuidv4 } from 'uuid';
+import { broadcastStateUpdate } from './utils/messaging.ts';
 
 interface Store extends AppState {
     // Actions
@@ -183,7 +184,11 @@ export const useStore = create<Store>((set) => ({
                 ...state,
                 themes: finalThemes.map((t) => (t.id === id ? { ...t, ...updates, updatedAt: Date.now() } : t)),
             };
-            storageService.save(newState);
+
+            const isImmediate = updates.isActive !== undefined || updates.domainPatterns !== undefined;
+            storageService.save(newState, { immediate: isImmediate });
+            if (isImmediate) broadcastStateUpdate(newState);
+
             return newState;
         });
     },
@@ -217,7 +222,8 @@ export const useStore = create<Store>((set) => ({
                 ...state,
                 themes: state.themes.map(t => t.id === themeId ? updatedTheme : t)
             };
-            storageService.save(newState);
+            storageService.save(newState, { immediate: true });
+            broadcastStateUpdate(newState);
             return newState;
         });
         return itemId;
@@ -237,7 +243,8 @@ export const useStore = create<Store>((set) => ({
                 ...state,
                 themes: state.themes.map(t => t.id === themeId ? updatedTheme : t)
             };
-            storageService.save(newState);
+            storageService.save(newState, { immediate: true });
+            broadcastStateUpdate(newState);
             return newState;
 
         })
@@ -325,7 +332,8 @@ export const useStore = create<Store>((set) => ({
                 ...state,
                 globalEnabled: !state.globalEnabled
             };
-            storageService.save(newState);
+            storageService.save(newState, { immediate: true });
+            broadcastStateUpdate(newState);
             return newState;
         });
     },

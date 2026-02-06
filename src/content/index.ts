@@ -6,11 +6,16 @@ const STORAGE_KEY = 'tweakbench_data';
 const injectedStyles = new Map<string, HTMLStyleElement>();
 const injectedElements = new Map<string, HTMLElement>();
 
-// Ping Listener for Panel
+// Message Listener for State Updates
 chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
     if (request.type === 'PING') {
         console.log('TweakBench: PING received');
         sendResponse('PONG');
+    }
+
+    if (request.type === 'STATE_UPDATED') {
+        console.log('TweakBench: State Updated via messaging');
+        updateStyles(request.state);
     }
 
     if (request.type === 'SCAN_CSS_VARIABLES') {
@@ -59,9 +64,11 @@ function updateStyles(state: AppState) {
     console.log('TweakBench: Updating Styles/HTML', state);
     const activeSnippetIds = new Set<string>();
 
-    // Defensive checks
-    const themes = state.themes || [];
+    // Prepare snippet map for O(1) lookup
     const snippets = state.snippets || [];
+    const snippetMap = new Map(snippets.map(s => [s.id, s]));
+
+    const themes = state.themes || [];
     const globalEnabled = state.globalEnabled ?? true;
     const currentUrl = window.location.href;
 
@@ -79,7 +86,7 @@ function updateStyles(state: AppState) {
             theme.items.forEach(item => {
                 if (!item.isEnabled) return;
 
-                const snippet = snippets.find(s => s.id === item.snippetId);
+                const snippet = snippetMap.get(item.snippetId);
                 if (snippet) {
                     // Merge overrides
                     const effectiveSnippet = {

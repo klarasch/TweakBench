@@ -6,11 +6,14 @@ const isExtension = typeof chrome !== 'undefined' && chrome.storage && chrome.st
 let saveTimeout: any = null;
 
 export const storageService = {
-    async save(data: Partial<AppState>): Promise<void> {
+    async save(data: Partial<AppState>, options?: { immediate?: boolean }): Promise<void> {
         return new Promise((resolve, reject) => {
-            if (saveTimeout) clearTimeout(saveTimeout);
+            if (saveTimeout) {
+                clearTimeout(saveTimeout);
+                saveTimeout = null;
+            }
 
-            saveTimeout = setTimeout(async () => {
+            const performSave = async () => {
                 try {
                     if (isExtension) {
                         await chrome.storage.local.set({ [STORAGE_KEY]: data });
@@ -22,7 +25,13 @@ export const storageService = {
                     console.error('Storage Save Failed:', e);
                     reject(e);
                 }
-            }, 1000); // Debounce 1000ms
+            };
+
+            if (options?.immediate) {
+                performSave();
+            } else {
+                saveTimeout = setTimeout(performSave, 300); // Reduced debounce to 300ms
+            }
         });
     },
 
