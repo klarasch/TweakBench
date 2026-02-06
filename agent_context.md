@@ -28,3 +28,5 @@
     - Reorganized group headers to swap Expand/Collapse and Group Label positions.
     - Theme names now use standard `text-sm` font size.
     - Moved "Delete" action into the overflow menu to reduce visual weight.
+    - Repositioned header actions (Collapse all, Select) to the right side for better focus on the "Themes" title.
+    - Moved domain group selection checkboxes to the left in selection mode to align with individual theme checkboxes.

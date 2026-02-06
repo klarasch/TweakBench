@@ -121,6 +121,21 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
                 {...listeners}
             >
                 <div className="flex items-center gap-2 min-w-0">
+                    {isSelectionMode && (
+                        <div
+                            onClick={(e) => { e.stopPropagation(); handleGroupSelect(); }}
+                            className={`w-5 h-5 flex items-center justify-center rounded border cursor-pointer transition-colors shrink-0 ${isAllSelected
+                                ? 'bg-blue-500 border-blue-500'
+                                : isSomeSelected
+                                    ? 'bg-blue-900/50 border-blue-400'
+                                    : 'bg-transparent border-slate-600 hover:border-slate-500'
+                                }`}
+                            onPointerDown={e => e.stopPropagation()} // Prevent drag start
+                        >
+                            {isAllSelected && <CheckSquare size={12} className="text-white fill-current" />}
+                            {isSomeSelected && !isAllSelected && <div className="w-2 h-0.5 bg-blue-400 rounded-full" />}
+                        </div>
+                    )}
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
@@ -181,21 +196,7 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
                 </div>
 
                 <div className="flex items-center gap-1">
-                    {isSelectionMode ? (
-                        <div
-                            onClick={(e) => { e.stopPropagation(); handleGroupSelect(); }}
-                            className={`w-5 h-5 flex items-center justify-center rounded border cursor-pointer transition-colors ${isAllSelected
-                                ? 'bg-blue-500 border-blue-500'
-                                : isSomeSelected
-                                    ? 'bg-blue-900/50 border-blue-400'
-                                    : 'bg-transparent border-slate-600 hover:border-slate-500'
-                                }`}
-                            onPointerDown={e => e.stopPropagation()} // Prevent drag start
-                        >
-                            {isAllSelected && <CheckSquare size={12} className="text-white fill-current" />}
-                            {isSomeSelected && !isAllSelected && <div className="w-2 h-0.5 bg-blue-400 rounded-full" />}
-                        </div>
-                    ) : (
+                    {!isSelectionMode && (
                         <>
                             {effectivelyCollapsed && activeTheme && (
                                 <>

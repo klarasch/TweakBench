@@ -651,34 +651,33 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
 
     return (
         <div className="flex flex-col gap-4 relative pb-20">
-            <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                    <h2 className="text-lg font-semibold text-slate-200">Themes</h2>
-                    {groupCount > 1 && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={toggleAllGroups}
-                            className="text-slate-400 hover:text-white"
-                            title={allGroupsCollapsed ? 'Expand all groups' : 'Collapse all groups'}
-                        >
-                            {allGroupsCollapsed ? 'Expand all' : 'Collapse all'}
-                        </Button>
-                    )}
-                    {!isSelectionMode && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setIsSelectionMode(true)}
-                            className="text-slate-400 hover:text-white"
-                        >
-                            Select
-                        </Button>
-                    )}
-                </div>
-                <div className="flex gap-2">
+            <div className="flex justify-between items-center px-1">
+                <h2 className="text-lg font-bold text-slate-100 tracking-tight">Themes</h2>
+                <div className="flex items-center gap-1">
                     {!isSelectionMode ? (
                         <>
+                            {groupCount > 1 && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={toggleAllGroups}
+                                    className="text-slate-400 hover:text-white px-2"
+                                    title={allGroupsCollapsed ? 'Expand all groups' : 'Collapse all groups'}
+                                >
+                                    {allGroupsCollapsed ? 'Expand all' : 'Collapse all'}
+                                </Button>
+                            )}
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setIsSelectionMode(true)}
+                                className="text-slate-400 hover:text-white px-2"
+                            >
+                                Select
+                            </Button>
+
+                            <div className="w-px h-4 bg-slate-800 mx-1" />
+
                             {/* Compact view for narrow screens */}
                             <div className="md:hidden">
                                 <button
@@ -726,6 +725,17 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                         </>
                     ) : (
                         <>
+                            {groupCount > 1 && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={toggleAllGroups}
+                                    className="text-slate-400 hover:text-white px-2"
+                                    title={allGroupsCollapsed ? 'Expand all groups' : 'Collapse all groups'}
+                                >
+                                    {allGroupsCollapsed ? 'Expand all' : 'Collapse all'}
+                                </Button>
+                            )}
                             <Button
                                 variant="ghost"
                                 size="sm"
@@ -737,7 +747,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                         setSelectedThemeIds(allIds);
                                     }
                                 }}
-                                className="text-slate-500 hover:text-white"
+                                className="text-slate-400 hover:text-white px-2"
                             >
                                 {selectedThemeIds.size > 0 ? 'Deselect all' : 'Select all'}
                             </Button>
@@ -761,7 +771,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => setIsSelectionMode(false)}
-                                className="text-blue-400 font-medium"
+                                className="text-blue-400 font-medium px-2"
                             >
                                 Done
                             </Button>
