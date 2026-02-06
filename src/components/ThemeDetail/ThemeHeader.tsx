@@ -89,13 +89,34 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                     {activeUrl && (
                         <div
                             className={`flex items-center gap-1.5 text-[10px] font-medium px-2 py-1 rounded-full ${isMatch
-                                ? 'text-green-400/90 bg-green-500/5'
+                                ? theme.isActive
+                                    ? 'text-green-400/90 bg-green-500/5'
+                                    : 'text-amber-500/90 bg-amber-500/5'
                                 : 'text-slate-500'
                                 }`}
-                            title={isMatch ? "Theme matches this tab" : "Theme does not run on this tab"}
+                            title={
+                                isMatch
+                                    ? theme.isActive
+                                        ? "Theme matches this tab and is enabled"
+                                        : theme.groupId
+                                            ? "Theme matches this tab but is disabled because another theme in this group is active"
+                                            : "Theme matches this tab but is currently disabled"
+                                    : "Theme does not run on this tab"
+                            }
                         >
-                            <div className={`w-1.5 h-1.5 rounded-full ${isMatch ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-slate-600'}`}></div>
-                            {isMatch ? "Active on this tab" : "Inactive"}
+                            <div className={`w-1.5 h-1.5 rounded-full ${isMatch
+                                ? theme.isActive
+                                    ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]'
+                                    : 'bg-amber-500'
+                                : 'bg-slate-600'
+                                }`}></div>
+                            {isMatch
+                                ? theme.isActive
+                                    ? "Active on this tab"
+                                    : theme.groupId
+                                        ? "Inactive (another theme in group is active)"
+                                        : "Inactive"
+                                : "Inactive"}
                         </div>
                     )}
                 </div>

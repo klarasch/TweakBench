@@ -68,7 +68,7 @@ const SortableSnippetItem: React.FC<SortableSnippetItemProps> = ({
         transform,
         transition,
         isDragging
-    } = useSortable({ id: snippet.id });
+    } = useSortable({ id: snippet.id, disabled: isEditing });
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -127,7 +127,7 @@ const SortableSnippetItem: React.FC<SortableSnippetItemProps> = ({
                             title="Click to rename"
                         >{snippet.name}</span>
                     )}
-                    {usageCount > 0 && !isEditing && <span className="text-[10px] text-slate-500">Used in {usageCount} themes</span>}
+                    {usageCount > 0 && !isEditing && <span className="text-[10px] text-slate-500">Used in {usageCount} theme{usageCount !== 1 ? 's' : ''}</span>}
                 </div>
             </div>
             {!isEditing && !isSelectionMode && (

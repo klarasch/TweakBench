@@ -55,21 +55,33 @@ export const ImportVariablesModal: React.FC<ImportVariablesModalProps> = ({ vari
                 </>
             }
         >
-            <div className="p-4 border-b border-slate-800 flex gap-4 -mx-4 -mt-4 mb-2 bg-slate-900 sticky top-0 z-10">
-                <div className="flex-1 bg-slate-950 border border-slate-800 rounded px-3 py-2 flex items-center gap-2">
-                    <Search size={14} className="text-slate-500" />
-                    <input
-                        className="bg-transparent outline-none text-sm text-slate-200 placeholder:text-slate-600 w-full"
-                        placeholder="Filter scopes..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        autoFocus
-                    />
+            {scopes.length > 0 ? (
+                <div className="p-4 border-b border-slate-800 flex gap-4 -mx-4 -mt-4 mb-2 bg-slate-900 sticky top-0 z-10">
+                    <div className="flex-1 bg-slate-950 border border-slate-800 rounded px-3 py-2 flex items-center gap-2">
+                        <Search size={14} className="text-slate-500" />
+                        <input
+                            className="bg-transparent outline-none text-sm text-slate-200 placeholder:text-slate-600 w-full"
+                            placeholder="Filter scopes..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            autoFocus
+                        />
+                    </div>
+                    <Button variant="outline" size="sm" onClick={toggleAll}>
+                        {selected.size === filteredScopes.length ? 'Deselect all' : 'Select all'}
+                    </Button>
                 </div>
-                <Button variant="outline" size="sm" onClick={toggleAll}>
-                    {selected.size === filteredScopes.length ? 'Deselect all' : 'Select all'}
-                </Button>
-            </div>
+            ) : (
+                <div className="text-center py-12 px-6">
+                    <div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Search size={20} className="text-slate-500" />
+                    </div>
+                    <p className="text-slate-300 font-medium">No CSS variables detected</p>
+                    <p className="text-slate-500 text-xs mt-2">
+                        We couldn't find any CSS variables on this page. Make sure the page uses CSS variables in <code>:root</code> or other scopes.
+                    </p>
+                </div>
+            )}
 
             <div className="space-y-1">
                 {filteredScopes.map(scope => {
