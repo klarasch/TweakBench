@@ -38,6 +38,7 @@ export interface Theme {
     domainPatterns: string[]; // e.g. ["*.google.com"]
     items: ThemeItem[];
     isActive: boolean;
+    groupId?: string; // If set, only one theme in this group can be active at a time
     createdAt: number;
     updatedAt: number;
 }

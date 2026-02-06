@@ -37,7 +37,7 @@ export const ImportVariablesModal: React.FC<ImportVariablesModalProps> = ({ vari
             onClose={onClose}
             title={
                 <div>
-                    Import CSS Variables
+                    Import CSS variables
                     <p className="text-xs text-slate-400 font-normal mt-0.5">Select scopes to import as snippets</p>
                 </div>
             }
@@ -50,7 +50,7 @@ export const ImportVariablesModal: React.FC<ImportVariablesModalProps> = ({ vari
                         onClick={() => onImport(Array.from(selected))}
                         disabled={selected.size === 0}
                     >
-                        Import {selected.size} Snippets
+                        Import {selected.size} snippets
                     </Button>
                 </>
             }
@@ -67,7 +67,7 @@ export const ImportVariablesModal: React.FC<ImportVariablesModalProps> = ({ vari
                     />
                 </div>
                 <Button variant="outline" size="sm" onClick={toggleAll}>
-                    {selected.size === filteredScopes.length ? 'Deselect All' : 'Select All'}
+                    {selected.size === filteredScopes.length ? 'Deselect all' : 'Select all'}
                 </Button>
             </div>
 

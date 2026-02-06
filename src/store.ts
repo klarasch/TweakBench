@@ -28,6 +28,9 @@ interface Store extends AppState {
 
     duplicateTheme: (themeId: string) => string;
     duplicateThemeItem: (themeId: string, itemId: string) => void;
+
+    createThemeGroup: (themeIds: string[]) => void;
+    ungroupThemes: (themeIds: string[]) => void;
 }
 
 export const useStore = create<Store>((set) => ({
@@ -150,9 +153,34 @@ export const useStore = create<Store>((set) => ({
 
     updateTheme: (id, updates) => {
         set((state) => {
+            const theme = state.themes.find(t => t.id === id);
+            if (!theme) return state;
+
+            let finalThemes = state.themes;
+            // Handle Switch Group Logic
+            if (theme.groupId) {
+                // 1. Mutual Exclusivity: If turning ON, turn others OFF
+                if (updates.isActive === true) {
+                    finalThemes = finalThemes.map(t =>
+                        (t.groupId === theme.groupId && t.id !== id)
+                            ? { ...t, isActive: false, updatedAt: Date.now() }
+                            : t
+                    );
+                }
+
+                // 2. Domain Sync: If domains changed, sync to group
+                if (updates.domainPatterns) {
+                    finalThemes = finalThemes.map(t =>
+                        (t.groupId === theme.groupId && t.id !== id)
+                            ? { ...t, domainPatterns: updates.domainPatterns!, updatedAt: Date.now() }
+                            : t
+                    );
+                }
+            }
+
             const newState = {
                 ...state,
-                themes: state.themes.map((t) => (t.id === id ? { ...t, ...updates, updatedAt: Date.now() } : t)),
+                themes: finalThemes.map((t) => (t.id === id ? { ...t, ...updates, updatedAt: Date.now() } : t)),
             };
             storageService.save(newState);
             return newState;
@@ -565,6 +593,71 @@ export const useStore = create<Store>((set) => ({
                 themes: state.themes.map(t => t.id === themeId ? updatedTheme : t),
                 snippets: newSnippets
             };
+            storageService.save(newState);
+            return newState;
+        });
+    },
+
+    createThemeGroup: (themeIds) => {
+        set((state) => {
+            if (themeIds.length < 2) return state;
+            const groupId = uuidv4();
+
+            // Gather all unique domain patterns from all selected themes (Union)
+            const allDomains = new Set<string>();
+            themeIds.forEach(id => {
+                const t = state.themes.find(theme => theme.id === id);
+                if (t && t.domainPatterns) {
+                    t.domainPatterns.forEach(d => allDomains.add(d));
+                }
+            });
+            const unifiedDomains = Array.from(allDomains);
+
+            // Turn off all themes initially to avoid conflicts? 
+            // Or allow one to remain active?
+            // Safer to allow the *last* active one to stay, or just let the user toggle.
+            // But if multiple are active, we MUST turn off all but one.
+            // Let's keep the one that appears latest in the list active, or just disable all except the first active one found.
+
+            // We'll traverse the current themes array to respect order, or just iterate `themeIds`?
+            // Iterating `themeIds` is safer if the user intention matters.
+            // Actually, we can just enforce the rule: Only ONE can be active.
+            // Let's pick the first active one in `themeIds` as the winner, others get disabled.
+
+            const themesToGroup = state.themes.filter(t => themeIds.includes(t.id));
+            const activeTheme = themesToGroup.find(t => t.isActive);
+            // If none active, fine. If multiple, `activeTheme` is the first one found.
+
+            const updatedThemes = state.themes.map(t => {
+                if (!themeIds.includes(t.id)) return t;
+
+                const shouldBeActive = t.isActive && t.id === activeTheme?.id;
+
+                return {
+                    ...t,
+                    groupId,
+                    domainPatterns: unifiedDomains, // Apply union of domains
+                    isActive: shouldBeActive,
+                    updatedAt: Date.now()
+                };
+            });
+
+            const newState = { ...state, themes: updatedThemes };
+            storageService.save(newState);
+            return newState;
+        });
+    },
+
+    ungroupThemes: (themeIds) => {
+        set((state) => {
+            const updatedThemes = state.themes.map(t => {
+                if (!themeIds.includes(t.id)) return t;
+                // Remove groupId. Keep domains and active state as is.
+                const { groupId, ...rest } = t;
+                return { ...rest, updatedAt: Date.now() };
+            });
+
+            const newState = { ...state, themes: updatedThemes };
             storageService.save(newState);
             return newState;
         });

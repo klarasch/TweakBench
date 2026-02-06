@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../store.ts';
-import { Plus, Trash2, Play, Pause, MoreVertical, Upload, Download, Globe, X, Copy } from 'lucide-react';
+import { Plus, Trash2, Play, Pause, MoreVertical, Upload, Download, Globe, X, Copy, Link as LinkIcon, Ungroup } from 'lucide-react';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
 import { exportThemeToJS, exportThemeToCSS, parseThemeFromJS, exportAllData, importAllData } from '../utils/impexp.ts';
-import { isDomainMatch, getDomainFromUrl } from '../utils/domains.ts';
+import { getDomainFromUrl } from '../utils/domains.ts';
 import { Button } from './ui/Button';
 import { Modal } from './ui/Modal';
 import { ConfirmDialog } from './ui/Dialog';
 import { useToast } from './ui/Toast';
 import type { Theme } from '../types.ts';
+import { ThemeItem } from './ThemeItem'; // Import new component
+import { ThemeGroup } from './ThemeGroup'; // Import new component
+import { DomainConfigurationModal } from './DomainConfigurationModal'; // New import
 import {
     DndContext,
     closestCenter,
@@ -47,19 +50,8 @@ interface SortableThemeItemProps {
     onDeleteClick: (e: React.MouseEvent) => void;
 }
 
-const SortableThemeItem: React.FC<SortableThemeItemProps> = ({
-    theme,
-    activeUrl,
-    isSelectionMode,
-    isSelected,
-    globalEnabled,
-    onSelect,
-    onToggleSelection,
-    onContextMenu,
-    onKebabClick,
-    onUpdateTheme,
-    onDeleteClick
-}) => {
+// Wrapper for Sortable functionality for generic items
+const SortableThemeItemWrapper: React.FC<SortableThemeItemProps> = (props) => {
     const {
         attributes,
         listeners,
@@ -67,118 +59,29 @@ const SortableThemeItem: React.FC<SortableThemeItemProps> = ({
         transform,
         transition,
         isDragging
-    } = useSortable({ id: theme.id, disabled: isSelectionMode });
+    } = useSortable({ id: props.theme.id, disabled: props.isSelectionMode });
 
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
         opacity: isDragging ? 0.5 : 1,
-        zIndex: isDragging ? 10 : 'auto',
+        zIndex: isDragging ? 20 : 'auto',
         position: 'relative' as 'relative',
     };
 
-    const isMatch = activeUrl ? isDomainMatch(theme.domainPatterns, activeUrl) : false;
-    const isActiveOnTab = theme.isActive && globalEnabled && isMatch;
-    const isSystemDisabled = !globalEnabled;
-
     return (
-        <div
-            ref={setNodeRef}
+        <ThemeItem
+            {...props}
+            setNodeRef={setNodeRef}
             style={style}
-            {...attributes}
-            {...listeners}
-            className={`p-3 rounded border flex flex-col gap-2 cursor-pointer transition-all active:scale-[0.99]
-                ${isSelected
-                    ? 'bg-blue-900/20 border-blue-500/50'
-                    : isActiveOnTab
-                        ? 'bg-slate-800 border-green-500/50 shadow-[0_0_10px_-2px_rgba(34,197,94,0.15)]'
-                        : 'bg-slate-800 border-slate-700 hover:border-slate-500'
-                }
-                ${!theme.isActive && !isSelected && 'opacity-75'}
-                ${isDragging ? 'shadow-xl ring-2 ring-blue-500/50 z-10' : ''}
-            `}
-            onClick={() => {
-                if (isSelectionMode) {
-                    onToggleSelection();
-                } else {
-                    onSelect();
-                }
-            }}
-            onContextMenu={onContextMenu}
-        >
-            <div className="flex justify-between items-center">
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                    {isSelectionMode && (
-                        <div className="flex items-center justify-center pointer-events-none">
-                            <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${isSelected ? 'bg-blue-500 border-blue-500' : 'border-slate-500 bg-transparent'}`}>
-                                {isSelected && <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
-                            </div>
-                        </div>
-                    )}
-                    <span className={`font-medium truncate ${isActiveOnTab ? 'text-green-400' : 'text-slate-200'} ${isSelected ? 'text-white' : ''}`}>
-                        {theme.name}
-                    </span>
-                </div>
-                <div className="flex gap-1 items-center">
-                    <div className="flex gap-1">
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                if (!globalEnabled) return;
-                                onUpdateTheme({ isActive: !theme.isActive });
-                            }}
-                            onPointerDown={e => e.stopPropagation()}
-                            disabled={!globalEnabled}
-                            className={`p-1 rounded flex items-center gap-1.5 px-2 transition-colors ${isSystemDisabled
-                                ? 'bg-slate-800/50 text-slate-600 cursor-not-allowed opacity-50'
-                                : theme.isActive
-                                    ? 'bg-green-500/10 text-green-400 border border-green-500/20'
-                                    : 'bg-slate-700/50 text-slate-500 hover:bg-slate-700 hover:text-slate-300'
-                                }`}
-                            title={isSystemDisabled ? "System disabled" : (theme.isActive ? "Disable theme" : "Enable theme")}
-                        >
-                            <div className={`w-1.5 h-1.5 rounded-full ${isSystemDisabled ? 'bg-slate-600' : (theme.isActive ? 'bg-green-400 animate-pulse' : 'bg-slate-500')}`}></div>
-                            <span className="text-[10px] font-bold uppercase">{theme.isActive ? 'ON' : 'OFF'}</span>
-                        </button>
-                        {!isSelectionMode && (
-                            <button
-                                onClick={onDeleteClick}
-                                onPointerDown={e => e.stopPropagation()}
-                                className="p-1 rounded text-slate-600 hover:text-red-400 hover:bg-slate-700 transition-colors"
-                                title="Delete theme"
-                            >
-                                <Trash2 size={14} />
-                            </button>
-                        )}
-                    </div>
-                    {!isSelectionMode && (
-                        <button
-                            onClick={onKebabClick}
-                            onPointerDown={e => e.stopPropagation()}
-                            className="p-1 rounded text-slate-500 hover:text-white hover:bg-slate-700"
-                        >
-                            <MoreVertical size={16} />
-                        </button>
-                    )}
-                </div>
-            </div>
-            <div className={`flex justify-between items-center text-xs ${isSelectionMode ? 'pl-7' : ''}`}>
-                <span className="text-slate-400 truncate max-w-[200px]">
-                    {theme.domainPatterns.join(', ')}
-                </span>
-                {isActiveOnTab && (
-                    <div className="flex items-center gap-1.5 text-[10px] font-medium px-2 py-1 rounded-full text-green-400/90 bg-green-500/5">
-                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]"></div>
-                        Active on this tab
-                    </div>
-                )}
-            </div>
-        </div>
+            dragHandleProps={{ ...attributes, ...listeners }}
+            isDragging={isDragging}
+        />
     );
 };
 
 export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }) => {
-    const { themes, snippets, addTheme, deleteTheme, updateTheme, addSnippet, addSnippetToTheme, globalEnabled, importAllData: importData, reorderThemes } = useStore();
+    const { themes, snippets, addTheme, deleteTheme, updateTheme, addSnippet, addSnippetToTheme, globalEnabled, importAllData: importData, reorderThemes, createThemeGroup, ungroupThemes } = useStore();
     const { showToast } = useToast();
 
     // Creation Modal State
@@ -191,6 +94,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
     const [themeToDelete, setThemeToDelete] = useState<string | null>(null);
     const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
     const [confirmBulkExport, setConfirmBulkExport] = useState<'js' | 'css' | null>(null);
+    const [groupToDelete, setGroupToDelete] = useState<string | null>(null);
 
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const allDataFileInputRef = React.useRef<HTMLInputElement>(null);
@@ -204,8 +108,62 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
     const [isSelectionMode, setIsSelectionMode] = useState(false);
     const [selectedThemeIds, setSelectedThemeIds] = useState<Set<string>>(new Set());
 
+    // Collapse State for Groups
+    const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+
+    // Display Items Logic
+    type DisplayItem =
+        | { type: 'theme', id: string, data: Theme }
+        | { type: 'group', id: string, themes: Theme[], domainPatterns: string[] };
+
+    const displayItems = React.useMemo(() => {
+        const items: DisplayItem[] = [];
+        const processedGroupIds = new Set<string>();
+
+        themes.forEach(theme => {
+            if (theme.groupId) {
+                if (processedGroupIds.has(theme.groupId)) return;
+
+                // Find all themes in this group
+                const groupThemes = themes.filter(t => t.groupId === theme.groupId);
+                items.push({
+                    type: 'group',
+                    id: theme.groupId, // Use groupId as Item ID
+                    themes: groupThemes,
+                    domainPatterns: theme.domainPatterns // They share domains
+                });
+                processedGroupIds.add(theme.groupId);
+            } else {
+                items.push({ type: 'theme', id: theme.id, data: theme });
+            }
+        });
+        return items;
+    }, [themes]);
+
+    // Count groups for collapse/expand all button
+    const groupCount = displayItems.filter(item => item.type === 'group').length;
+    const allGroupsCollapsed = displayItems
+        .filter(item => item.type === 'group')
+        .every(item => collapsedGroups.has(item.id));
+
+    const toggleAllGroups = () => {
+        if (allGroupsCollapsed) {
+            // Expand all
+            setCollapsedGroups(new Set());
+        } else {
+            // Collapse all
+            const allGroupIds = displayItems
+                .filter(item => item.type === 'group')
+                .map(item => item.id);
+            setCollapsedGroups(new Set(allGroupIds));
+        }
+    };
+
     // Context Menu State
-    const [menuState, setMenuState] = useState<{ x: number; y: number; themeId: string | null }>({ x: 0, y: 0, themeId: null });
+    const [menuState, setMenuState] = useState<{ x: number; y: number; themeId: string | null; groupId?: string }>({ x: 0, y: 0, themeId: null });
+
+    // Domain Config State
+    const [editingDomainGroup, setEditingDomainGroup] = useState<string | null>(null);
 
     // Responsive State
     const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
@@ -226,11 +184,28 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
         const { active, over } = event;
         if (!over || active.id === over.id) return;
 
-        const oldIndex = themes.findIndex(t => t.id === active.id);
-        const newIndex = themes.findIndex(t => t.id === over.id);
+        const oldIndex = displayItems.findIndex(i => i.id === active.id);
+        const newIndex = displayItems.findIndex(i => i.id === over.id);
 
         if (oldIndex !== -1 && newIndex !== -1) {
-            const newThemes = arrayMove(themes, oldIndex, newIndex);
+            // Reorder displayItems first
+            const newDisplayItems = arrayMove(displayItems, oldIndex, newIndex);
+
+            // Flatten back to themes
+            const newThemes: Theme[] = [];
+            newDisplayItems.forEach(item => {
+                if (item.type === 'theme') {
+                    newThemes.push(item.data);
+                } else {
+                    // Spread group themes. Ensure we keep their relative order? Yes, preserving internal order.
+                    // Wait, groupThemes in displayItems might be just a filter result.
+                    // If we move a group, we move ALL its members.
+                    // The internal order within a group is determined by the ORIGINAL array order essentially.
+                    // But if we use 'groupThemes' which is filtered from 'themes', they are already in relative order.
+                    newThemes.push(...item.themes);
+                }
+            });
+
             reorderThemes(newThemes);
         }
     };
@@ -447,14 +422,53 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
         setMenuState({ x: e.pageX, y: e.pageY, themeId });
     };
 
+    const handleGroupContextMenu = (e: React.MouseEvent, groupId: string, triggers: { x: number, y: number }) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setMenuState({ x: triggers.x, y: triggers.y, themeId: 'GROUP_MENU', groupId });
+    };
+
     const handleKebabClick = (e: React.MouseEvent, themeId: string) => {
         e.stopPropagation();
         const rect = e.currentTarget.getBoundingClientRect();
         setMenuState({ x: rect.left, y: rect.bottom, themeId });
     };
 
-    const getMenuItems = (themeId: string): ContextMenuItem[] => {
-        if (themeId === 'BULK_ACTIONS_MENU') {
+
+
+    const getMenuItems = (targetId: string | null, groupId?: string): ContextMenuItem[] => {
+        // Group Menu
+        if (groupId) {
+            return [
+                {
+                    label: 'Configure domains',
+                    icon: <Globe size={14} />,
+                    onClick: () => {
+                        setEditingDomainGroup(groupId);
+                    }
+                },
+                {
+                    label: 'Ungroup themes',
+                    icon: <Ungroup size={14} />,
+                    onClick: () => {
+                        const groupThemes = themes.filter(t => t.groupId === groupId);
+                        ungroupThemes(groupThemes.map(t => t.id));
+                        showToast('Themes ungrouped');
+                    }
+                },
+                { separator: true },
+                {
+                    label: 'Delete group',
+                    icon: <Trash2 size={14} />,
+                    danger: true,
+                    onClick: () => {
+                        setGroupToDelete(groupId);
+                    }
+                }
+            ];
+        }
+
+        if (targetId === 'BULK_ACTIONS_MENU') {
             return [
                 {
                     label: 'Enable selected',
@@ -465,6 +479,25 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                     label: 'Disable selected',
                     icon: <Pause size={14} className="text-slate-400" />,
                     onClick: () => handleBulkEnable(false)
+                },
+                { separator: true },
+                {
+                    label: 'Create switch group',
+                    icon: <LinkIcon size={14} className="text-blue-400" />,
+                    onClick: () => {
+                        createThemeGroup(Array.from(selectedThemeIds));
+                        showToast('Switch group created');
+                        setIsSelectionMode(false);
+                    }
+                },
+                {
+                    label: 'Ungroup selected',
+                    icon: <Ungroup size={14} />,
+                    onClick: () => {
+                        ungroupThemes(Array.from(selectedThemeIds));
+                        showToast('Themes ungrouped');
+                        setIsSelectionMode(false);
+                    }
                 },
                 { separator: true },
                 {
@@ -482,31 +515,32 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
             ];
         }
 
-        const theme = themes.find(t => t.id === themeId);
+        if (!targetId) return [];
+        const theme = themes.find(t => t.id === targetId);
         if (!theme) return [];
         return [
             {
                 label: theme.isActive ? 'Disable theme' : 'Enable theme',
                 icon: theme.isActive ? <Pause size={14} /> : <Play size={14} />,
-                onClick: () => updateTheme(themeId, { isActive: !theme.isActive })
+                onClick: () => updateTheme(targetId, { isActive: !theme.isActive })
             },
             { separator: true },
             {
                 label: 'Export to JS',
                 icon: <Download size={14} />,
-                onClick: () => handleExport(themeId, 'js')
+                onClick: () => handleExport(targetId, 'js')
             },
             {
                 label: 'Export to CSS only',
                 icon: <Download size={14} />,
-                onClick: () => handleExport(themeId, 'css')
+                onClick: () => handleExport(targetId, 'css')
             },
             { separator: true },
             {
                 label: 'Duplicate theme',
                 icon: <Copy size={14} />,
                 onClick: () => {
-                    useStore.getState().duplicateTheme(themeId);
+                    useStore.getState().duplicateTheme(targetId);
                     showToast('Theme duplicated');
                 }
             },
@@ -515,7 +549,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                 label: 'Delete theme',
                 icon: <Trash2 size={14} />,
                 danger: true,
-                onClick: () => setThemeToDelete(themeId)
+                onClick: () => setThemeToDelete(targetId)
             }
         ];
     };
@@ -542,6 +576,17 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                 <div className="flex gap-2">
                     {!isSelectionMode ? (
                         <>
+                            {groupCount > 1 && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={toggleAllGroups}
+                                    className="text-slate-400 hover:text-white"
+                                    title={allGroupsCollapsed ? 'Expand all groups' : 'Collapse all groups'}
+                                >
+                                    {allGroupsCollapsed ? 'Expand all' : 'Collapse all'}
+                                </Button>
+                            )}
                             <Button
                                 variant="ghost"
                                 size="sm"
@@ -587,6 +632,21 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                             >
                                 {selectedThemeIds.size > 0 ? 'Deselect all' : 'Select all'}
                             </Button>
+
+                            {selectedThemeIds.size > 0 && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        const rect = e.currentTarget.getBoundingClientRect();
+                                        setMenuState({ x: rect.left, y: rect.bottom, themeId: 'BULK_ACTIONS_MENU' });
+                                    }}
+                                    className="p-1 rounded hover:bg-slate-700 text-slate-300 mx-1"
+                                    title="Bulk actions"
+                                >
+                                    <MoreVertical size={20} />
+                                </button>
+                            )}
+
                             <div className="h-6 w-px bg-slate-800 mx-1"></div>
                             <Button
                                 variant="ghost"
@@ -686,6 +746,28 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                 onConfirm={confirmBulkDeleteAction}
                 title="Delete themes"
                 message={`Remove ${selectedThemeIds.size} theme${selectedThemeIds.size === 1 ? '' : 's'}? This action cannot be undone.`}
+                confirmLabel="Delete"
+                isDangerous
+            />
+
+            {/* Group Delete Confirmation */}
+            <ConfirmDialog
+                isOpen={!!groupToDelete}
+                onClose={() => setGroupToDelete(null)}
+                onConfirm={() => {
+                    if (groupToDelete) {
+                        const groupThemes = themes.filter(t => t.groupId === groupToDelete);
+                        groupThemes.forEach(t => deleteTheme(t.id));
+                        showToast('Group deleted');
+                        setGroupToDelete(null);
+                    }
+                }}
+                title="Delete group"
+                message={(() => {
+                    if (!groupToDelete) return '';
+                    const groupThemes = themes.filter(t => t.groupId === groupToDelete);
+                    return `Delete this switch group and all ${groupThemes.length} theme${groupThemes.length === 1 ? '' : 's'} in it? This action cannot be undone.`;
+                })()}
                 confirmLabel="Delete"
                 isDangerous
             />
@@ -810,34 +892,74 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                     onDragEnd={handleDragEnd}
                     modifiers={[restrictToVerticalAxis]}
                 >
-                    <SortableContext
-                        items={themes.map(t => t.id)}
-                        strategy={verticalListSortingStrategy}
-                    >
-                        {themes.map(theme => {
-                            const isSelected = selectedThemeIds.has(theme.id);
+                    <div className="flex flex-col gap-2">
+                        <SortableContext
+                            items={displayItems.map(i => i.id)}
+                            strategy={verticalListSortingStrategy}
+                        >
+                            {displayItems.map((item) => (
+                                item.type === 'group' ? (
+                                    <ThemeGroup
+                                        key={item.id}
+                                        id={item.id}
+                                        themes={item.themes}
+                                        domainPatterns={item.domainPatterns}
+                                        activeUrl={activeUrl}
+                                        isSelectionMode={isSelectionMode}
+                                        selectedThemeIds={selectedThemeIds}
+                                        globalEnabled={globalEnabled}
+                                        onSelectTheme={onSelectTheme}
+                                        onToggleSelection={handleToggleSelection}
+                                        onContextMenu={handleContextMenu}
+                                        onGroupContextMenu={handleGroupContextMenu}
+                                        onUpdateTheme={updateTheme}
+                                        onDeleteTheme={(e, id) => { e.stopPropagation(); setThemeToDelete(id); }}
+                                        onDomainClick={(e) => {
+                                            e.stopPropagation();
+                                            setEditingDomainGroup(item.id);
+                                        }}
+                                        isCollapsed={collapsedGroups.has(item.id)}
+                                        onToggleCollapse={() => {
+                                            setCollapsedGroups(prev => {
+                                                const next = new Set(prev);
+                                                if (next.has(item.id)) {
+                                                    next.delete(item.id);
+                                                } else {
+                                                    next.add(item.id);
+                                                }
+                                                return next;
+                                            });
+                                        }}
+                                    />
+                                ) : (
+                                    <SortableThemeItemWrapper
+                                        key={item.id}
+                                        theme={item.data}
+                                        activeUrl={activeUrl}
+                                        isSelectionMode={isSelectionMode}
+                                        isSelected={selectedThemeIds.has(item.id)}
+                                        globalEnabled={globalEnabled}
+                                        onSelect={() => onSelectTheme(item.id)}
+                                        onToggleSelection={() => handleToggleSelection(item.id)}
+                                        onContextMenu={(e) => handleContextMenu(e, item.id)}
+                                        onKebabClick={(e) => handleKebabClick(e, item.id)}
+                                        onUpdateTheme={(updates) => updateTheme(item.id, updates)}
+                                        onDeleteClick={(e) => {
+                                            e.stopPropagation();
+                                            setThemeToDelete(item.id);
+                                        }}
+                                    />
+                                )
+                            ))}
+                        </SortableContext>
+                    </div>
 
-                            return (
-                                <SortableThemeItem
-                                    key={theme.id}
-                                    theme={theme}
-                                    activeUrl={activeUrl}
-                                    isSelectionMode={isSelectionMode}
-                                    isSelected={isSelected}
-                                    globalEnabled={globalEnabled}
-                                    onSelect={() => onSelectTheme(theme.id)}
-                                    onToggleSelection={() => handleToggleSelection(theme.id)}
-                                    onContextMenu={(e) => handleContextMenu(e, theme.id)}
-                                    onKebabClick={(e) => handleKebabClick(e, theme.id)}
-                                    onUpdateTheme={(updates) => updateTheme(theme.id, updates)}
-                                    onDeleteClick={(e) => {
-                                        e.stopPropagation();
-                                        setThemeToDelete(theme.id);
-                                    }}
-                                />
-                            );
-                        })}
-                    </SortableContext>
+                    {themes.length === 0 && (
+                        <div className="text-center py-20 text-slate-500">
+                            <p className="text-lg mb-2">No themes yet</p>
+                            <p className="text-sm">Create one or import from the top menu</p>
+                        </div>
+                    )}
                 </DndContext>
             </div>
 
@@ -908,10 +1030,21 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                 <ContextMenu
                     x={menuState.x}
                     y={menuState.y}
-                    items={menuState.themeId === 'HEADER_MENU' ? getMenuItemsForHeader() : getMenuItems(menuState.themeId)}
-                    onClose={() => setMenuState({ ...menuState, themeId: null })}
+                    items={menuState.themeId === 'HEADER_MENU' ? getMenuItemsForHeader() : getMenuItems(menuState.themeId, menuState.groupId)}
+                    onClose={() => setMenuState({ ...menuState, themeId: null, groupId: undefined })}
                 />
             )}
+
+
+            {/* Domain Configuration Modal */}
+            <DomainConfigurationModal
+                isOpen={!!editingDomainGroup}
+                onClose={() => setEditingDomainGroup(null)}
+                themes={themes}
+                groupId={editingDomainGroup || undefined}
+                onUpdateTheme={updateTheme}
+                activeUrl={activeUrl}
+            />
         </div>
     );
 };

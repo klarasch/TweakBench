@@ -11,3 +11,4 @@
 [x] enable reorder in stack
 [ ] make it possible to export the whole workspace
 [ ] make library scoped (show relevant in tabs and only show whole library on initial screen)
+[ ] when importing to an empty space, don't ask how to handle conflicts

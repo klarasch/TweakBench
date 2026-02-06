@@ -701,7 +701,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                 onClick: () => toggleThemeItem(theme.id, itemId)
             },
             ...(snippets.find(s => s.id === item.snippetId)?.isLibraryItem !== false ? [{
-                label: 'Detach from Library',
+                label: 'Detach from library',
                 icon: <Unlink size={14} />,
                 onClick: () => handleDetachSnippet(itemId)
             }] : []),
