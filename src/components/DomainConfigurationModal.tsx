@@ -77,7 +77,7 @@ export const DomainConfigurationModal: React.FC<DomainConfigurationModalProps> =
                     <div>
                         <h3 className="text-lg font-semibold text-slate-100 tracking-tight">
                             {mode === 'create'
-                                ? 'Create switch group'
+                                ? 'Create domain group'
                                 : isGroup ? 'Group domain configuration' : 'Domain configuration'
                             }
                         </h3>
@@ -85,7 +85,7 @@ export const DomainConfigurationModal: React.FC<DomainConfigurationModalProps> =
                             {mode === 'create'
                                 ? 'Configure where this group will be active'
                                 : isGroup
-                                    ? 'Changes apply to all themes in this switch group'
+                                    ? 'Changes apply to all themes in this domain group'
                                     : 'Control where this theme is active'
                             }
                         </p>

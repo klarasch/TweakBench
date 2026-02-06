@@ -5,7 +5,7 @@ import { Toggle } from '../ui/Toggle';
 import { Modal } from '../ui/Modal';
 import type { Theme } from '../../types.ts';
 import { useActiveTab } from '../../hooks/useActiveTab.ts';
-import { isDomainMatch, getDomainFromUrl } from '../../utils/domains.ts';
+import { isDomainMatch } from '../../utils/domains.ts';
 import { ConfirmDialog } from '../ui/Dialog';
 import { DomainListEditor } from '../DomainListEditor';
 
@@ -40,7 +40,6 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
     const [confirmEnableGlobal, setConfirmEnableGlobal] = useState(false);
 
     const isMatch = activeUrl ? isDomainMatch(theme.domainPatterns, activeUrl) : false;
-    const currentDomain = activeUrl ? getDomainFromUrl(activeUrl) : null;
 
     useEffect(() => {
         setLocalName(theme.name);
@@ -56,7 +55,7 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                     {theme.groupId && (
-                        <div className="text-blue-400" title="This theme is part of a switch group">
+                        <div className="text-blue-400" title="This theme is part of a domain group">
                             <LinkIcon size={16} />
                         </div>
                     )}
@@ -188,7 +187,7 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                     <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg flex items-start gap-3">
                         <LinkIcon size={16} className="text-blue-400 mt-0.5 shrink-0" />
                         <div className="text-xs text-blue-300">
-                            <span className="font-semibold block mb-0.5">Part of a switch group</span>
+                            <span className="font-semibold block mb-0.5">Part of a domain group</span>
                             Changes to domains will apply to <strong>all themes</strong> in this group to ensure they run on the same pages.
                         </div>
                     </div>

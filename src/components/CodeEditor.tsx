@@ -2,7 +2,8 @@ import React, { useCallback, useEffect, useRef, useImperativeHandle } from 'reac
 import CodeMirror from '@uiw/react-codemirror';
 import { css } from '@codemirror/lang-css';
 import { html } from '@codemirror/lang-html';
-import { EditorView } from '@codemirror/view';
+import { EditorView, Decoration, ViewPlugin, ViewUpdate } from '@codemirror/view';
+import type { DecorationSet } from '@codemirror/view';
 // Imports needed for prettier
 import * as prettier from "prettier/standalone";
 import * as parserPostcss from "prettier/plugins/postcss";
@@ -20,6 +21,8 @@ interface CodeEditorProps {
     autoHeight?: boolean;
     onFocus?: () => void;
     snippets?: Snippet[];
+    searchQuery?: string;
+    currentMatch?: { from: number; to: number } | null;
 }
 
 // Re-adding CodeEditorRef interface and forwardRef implementation
@@ -151,6 +154,55 @@ export const CodeEditor = React.forwardRef<CodeEditorRef, CodeEditorProps>((prop
         };
     }, [mode, props.snippets]);
 
+    // Search highlighting extension
+    const searchHighlightExtension = React.useMemo(() => {
+        if (!props.searchQuery || props.searchQuery.trim() === '') {
+            return [];
+        }
+
+        const searchMark = Decoration.mark({ class: 'cm-search-match' });
+        const currentSearchMark = Decoration.mark({ class: 'cm-search-match-current' });
+
+        const decorations = (view: EditorView) => {
+            const decorations: any[] = [];
+            const query = props.searchQuery!.toLowerCase();
+            const text = view.state.doc.toString().toLowerCase();
+
+            let pos = 0;
+            while ((pos = text.indexOf(query, pos)) !== -1) {
+                const from = pos;
+                const to = pos + query.length;
+
+                // Check if this is the current match
+                const isCurrentMatch = props.currentMatch &&
+                    props.currentMatch.from === from &&
+                    props.currentMatch.to === to;
+
+                decorations.push(
+                    (isCurrentMatch ? currentSearchMark : searchMark).range(from, to)
+                );
+
+                pos = to;
+            }
+
+            return Decoration.set(decorations);
+        };
+
+        return ViewPlugin.fromClass(class {
+            decorations: DecorationSet;
+
+            constructor(view: EditorView) {
+                this.decorations = decorations(view);
+            }
+
+            update(update: ViewUpdate) {
+                this.decorations = decorations(update.view);
+            }
+        }, {
+            decorations: v => v.decorations
+        });
+    }, [props.searchQuery, props.currentMatch]);
+
     const extensions = React.useMemo(() => [
         mode === 'css' ? css() : html(),
         EditorView.theme({
@@ -178,10 +230,20 @@ export const CodeEditor = React.forwardRef<CodeEditorRef, CodeEditorProps>((prop
             ".cm-activeLineGutter": {
                 backgroundColor: "#1e293b", /* slate-800 */
                 color: "#e2e8f0"
+            },
+            ".cm-search-match": {
+                backgroundColor: "#fbbf2480", /* yellow-400 with opacity */
+                borderRadius: "2px"
+            },
+            ".cm-search-match-current": {
+                backgroundColor: "#fb923c", /* orange-400 */
+                borderRadius: "2px",
+                outline: "1px solid #f97316" /* orange-500 */
             }
         }, { dark: true }),
-        autocompletion({ override: [cssVariableCompletions] }) // Add our custom completion
-    ], [mode, autoHeight, cssVariableCompletions]);
+        autocompletion({ override: [cssVariableCompletions] }), // Add our custom completion
+        ...(searchHighlightExtension ? [searchHighlightExtension] : [])
+    ], [mode, autoHeight, cssVariableCompletions, searchHighlightExtension]);
 
     const handleChange = useCallback((val: string) => {
         onChange(val);

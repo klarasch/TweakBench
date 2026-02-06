@@ -25,6 +25,8 @@ interface SnippetStackItemProps {
     isThemeActive: boolean;
     editorRef?: React.Ref<any>;
     isSelectionMode?: boolean;
+    searchQuery?: string;
+    currentMatch?: { from: number; to: number } | null;
 }
 
 export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
@@ -40,7 +42,9 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
     onSelect,
     isThemeActive,
     editorRef,
-    isSelectionMode
+    isSelectionMode,
+    searchQuery,
+    currentMatch
 }) => {
     const { snippets, updateSnippet, updateThemeItem, toggleThemeItem, themes, updateSnippetAndPropagate } = useStore();
     const s = snippets.find(sn => sn.id === item.snippetId);
@@ -379,6 +383,8 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                                 onSelect(item.id);
                             }}
                             snippets={snippets}
+                            searchQuery={searchQuery}
+                            currentMatch={currentMatch}
                         />
                     </div>
                 )

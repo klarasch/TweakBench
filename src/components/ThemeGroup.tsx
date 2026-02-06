@@ -265,7 +265,6 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
                             onContextMenu={(e) => onContextMenu(e, theme.id)}
                             onKebabClick={(e) => {
                                 e.stopPropagation();
-                                const rect = e.currentTarget.getBoundingClientRect();
                                 // We need to pass this up, but the prop signature on ThemeItem expects void or simple event
                                 // ThemeItem calls: onKebabClick(e)
                                 // We need to trigger the parent's context menu handler logic.

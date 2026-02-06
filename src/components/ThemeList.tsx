@@ -516,11 +516,11 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                 },
                 { separator: true },
                 {
-                    label: 'Create switch group',
+                    label: 'Create domain group',
                     icon: <LinkIcon size={14} className="text-blue-400" />,
                     onClick: () => {
                         createThemeGroup(Array.from(selectedThemeIds));
-                        showToast('Switch group created');
+                        showToast('Domain group created');
                         setIsSelectionMode(false);
                     }
                 },
@@ -609,54 +609,81 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
         }
     ];
 
+    const getMenuItemsForCreate = (): ContextMenuItem[] => [
+        {
+            label: 'Create theme',
+            icon: <Plus size={14} className="text-blue-400" />,
+            onClick: () => setIsCreating(true)
+        },
+        {
+            label: 'Create domain group',
+            icon: <LinkIcon size={14} className="text-blue-400" />,
+            onClick: () => setIsCreatingGroup(true)
+        }
+    ];
+
     return (
         <div className="flex flex-col gap-4 relative pb-20">
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
                     <h2 className="text-lg font-semibold text-slate-200">Themes</h2>
+                    {groupCount > 1 && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={toggleAllGroups}
+                            className="text-slate-400 hover:text-white"
+                            title={allGroupsCollapsed ? 'Expand all groups' : 'Collapse all groups'}
+                        >
+                            {allGroupsCollapsed ? 'Expand all' : 'Collapse all'}
+                        </Button>
+                    )}
                     {!isSelectionMode && (
-                        <>
-                            {groupCount > 1 && (
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={toggleAllGroups}
-                                    className="text-slate-400 hover:text-white"
-                                    title={allGroupsCollapsed ? 'Expand all groups' : 'Collapse all groups'}
-                                >
-                                    {allGroupsCollapsed ? 'Expand all' : 'Collapse all'}
-                                </Button>
-                            )}
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setIsSelectionMode(true)}
-                                className="text-slate-400 hover:text-white"
-                            >
-                                Select
-                            </Button>
-                        </>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setIsSelectionMode(true)}
+                            className="text-slate-400 hover:text-white"
+                        >
+                            Select
+                        </Button>
                     )}
                 </div>
                 <div className="flex gap-2">
                     {!isSelectionMode ? (
                         <>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setIsCreatingGroup(true)}
-                                icon={<Plus size={14} />}
-                            >
-                                Create switch group
-                            </Button>
-                            <Button
-                                variant="filled"
-                                size="sm"
-                                onClick={() => setIsCreating(true)}
-                                icon={<Plus size={14} />}
-                            >
-                                Create theme
-                            </Button>
+                            {/* Compact view for narrow screens */}
+                            <div className="md:hidden">
+                                <button
+                                    onClick={(e) => {
+                                        const rect = e.currentTarget.getBoundingClientRect();
+                                        setMenuState({ x: rect.left, y: rect.bottom, themeId: 'CREATE_MENU' });
+                                    }}
+                                    className="p-1.5 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                                    title="Create"
+                                >
+                                    <Plus size={16} />
+                                </button>
+                            </div>
+                            {/* Full view for wider screens */}
+                            <div className="hidden md:flex md:gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setIsCreatingGroup(true)}
+                                    icon={<Plus size={14} />}
+                                >
+                                    Create domain group
+                                </Button>
+                                <Button
+                                    variant="filled"
+                                    size="sm"
+                                    onClick={() => setIsCreating(true)}
+                                    icon={<Plus size={14} />}
+                                >
+                                    Create theme
+                                </Button>
+                            </div>
                             <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".js" />
                             <input type="file" ref={allDataFileInputRef} onChange={handleAllDataFileChange} className="hidden" accept=".json" />
                             <button
@@ -821,7 +848,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                 message={(() => {
                     if (!groupToDelete) return '';
                     const groupThemes = themes.filter(t => t.groupId === groupToDelete);
-                    return `Delete this switch group and all ${groupThemes.length} theme${groupThemes.length === 1 ? '' : 's'} in it? This action cannot be undone.`;
+                    return `Delete this domain group and all ${groupThemes.length} theme${groupThemes.length === 1 ? '' : 's'} in it? This action cannot be undone.`;
                 })()}
                 confirmLabel="Delete"
                 isDangerous
@@ -1089,7 +1116,13 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                 <ContextMenu
                     x={menuState.x}
                     y={menuState.y}
-                    items={menuState.themeId === 'HEADER_MENU' ? getMenuItemsForHeader() : getMenuItems(menuState.themeId, menuState.groupId)}
+                    items={
+                        menuState.themeId === 'HEADER_MENU'
+                            ? getMenuItemsForHeader()
+                            : menuState.themeId === 'CREATE_MENU'
+                                ? getMenuItemsForCreate()
+                                : getMenuItems(menuState.themeId, menuState.groupId)
+                    }
                     onClose={() => setMenuState({ ...menuState, themeId: null, groupId: undefined })}
                 />
             )}
@@ -1123,7 +1156,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                 onCreateGroup={(domainPatterns) => {
                     createEmptyGroup(domainPatterns);
                     setIsCreatingGroup(false);
-                    showToast('Switch group created');
+                    showToast('Domain group created');
                 }}
             />
         </div>

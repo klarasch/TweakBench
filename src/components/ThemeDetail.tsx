@@ -5,6 +5,7 @@ import { SnippetStackItem } from './ThemeDetail/SnippetStackItem.tsx';
 import { StructureSidebar } from './ThemeDetail/StructureSidebar.tsx';
 import { ThemeHeader } from './ThemeDetail/ThemeHeader.tsx';
 import { ImportVariablesModal } from './ThemeDetail/ImportVariablesModal.tsx';
+import { SearchBar } from './ThemeDetail/SearchBar.tsx';
 import { Button } from './ui/Button';
 import { ConfirmDialog } from './ui/Dialog';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
@@ -56,6 +57,12 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     const [pendingScrollItemId, setPendingScrollItemId] = useState<string | null>(null);
     const [collapsedItems, setCollapsedItems] = useState<Set<string>>(new Set());
     const [editingSnippetId, setEditingSnippetId] = useState<string | null>(null); // Added editing state
+
+    // Search State
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
+
     // itemRefs not needed for main list with Virtuoso, but keeping for sidebar potentially? 
     // Actually sidebar uses it. Main list will use Virtuoso handle.
     const virtuosoRef = useRef<VirtuosoHandle>(null);
@@ -197,6 +204,155 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
         return s?.type === activeTab;
     }) : [], [theme, snippets, activeTab]);
 
+    // Search Logic
+    interface SearchMatch {
+        itemId: string;
+        matches: Array<{ from: number; to: number }>;
+    }
+
+    const searchResults = useMemo<SearchMatch[]>(() => {
+        if (!searchQuery || searchQuery.trim() === '') return [];
+
+        const query = searchQuery.toLowerCase();
+        const results: SearchMatch[] = [];
+
+        filteredItems.forEach(item => {
+            const snippet = snippets.find(s => s.id === item.snippetId);
+            if (!snippet) return;
+
+            const matches: Array<{ from: number; to: number }> = [];
+
+            // Search in snippet name
+            const nameLower = snippet.name.toLowerCase();
+            let namePos = 0;
+            while ((namePos = nameLower.indexOf(query, namePos)) !== -1) {
+                matches.push({ from: namePos, to: namePos + query.length });
+                namePos += query.length;
+            }
+
+            // Search in content
+            const content = item.overrides?.content ?? snippet.content;
+            const contentLower = content.toLowerCase();
+            let contentPos = 0;
+            while ((contentPos = contentLower.indexOf(query, contentPos)) !== -1) {
+                matches.push({ from: contentPos, to: contentPos + query.length });
+                contentPos += query.length;
+            }
+
+            // Search in HTML selector if applicable
+            if (snippet.type === 'html') {
+                const selector = item.overrides?.selector ?? snippet.selector ?? '';
+                const selectorLower = selector.toLowerCase();
+                let selectorPos = 0;
+                while ((selectorPos = selectorLower.indexOf(query, selectorPos)) !== -1) {
+                    matches.push({ from: selectorPos, to: selectorPos + query.length });
+                    selectorPos += query.length;
+                }
+            }
+
+            if (matches.length > 0) {
+                results.push({ itemId: item.id, matches });
+            }
+        });
+
+        return results;
+    }, [searchQuery, filteredItems, snippets]);
+
+    const totalMatches = useMemo(() => {
+        return searchResults.reduce((sum, result) => sum + result.matches.length, 0);
+    }, [searchResults]);
+
+    // Filter items to only show those with matches when searching
+    const displayedItems = useMemo(() => {
+        if (!searchQuery || searchQuery.trim() === '') return filteredItems;
+        return filteredItems.filter(item =>
+            searchResults.some(result => result.itemId === item.id)
+        );
+    }, [searchQuery, filteredItems, searchResults]);
+
+    // Get current match details
+    const currentMatch = useMemo(() => {
+        if (totalMatches === 0 || currentMatchIndex >= totalMatches) return null;
+
+        let matchCount = 0;
+        for (const result of searchResults) {
+            if (matchCount + result.matches.length > currentMatchIndex) {
+                const localIndex = currentMatchIndex - matchCount;
+                return {
+                    itemId: result.itemId,
+                    match: result.matches[localIndex]
+                };
+            }
+            matchCount += result.matches.length;
+        }
+        return null;
+    }, [searchResults, currentMatchIndex, totalMatches]);
+
+    // Navigate to next match
+    const handleNextMatch = useCallback(() => {
+        if (totalMatches === 0) return;
+        setCurrentMatchIndex((prev) => (prev + 1) % totalMatches);
+    }, [totalMatches]);
+
+    // Navigate to previous match
+    const handlePreviousMatch = useCallback(() => {
+        if (totalMatches === 0) return;
+        setCurrentMatchIndex((prev) => (prev - 1 + totalMatches) % totalMatches);
+    }, [totalMatches]);
+
+    // Close search and clear filters
+    const handleCloseSearch = useCallback(() => {
+        setIsSearchOpen(false);
+        setSearchQuery('');
+        setCurrentMatchIndex(0);
+    }, []);
+
+    // Auto-expand items with matches and scroll to current match
+    useEffect(() => {
+        if (!currentMatch) return;
+
+        // Expand the item with current match
+        setCollapsedItems(prev => {
+            const next = new Set(prev);
+            next.delete(currentMatch.itemId);
+            return next;
+        });
+
+        // Scroll to the item
+        const index = displayedItems.findIndex(i => i.id === currentMatch.itemId);
+        if (index !== -1) {
+            setTimeout(() => {
+                virtuosoRef.current?.scrollToIndex({ index, align: 'center', behavior: 'smooth' });
+            }, 100);
+        }
+
+        // Select the item
+        setSelectedItemId(currentMatch.itemId);
+    }, [currentMatch, displayedItems]);
+
+    // Reset match index when search query changes
+    useEffect(() => {
+        setCurrentMatchIndex(0);
+    }, [searchQuery]);
+
+    // Keyboard shortcut for opening search (Cmd+F / Ctrl+F)
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Cmd+F or Ctrl+F to open search
+            if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
+                // Only trigger if focus is within the theme detail area
+                const target = e.target as HTMLElement;
+                if (target.closest('.theme-detail-container')) {
+                    e.preventDefault();
+                    setIsSearchOpen(true);
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
+
     // Phase 1: Detect sidebar scroll request and set pending state
     useEffect(() => {
         if (selectedItemId && scrollSourceRef.current === 'sidebar' && !justDroppedId) {
@@ -208,7 +364,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     // Phase 2: Execute scroll after DOM has updated (runs synchronously after render)
     useLayoutEffect(() => {
         if (pendingScrollItemId && virtuosoRef.current) {
-            const index = filteredItems.findIndex(i => i.id === pendingScrollItemId);
+            const index = displayedItems.findIndex(i => i.id === pendingScrollItemId);
             if (index !== -1) {
                 // Scroll Virtuoso to the index
                 virtuosoRef.current.scrollToIndex({ index, align: 'start', behavior: 'smooth' });
@@ -216,12 +372,12 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
             setPendingScrollItemId(null); // Clear pending scroll
             scrollSourceRef.current = null; // Reset source after scroll
         }
-    }, [pendingScrollItemId, filteredItems]);
+    }, [pendingScrollItemId, displayedItems]);
 
     // Handle scroll on drop
     useEffect(() => {
         if (justDroppedId) {
-            const index = filteredItems.findIndex(i => i.id === justDroppedId);
+            const index = displayedItems.findIndex(i => i.id === justDroppedId);
             if (index !== -1) {
                 // Wait for expansion/layout measurement
                 const timer = setTimeout(() => {
@@ -239,7 +395,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                 return () => clearTimeout(timer);
             }
         }
-    }, [justDroppedId, filteredItems, collapsedItems]);
+    }, [justDroppedId, displayedItems, collapsedItems]);
 
     // Resize Handler
     useEffect(() => {
@@ -991,8 +1147,19 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                 )}
 
                 {/* Main: Editor */}
-                <div className="flex-1 flex flex-col bg-slate-900 relative overflow-hidden">
-
+                <div className="flex-1 flex flex-col bg-slate-900 relative overflow-hidden theme-detail-container">
+                    {/* Search Bar */}
+                    {isSearchOpen && (
+                        <SearchBar
+                            searchQuery={searchQuery}
+                            onSearchChange={setSearchQuery}
+                            onClose={handleCloseSearch}
+                            onNext={handleNextMatch}
+                            onPrevious={handlePreviousMatch}
+                            currentMatchIndex={currentMatchIndex}
+                            totalMatches={totalMatches}
+                        />
+                    )}
 
                     {/* Sticky Subheader - Refreshed */}
                     <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-800 p-2 flex items-center justify-between">
@@ -1167,7 +1334,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                     )}
 
                     <div className="flex-1 p-3">
-                        {filteredItems.length > 0 ? (
+                        {displayedItems.length > 0 ? (
                             <DndContext
                                 sensors={sensors}
                                 collisionDetection={closestCenter}
@@ -1176,13 +1343,13 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                 modifiers={[restrictToVerticalAxis]}
                             >
                                 <SortableContext
-                                    items={filteredItems.map(i => i.id)}
+                                    items={displayedItems.map(i => i.id)}
                                     strategy={verticalListSortingStrategy}
                                 >
                                     <Virtuoso
                                         style={{ height: '100%' }}
                                         ref={virtuosoRef}
-                                        data={filteredItems}
+                                        data={displayedItems}
                                         itemContent={(_, item) => (
                                             <SnippetStackItem
                                                 key={item.id}
@@ -1207,6 +1374,8 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                                 isThemeActive={true}
                                                 editorRef={(el: any) => editorRefs.current[item.id] = el}
                                                 isSelectionMode={isSelectionMode}
+                                                searchQuery={searchQuery}
+                                                currentMatch={currentMatch?.itemId === item.id ? currentMatch.match : null}
                                             />
                                         )}
                                     />
