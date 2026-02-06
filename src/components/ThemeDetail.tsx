@@ -805,6 +805,27 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
             ];
         }
 
+        if (itemId === 'SUB_HEADER_MENU') {
+            return [
+                ...(activeTab === 'css' ? [{
+                    label: 'Import vars',
+                    icon: <Download size={14} />,
+                    onClick: handleImportVariables
+                }] : []),
+                {
+                    label: 'Quick add from library',
+                    icon: <Plus size={14} />,
+                    onClick: () => {
+                        // We can't easily get the rect here without the event, 
+                        // but we don't really need it if we're opening from a menu.
+                        // Actually, setShowLibrary is easier here.
+                        setLibraryFilter(activeTab);
+                        setShowLibrary(true);
+                    }
+                }
+            ];
+        }
+
         if (itemId === 'BULK_ACTIONS_MENU') {
             return [
                 {
@@ -1230,7 +1251,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
 
                         {!isSelectionMode && !isSearchOpen && (
                             <div className="flex gap-2">
-                                {activeTab === 'css' && (
+                                {activeTab === 'css' && viewportWidth > 500 && (
                                     <Button
                                         variant="outline"
                                         size="sm"
@@ -1243,30 +1264,51 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                     </Button>
                                 )}
 
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="text-slate-400 hover:text-white border-slate-700 hover:border-slate-500"
-                                    onClick={(e) => {
-                                        const rect = e.currentTarget.getBoundingClientRect();
-                                        setQuickAddState({ x: rect.left, y: rect.bottom, type: activeTab });
-                                    }}
-                                    icon={<Plus size={14} />}
-                                    title="Quick add from library"
-                                >
-                                    Quick add
-                                </Button>
+                                {viewportWidth > 500 && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="text-slate-400 hover:text-white border-slate-700 hover:border-slate-500"
+                                        onClick={(e) => {
+                                            const rect = e.currentTarget.getBoundingClientRect();
+                                            setQuickAddState({ x: rect.left, y: rect.bottom, type: activeTab });
+                                        }}
+                                        icon={<Plus size={14} />}
+                                        title="Quick add from library"
+                                    >
+                                        Quick add
+                                    </Button>
+                                )}
+
+                                {viewportWidth <= 500 && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="text-slate-400 hover:text-white border-slate-700 hover:border-slate-500"
+                                        onClick={(e) => {
+                                            const rect = e.currentTarget.getBoundingClientRect();
+                                            setMenuState({
+                                                x: rect.left,
+                                                y: rect.bottom,
+                                                itemId: 'SUB_HEADER_MENU',
+                                                source: 'stack'
+                                            });
+                                        }}
+                                        title="More actions"
+                                    >
+                                        <MoreVertical size={16} />
+                                    </Button>
+                                )}
 
                                 <Button
                                     variant="filled"
                                     size="sm"
                                     onClick={() => handleCreateLocal(activeTab)}
-                                    // Make HTML orange button use black text for better contrast against orange-600? Or go darker orange?
-                                    // User requested darker orange with white label (AA contrast)
                                     className={activeTab === 'css' ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-orange-700 hover:bg-orange-600 text-white font-bold'}
-                                    icon={<Plus size={10} />}
+                                    icon={<Plus size={viewportWidth > 500 ? 10 : 14} />}
+                                    title={`Add ${activeTab.toUpperCase()}`}
                                 >
-                                    Add {activeTab === 'css' ? 'CSS' : 'HTML'}
+                                    {viewportWidth > 500 && `Add ${activeTab === 'css' ? 'CSS' : 'HTML'}`}
                                 </Button>
                             </div>
                         )}
@@ -1293,42 +1335,39 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                             <div className="flex gap-2">
                                 <div className="h-6 w-px bg-slate-700 mx-1"></div>
 
-                                {viewportWidth > 600 ? (
-                                    <>
-                                        <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(true)} title="Enable selected">
-                                            <Play size={14} className="mr-1.5 text-green-400" /> Enable
-                                        </Button>
-                                        <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(false)} title="Disable selected">
-                                            <Pause size={14} className="mr-1.5 text-slate-400" /> Disable
-                                        </Button>
-                                        <div className="h-6 w-px bg-slate-700 mx-1"></div>
-                                        <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-900/20" onClick={handleBulkDelete}>
-                                            <Trash2 size={14} className="mr-1.5" /> Delete
-                                        </Button>
-                                    </>
-                                ) : (
+                                <>
+                                    <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(true)} title="Enable selected">
+                                        <Play size={14} className={viewportWidth > 600 ? "mr-1.5 text-green-400" : "text-green-400"} />
+                                        {viewportWidth > 600 && "Enable"}
+                                    </Button>
+                                    <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(false)} title="Disable selected">
+                                        <Pause size={14} className={viewportWidth > 600 ? "mr-1.5 text-slate-400" : "text-slate-400"} />
+                                        {viewportWidth > 600 && "Disable"}
+                                    </Button>
+                                    <div className="h-6 w-px bg-slate-700 mx-1"></div>
                                     <Button
                                         variant="ghost"
                                         size="sm"
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            if (menuState.itemId === 'BULK_ACTIONS_MENU') {
-                                                setMenuState({ x: 0, y: 0, itemId: null });
-                                                return;
-                                            }
                                             const rect = e.currentTarget.getBoundingClientRect();
                                             setMenuState({
-                                                // Center horizontally relative to button, display ABOVE the button
                                                 x: rect.left,
-                                                y: rect.top,
+                                                y: viewportWidth > 600 ? rect.bottom : rect.top,
                                                 itemId: 'BULK_ACTIONS_MENU',
                                                 source: 'stack'
                                             });
                                         }}
+                                        title="More actions"
                                     >
                                         <MoreVertical size={16} />
                                     </Button>
-                                )}
+                                    <div className="h-6 w-px bg-slate-700 mx-1"></div>
+                                    <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-900/20" onClick={handleBulkDelete} title="Delete selected">
+                                        <Trash2 size={14} className={viewportWidth > 600 ? "mr-1.5" : ""} />
+                                        {viewportWidth > 600 && "Delete"}
+                                    </Button>
+                                </>
                             </div>
                         </div>
                     )}

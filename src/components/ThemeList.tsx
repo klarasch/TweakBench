@@ -1040,12 +1040,6 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                         </SortableContext>
                     </div>
 
-                    {themes.length === 0 && (
-                        <div className="text-center py-20 text-slate-500">
-                            <p className="text-lg mb-2">No themes yet</p>
-                            <p className="text-sm">Create one or import from the top menu</p>
-                        </div>
-                    )}
                 </DndContext>
             </div>
 
@@ -1070,44 +1064,38 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                     <div className="flex gap-2">
                         <div className="h-6 w-px bg-slate-700 mx-1"></div>
 
-                        {viewportWidth > 600 ? (
-                            <>
-                                <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(true)} title="Enable selected">
-                                    <Play size={14} className="mr-1.5 text-green-400" /> Enable
-                                </Button>
-                                <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(false)} title="Disable selected">
-                                    <Pause size={14} className="mr-1.5 text-slate-400" /> Disable
-                                </Button>
-                                <div className="h-6 w-px bg-slate-700 mx-1"></div>
-                                <Button variant="ghost" size="sm" onClick={() => handleBulkExport('js')} title="Export selected">
-                                    <Download size={14} className="mr-1.5 text-blue-400" /> Export
-                                </Button>
-                                <div className="h-6 w-px bg-slate-700 mx-1"></div>
-                                <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-900/20" onClick={handleBulkDelete}>
-                                    <Trash2 size={14} className="mr-1.5" /> Delete
-                                </Button>
-                            </>
-                        ) : (
+                        <>
+                            <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(true)} title="Enable selected">
+                                <Play size={14} className={viewportWidth > 600 ? "mr-1.5 text-green-400" : "text-green-400"} />
+                                {viewportWidth > 600 && "Enable"}
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(false)} title="Disable selected">
+                                <Pause size={14} className={viewportWidth > 600 ? "mr-1.5 text-slate-400" : "text-slate-400"} />
+                                {viewportWidth > 600 && "Disable"}
+                            </Button>
+                            <div className="h-6 w-px bg-slate-700 mx-1"></div>
                             <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    if (menuState.themeId === 'BULK_ACTIONS_MENU') {
-                                        setMenuState({ x: 0, y: 0, themeId: null });
-                                        return;
-                                    }
                                     const rect = e.currentTarget.getBoundingClientRect();
                                     setMenuState({
                                         x: rect.left,
-                                        y: rect.top,
+                                        y: viewportWidth > 600 ? rect.bottom : rect.top,
                                         themeId: 'BULK_ACTIONS_MENU'
                                     });
                                 }}
+                                title="More actions"
                             >
                                 <MoreVertical size={16} />
                             </Button>
-                        )}
+                            <div className="h-6 w-px bg-slate-700 mx-1"></div>
+                            <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-900/20" onClick={handleBulkDelete} title="Delete selected">
+                                <Trash2 size={14} className={viewportWidth > 600 ? "mr-1.5" : ""} />
+                                {viewportWidth > 600 && "Delete"}
+                            </Button>
+                        </>
                     </div>
                 </div>
             )}
