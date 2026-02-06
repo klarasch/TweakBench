@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Globe, MoreVertical, Link as LinkIcon, CheckSquare, ChevronDown } from 'lucide-react';
+import { Globe, MoreVertical, Link as LinkIcon, CheckSquare, ChevronDown, Plus } from 'lucide-react';
 import { ThemeItem } from './ThemeItem';
 import type { Theme } from '../types';
 
@@ -144,16 +144,29 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
                             {isSomeSelected && !isAllSelected && <div className="w-2 h-0.5 bg-blue-400 rounded-full" />}
                         </div>
                     ) : (
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onGroupContextMenu(e, themes[0].groupId!, { x: e.pageX, y: e.pageY });
-                            }}
-                            className="p-1 rounded text-slate-500 hover:text-white hover:bg-slate-700 pointer-events-auto"
-                            onPointerDown={e => e.stopPropagation()} // Prevent drag
-                        >
-                            <MoreVertical size={14} />
-                        </button>
+                        <>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onGroupContextMenu(e, themes[0].groupId!, { x: e.pageX, y: e.pageY, action: 'add-theme' });
+                                }}
+                                className="p-1 rounded text-slate-500 hover:text-white hover:bg-slate-700 pointer-events-auto"
+                                onPointerDown={e => e.stopPropagation()} // Prevent drag
+                                title="Add theme to group"
+                            >
+                                <Plus size={14} />
+                            </button>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onGroupContextMenu(e, themes[0].groupId!, { x: e.pageX, y: e.pageY });
+                                }}
+                                className="p-1 rounded text-slate-500 hover:text-white hover:bg-slate-700 pointer-events-auto"
+                                onPointerDown={e => e.stopPropagation()} // Prevent drag
+                            >
+                                <MoreVertical size={14} />
+                            </button>
+                        </>
                     )}
                 </div>
             </div>

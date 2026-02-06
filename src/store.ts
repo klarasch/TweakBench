@@ -31,6 +31,7 @@ interface Store extends AppState {
 
     createThemeGroup: (themeIds: string[]) => void;
     ungroupThemes: (themeIds: string[]) => void;
+    createEmptyGroup: (domainPatterns: string[]) => string;
 }
 
 export const useStore = create<Store>((set) => ({
@@ -657,9 +658,37 @@ export const useStore = create<Store>((set) => ({
                 return { ...rest, updatedAt: Date.now() };
             });
 
+
             const newState = { ...state, themes: updatedThemes };
             storageService.save(newState);
             return newState;
         });
+    },
+
+    createEmptyGroup: (domainPatterns) => {
+        const groupId = uuidv4();
+        const themeId = uuidv4();
+
+        const newTheme: Theme = {
+            id: themeId,
+            name: 'New theme',
+            domainPatterns,
+            items: [],
+            isActive: false,
+            groupId,
+            createdAt: Date.now(),
+            updatedAt: Date.now()
+        };
+
+        set((state) => {
+            const newState = {
+                ...state,
+                themes: [...state.themes, newTheme]
+            };
+            storageService.save(newState);
+            return newState;
+        });
+
+        return groupId;
     }
 }));

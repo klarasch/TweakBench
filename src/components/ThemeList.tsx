@@ -81,7 +81,7 @@ const SortableThemeItemWrapper: React.FC<SortableThemeItemProps> = (props) => {
 };
 
 export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }) => {
-    const { themes, snippets, addTheme, deleteTheme, updateTheme, addSnippet, addSnippetToTheme, globalEnabled, importAllData: importData, reorderThemes, createThemeGroup, ungroupThemes } = useStore();
+    const { themes, snippets, addTheme, deleteTheme, updateTheme, addSnippet, addSnippetToTheme, globalEnabled, importAllData: importData, reorderThemes, createThemeGroup, ungroupThemes, createEmptyGroup } = useStore();
     const { showToast } = useToast();
 
     // Creation Modal State
@@ -89,6 +89,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
     const [newThemeName, setNewThemeName] = useState('');
     const [scannedDomain, setScannedDomain] = useState<string | null>(null);
     const [limitToDomain, setLimitToDomain] = useState(false);
+    const [newThemeGroupId, setNewThemeGroupId] = useState<string | null>(null);
 
     // Dialog States
     const [themeToDelete, setThemeToDelete] = useState<string | null>(null);
@@ -164,6 +165,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
 
     // Domain Config State
     const [editingDomainGroup, setEditingDomainGroup] = useState<string | null>(null);
+    const [isCreatingGroup, setIsCreatingGroup] = useState(false);
 
     // Responsive State
     const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
@@ -248,11 +250,13 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
             domainPatterns,
             items: [],
             isActive: true,
+            ...(newThemeGroupId && { groupId: newThemeGroupId })
         });
 
         setNewThemeName('');
         setIsCreating(false);
         setLimitToDomain(false);
+        setNewThemeGroupId(null);
 
         // Direct navigation to the new theme
         onSelectTheme(newId);
@@ -422,9 +426,22 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
         setMenuState({ x: e.pageX, y: e.pageY, themeId });
     };
 
-    const handleGroupContextMenu = (e: React.MouseEvent, groupId: string, triggers: { x: number, y: number }) => {
+    const handleGroupContextMenu = (e: React.MouseEvent, groupId: string, triggers: { x: number, y: number, action?: string }) => {
         e.preventDefault();
         e.stopPropagation();
+
+        // If this is the plus button, trigger theme creation
+        if (triggers.action === 'add-theme') {
+            const groupThemes = themes.filter(t => t.groupId === groupId);
+            if (groupThemes.length > 0) {
+                const domainPatterns = groupThemes[0].domainPatterns;
+                setScannedDomain(domainPatterns[0] || null);
+                setNewThemeGroupId(groupId);
+                setIsCreating(true);
+            }
+            return;
+        }
+
         setMenuState({ x: triggers.x, y: triggers.y, themeId: 'GROUP_MENU', groupId });
     };
 
@@ -440,6 +457,21 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
         // Group Menu
         if (groupId) {
             return [
+                {
+                    label: 'Add theme to group',
+                    icon: <Plus size={14} />,
+                    onClick: () => {
+                        const groupThemes = themes.filter(t => t.groupId === groupId);
+                        if (groupThemes.length > 0) {
+                            // Set the group ID and domain patterns, then open creation dialog
+                            const domainPatterns = groupThemes[0].domainPatterns;
+                            setScannedDomain(domainPatterns[0] || null);
+                            setNewThemeGroupId(groupId);
+                            setIsCreating(true);
+                        }
+                    }
+                },
+                { separator: true },
                 {
                     label: 'Configure domains',
                     icon: <Globe size={14} />,
@@ -558,6 +590,12 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
 
     const getMenuItemsForHeader = (): ContextMenuItem[] => [
         {
+            label: 'Import theme',
+            icon: <Upload size={14} className="text-green-400" />,
+            onClick: handleImportClick
+        },
+        { separator: true },
+        {
             label: 'Export all data',
             icon: <Download size={14} className="text-blue-400" />,
             onClick: handleExportAllData
@@ -572,9 +610,9 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
     return (
         <div className="flex flex-col gap-4 relative pb-20">
             <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold text-slate-200">Themes</h2>
-                <div className="flex gap-2">
-                    {!isSelectionMode ? (
+                <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-semibold text-slate-200">Themes</h2>
+                    {!isSelectionMode && (
                         <>
                             {groupCount > 1 && (
                                 <Button
@@ -595,24 +633,39 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                             >
                                 Select
                             </Button>
-                            <button onClick={handleImportClick} className="p-1 rounded hover:bg-slate-700 text-slate-300" title="Import theme">
-                                <Upload size={20} />
-                            </button>
+                        </>
+                    )}
+                </div>
+                <div className="flex gap-2">
+                    {!isSelectionMode ? (
+                        <>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setIsCreatingGroup(true)}
+                                icon={<Plus size={14} />}
+                            >
+                                Create switch group
+                            </Button>
+                            <Button
+                                variant="filled"
+                                size="sm"
+                                onClick={() => setIsCreating(true)}
+                                icon={<Plus size={14} />}
+                            >
+                                Create theme
+                            </Button>
                             <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".js" />
                             <input type="file" ref={allDataFileInputRef} onChange={handleAllDataFileChange} className="hidden" accept=".json" />
-                            <button onClick={() => setIsCreating(true)} className="p-1 rounded hover:bg-slate-700 text-slate-300" title="Create theme">
-                                <Plus size={20} />
-                            </button>
                             <button
                                 onClick={(e) => {
-                                    e.stopPropagation();
                                     const rect = e.currentTarget.getBoundingClientRect();
                                     setMenuState({ x: rect.left, y: rect.bottom, themeId: 'HEADER_MENU' });
                                 }}
-                                className="p-1 rounded hover:bg-slate-700 text-slate-300"
-                                title="Import/export all data"
+                                className="p-1.5 rounded hover:bg-slate-700 text-slate-300"
+                                title="More options"
                             >
-                                <MoreVertical size={20} />
+                                <MoreVertical size={16} />
                             </button>
                         </>
                     ) : (
@@ -1044,6 +1097,19 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                 groupId={editingDomainGroup || undefined}
                 onUpdateTheme={updateTheme}
                 activeUrl={activeUrl}
+            />
+
+            {/* Create Group Modal */}
+            <DomainConfigurationModal
+                isOpen={isCreatingGroup}
+                onClose={() => setIsCreatingGroup(false)}
+                activeUrl={activeUrl}
+                mode="create"
+                onCreateGroup={(domainPatterns) => {
+                    createEmptyGroup(domainPatterns);
+                    setIsCreatingGroup(false);
+                    showToast('Switch group created');
+                }}
             />
         </div>
     );

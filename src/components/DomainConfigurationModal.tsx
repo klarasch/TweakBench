@@ -8,34 +8,59 @@ import type { Theme } from '../types';
 interface DomainConfigurationModalProps {
     isOpen: boolean;
     onClose: () => void;
-    themes: Theme[];
+    themes?: Theme[];
     groupId?: string;
-    onUpdateTheme: (id: string, updates: Partial<Theme>) => void;
+    onUpdateTheme?: (id: string, updates: Partial<Theme>) => void;
     activeUrl: string | null;
+    mode?: 'edit' | 'create';
+    onCreateGroup?: (domainPatterns: string[]) => void;
 }
 
 export const DomainConfigurationModal: React.FC<DomainConfigurationModalProps> = ({
     isOpen,
     onClose,
-    themes,
+    themes = [],
     groupId,
     onUpdateTheme,
-    activeUrl
+    activeUrl,
+    mode = 'edit',
+    onCreateGroup
 }) => {
+    const [localPatterns, setLocalPatterns] = React.useState<string[]>([]);
+
+    // Initialize local patterns for create mode - MUST be before any conditional returns
+    React.useEffect(() => {
+        if (mode === 'create' && isOpen) {
+            setLocalPatterns([]);
+        }
+    }, [mode, isOpen]);
+
     // Get themes to configure
     const themesToConfigure = groupId
         ? themes.filter(t => t.groupId === groupId)
         : themes;
 
-    if (themesToConfigure.length === 0) return null;
+    // In create mode, we don't need existing themes
+    if (mode === 'edit' && themesToConfigure.length === 0) return null;
 
-    // Use first theme as source of truth (they're synced in groups)
-    const patterns = themesToConfigure[0].domainPatterns || [];
+    // Use first theme as source of truth (they're synced in groups), or local state for create mode
+    const patterns = mode === 'create' ? localPatterns : (themesToConfigure[0]?.domainPatterns || []);
 
     const updateDomains = (newPatterns: string[]) => {
-        themesToConfigure.forEach(theme => {
-            onUpdateTheme(theme.id, { domainPatterns: newPatterns });
-        });
+        if (mode === 'create') {
+            setLocalPatterns(newPatterns);
+        } else if (onUpdateTheme) {
+            themesToConfigure.forEach(theme => {
+                onUpdateTheme(theme.id, { domainPatterns: newPatterns });
+            });
+        }
+    };
+
+    const handleConfirm = () => {
+        if (mode === 'create' && onCreateGroup) {
+            onCreateGroup(localPatterns.length > 0 ? localPatterns : ['<all_urls>']);
+        }
+        onClose();
     };
 
     const isGroup = !!groupId;
@@ -51,12 +76,17 @@ export const DomainConfigurationModal: React.FC<DomainConfigurationModalProps> =
                     </div>
                     <div>
                         <h3 className="text-lg font-semibold text-slate-100 tracking-tight">
-                            {isGroup ? 'Group domain configuration' : 'Domain configuration'}
+                            {mode === 'create'
+                                ? 'Create switch group'
+                                : isGroup ? 'Group domain configuration' : 'Domain configuration'
+                            }
                         </h3>
                         <p className="text-xs font-normal text-slate-500">
-                            {isGroup
-                                ? 'Changes apply to all themes in this switch group'
-                                : 'Control where this theme is active'
+                            {mode === 'create'
+                                ? 'Configure where this group will be active'
+                                : isGroup
+                                    ? 'Changes apply to all themes in this switch group'
+                                    : 'Control where this theme is active'
                             }
                         </p>
                     </div>
@@ -64,11 +94,11 @@ export const DomainConfigurationModal: React.FC<DomainConfigurationModalProps> =
             }
             footer={
                 <Button
-                    onClick={onClose}
+                    onClick={handleConfirm}
                     variant="filled"
                     className="font-semibold"
                 >
-                    Done
+                    {mode === 'create' ? 'Create' : 'Done'}
                 </Button>
             }
         >
