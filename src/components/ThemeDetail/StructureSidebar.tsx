@@ -183,7 +183,7 @@ export const StructureSidebar: React.FC<StructureSidebarProps> = ({
                                                     e.stopPropagation();
                                                     setItemToRemove(item.id);
                                                 }}
-                                                title="Remove Snippet"
+                                                title="Remove snippet"
                                             >
                                                 <Trash2 size={12} />
                                             </button>
@@ -214,7 +214,7 @@ export const StructureSidebar: React.FC<StructureSidebarProps> = ({
                 onConfirm={() => {
                     if (itemToRemove) removeSnippetFromTheme(theme.id, itemToRemove);
                 }}
-                title="Remove Snippet"
+                title="Remove snippet"
                 message={<>Remove snippet <strong>{itemToRemoveName}</strong> from this theme?</>}
                 confirmLabel="Remove"
                 cancelLabel="Cancel"

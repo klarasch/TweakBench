@@ -232,7 +232,7 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
                         <p>Are you sure you want to delete <strong>"{snippetToDeleteObj?.name}"</strong>?</p>
                         {usageCountToDelete > 0 && (
                             <div className="bg-amber-500/10 border border-amber-500/20 text-amber-200 p-2 rounded text-xs">
-                                Warning: This snippet is used in {usageCountToDelete} theme{usageCountToDelete > 1 ? 's' : ''}. Deleting it will break those themes.
+                                Warning: This snippet is used in {usageCountToDelete} theme{usageCountToDelete > 1 ? 's' : ''}. Deleting it will affect those themes.
                             </div>
                         )}
                     </div>

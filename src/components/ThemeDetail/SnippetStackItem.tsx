@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useStore } from '../../store.ts';
 import { CodeEditor } from '../CodeEditor.tsx';
 import { MoreVertical, ChevronDown, ChevronRight, Terminal, FileCode, Upload, BookOpen } from 'lucide-react';
@@ -7,6 +7,7 @@ import { Button } from '../ui/Button';
 import { Toggle } from '../ui/Toggle';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { ConfirmDialog } from '../ui/Dialog';
 
 interface SnippetStackItemProps {
     item: ThemeItem;
@@ -41,6 +42,11 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
 }) => {
     const { snippets, updateSnippet, updateThemeItem, toggleThemeItem } = useStore();
     const s = snippets.find(sn => sn.id === item.snippetId);
+
+    // Confirmation dialogs
+    const [confirmPush, setConfirmPush] = useState(false);
+    const [confirmRevert, setConfirmRevert] = useState(false);
+    const [confirmReset, setConfirmReset] = useState(false);
 
     const {
         attributes,
@@ -212,7 +218,7 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                                         if (newName) updateSnippet(s.id, { name: newName, isLibraryItem: true });
                                     }}
                                     className="h-5 text-[10px] px-1.5 border-slate-700 text-slate-400 hover:text-purple-300 hover:border-purple-500/50"
-                                    title="Save to Library"
+                                    title="Save to library"
                                     icon={<Upload size={10} />}
                                 >
                                     Save
@@ -225,15 +231,10 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                                             variant="outline"
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                if (confirm('Update library snippet with local changes?')) {
-                                                    if (item.overrides?.content) {
-                                                        updateSnippet(s.id, { content: item.overrides.content });
-                                                        updateThemeItem(themeId, item.id, { overrides: undefined });
-                                                    }
-                                                }
+                                                setConfirmPush(true);
                                             }}
                                             className="h-5 text-[10px] px-1.5 border-purple-500/30 text-purple-300 hover:bg-purple-500/10 hover:border-purple-500/60 mr-1"
-                                            title="Update Library Snippet"
+                                            title="Update library snippet"
                                             icon={<Upload size={10} />}
                                         >
                                             Push
@@ -244,12 +245,10 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                                             variant="ghost"
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                if (confirm('Discard local changes and revert to library version?')) {
-                                                    updateThemeItem(themeId, item.id, { overrides: undefined });
-                                                }
+                                                setConfirmRevert(true);
                                             }}
                                             className="h-5 text-[10px] px-1.5 text-slate-500 hover:text-yellow-400"
-                                            title="Revert to Library Version"
+                                            title="Revert to library version"
                                         >
                                             Reset
                                         </Button>
@@ -264,12 +263,10 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                                     variant="ghost"
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        if (confirm('Reset snippet to its original imported state? This will discard all changes.')) {
-                                            updateSnippet(s.id, { content: s.originalContent });
-                                        }
+                                        setConfirmReset(true);
                                     }}
                                     className="h-5 text-[10px] px-1.5 text-slate-500 hover:text-yellow-400"
-                                    title="Reset to Original Import"
+                                    title="Reset to original import"
                                 >
                                     Reset
                                 </Button>
@@ -285,7 +282,7 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                         onChange={() => toggleThemeItem(themeId, item.id)}
                         size="sm"
                         disabled={!isThemeActive}
-                        title={!isThemeActive ? "Enable theme to toggle snippets" : "Toggle Snippet"}
+                        title={!isThemeActive ? "Enable theme to toggle snippets" : "Toggle snippet"}
                     />
 
                     {/* Kebab Menu */}
@@ -313,7 +310,7 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                                 onChange={(e) => updateThemeItem(themeId, item.id, {
                                     overrides: { ...item.overrides, selector: e.target.value }
                                 })}
-                                title="CSS Selector Target"
+                                title="CSS selector target"
                             />
                         </div>
                         <div className="w-[120px] flex gap-2 items-center bg-slate-900 border border-slate-800 rounded px-2 py-1">
@@ -324,7 +321,7 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                                 onChange={(e) => updateThemeItem(themeId, item.id, {
                                     overrides: { ...item.overrides, position: e.target.value as any }
                                 })}
-                                title="Injection Position"
+                                title="Injection position"
                             >
                                 <option value="append">Append</option>
                                 <option value="prepend">Prepend</option>
@@ -363,6 +360,50 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                     </div>
                 )
             }
+
+            {/* Confirmation Dialogs */}
+            <ConfirmDialog
+                isOpen={confirmPush}
+                onClose={() => setConfirmPush(false)}
+                onConfirm={() => {
+                    if (item.overrides?.content) {
+                        updateSnippet(s.id, { content: item.overrides.content });
+                        updateThemeItem(themeId, item.id, { overrides: undefined });
+                    }
+                    setConfirmPush(false);
+                }}
+                title="Update library snippet"
+                message="Update library snippet with local changes?"
+                confirmLabel="Update"
+            />
+
+            <ConfirmDialog
+                isOpen={confirmRevert}
+                onClose={() => setConfirmRevert(false)}
+                onConfirm={() => {
+                    updateThemeItem(themeId, item.id, { overrides: undefined });
+                    setConfirmRevert(false);
+                }}
+                title="Revert to library"
+                message="Discard local changes and revert to library version?"
+                confirmLabel="Revert"
+                isDangerous
+            />
+
+            <ConfirmDialog
+                isOpen={confirmReset}
+                onClose={() => setConfirmReset(false)}
+                onConfirm={() => {
+                    if (s.originalContent) {
+                        updateSnippet(s.id, { content: s.originalContent });
+                    }
+                    setConfirmReset(false);
+                }}
+                title="Reset snippet"
+                message="Reset snippet to its original imported state? This will discard all changes."
+                confirmLabel="Reset"
+                isDangerous
+            />
         </div>
     );
 });

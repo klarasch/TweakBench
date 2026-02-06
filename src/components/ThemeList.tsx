@@ -6,7 +6,8 @@ import { exportThemeToJS, exportThemeToCSS, parseThemeFromJS, exportAllData, imp
 import { isDomainMatch, getDomainFromUrl } from '../utils/domains.ts';
 import { Button } from './ui/Button';
 import { Modal } from './ui/Modal';
-import { ConfirmDialog, AlertDialog } from './ui/Dialog';
+import { ConfirmDialog } from './ui/Dialog';
+import { useToast } from './ui/Toast';
 
 interface ThemeListProps {
     onSelectTheme: (id: string) => void;
@@ -15,6 +16,7 @@ interface ThemeListProps {
 
 export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }) => {
     const { themes, snippets, addTheme, deleteTheme, updateTheme, addSnippet, addSnippetToTheme, globalEnabled, importAllData: importData } = useStore();
+    const { showToast } = useToast();
 
     // Creation Modal State
     const [isCreating, setIsCreating] = useState(false);
@@ -25,7 +27,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
     // Dialog States
     const [themeToDelete, setThemeToDelete] = useState<string | null>(null);
     const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
-    const [alertMessage, setAlertMessage] = useState<string | null>(null);
+    const [confirmBulkExport, setConfirmBulkExport] = useState<'js' | 'css' | null>(null);
 
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const allDataFileInputRef = React.useRef<HTMLInputElement>(null);
@@ -124,9 +126,9 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                     });
                     addSnippetToTheme(newThemeId, newSnippetId);
                 });
-                setAlertMessage(`Imported theme: ${importedData.name}`);
+                showToast(`Imported theme: ${importedData.name}`);
             } else {
-                setAlertMessage('Failed to parse theme from file.');
+                showToast('Failed to parse theme from file.', 'error');
             }
         };
         reader.readAsText(file);
@@ -160,7 +162,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                 setPendingImportData(importedData);
                 setIsImportDialogOpen(true);
             } else {
-                setAlertMessage('Failed to parse import file. Please ensure it\'s a valid TweakBench backup.');
+                showToast('Failed to parse import file. Please ensure it\'s a valid TweakBench backup.', 'error');
             }
         };
         reader.readAsText(file);
@@ -178,11 +180,11 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
         if (importMode === 'replace') {
             message = `Replaced all data: ${result.themesAdded} themes, ${result.snippetsAdded} snippets`;
         } else if (importMode === 'merge') {
-            message = `Imported: ${result.themesAdded} themes, ${result.snippetsAdded} snippets`;
+            message = `Imported ${result.themesAdded} themes, ${result.snippetsAdded} snippets`;
         } else {
-            message = `Imported: ${result.themesAdded} themes, ${result.snippetsAdded} snippets (${result.skipped} duplicates skipped)`;
+            message = `Imported ${result.themesAdded} themes, ${result.snippetsAdded} snippets (${result.skipped} duplicates skipped)`;
         }
-        setAlertMessage(message);
+        showToast(message);
     };
 
     const handleExport = (themeId: string, type: 'js' | 'css') => {
@@ -233,15 +235,14 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
     };
 
     const handleBulkExport = (type: 'js' | 'css') => {
-        // Batch export isn't straightforward with single file downloads unless we zip.
-        // For now, let's just loop download? Browser might block multiple downloads.
-        // Let's stick to simple "Export" which might need a rethink for bulk.
-        // Actually, user just said "Add relevant bulk actions".
-        // Maybe just Enable/Disable/Delete is enough for now.
-        // Or simple console log placeholder for now if too complex?
-        // Let's implement sequential download with slight delay.
-        if (selectedThemeIds.size > 5 && !confirm(`Export ${selectedThemeIds.size} files?`)) return;
+        if (selectedThemeIds.size > 5) {
+            setConfirmBulkExport(type);
+        } else {
+            executeBulkExport(type);
+        }
+    };
 
+    const executeBulkExport = (type: 'js' | 'css') => {
         let delay = 0;
         selectedThemeIds.forEach(id => {
             setTimeout(() => {
@@ -249,6 +250,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
             }, delay);
             delay += 500;
         });
+        showToast(`Exporting ${selectedThemeIds.size} themes...`);
     };
 
     const handleContextMenu = (e: React.MouseEvent, themeId: string) => {
@@ -267,24 +269,24 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
         if (themeId === 'BULK_ACTIONS_MENU') {
             return [
                 {
-                    label: 'Enable Selected',
+                    label: 'Enable selected',
                     icon: <Play size={14} className="text-green-400" />,
                     onClick: () => handleBulkEnable(true)
                 },
                 {
-                    label: 'Disable Selected',
+                    label: 'Disable selected',
                     icon: <Pause size={14} className="text-slate-400" />,
                     onClick: () => handleBulkEnable(false)
                 },
                 { separator: true },
                 {
-                    label: 'Export Selected',
+                    label: 'Export selected',
                     icon: <Download size={14} className="text-blue-400" />,
                     onClick: () => handleBulkExport('js')
                 },
                 { separator: true },
                 {
-                    label: `Delete ${selectedThemeIds.size} Themes`,
+                    label: `Delete ${selectedThemeIds.size} themes`,
                     icon: <Trash2 size={14} />,
                     danger: true,
                     onClick: handleBulkDelete
@@ -296,7 +298,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
         if (!theme) return [];
         return [
             {
-                label: theme.isActive ? 'Disable Theme' : 'Enable Theme',
+                label: theme.isActive ? 'Disable theme' : 'Enable theme',
                 icon: theme.isActive ? <Pause size={14} /> : <Play size={14} />,
                 onClick: () => updateTheme(themeId, { isActive: !theme.isActive })
             },
@@ -307,13 +309,13 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                 onClick: () => handleExport(themeId, 'js')
             },
             {
-                label: 'Export to CSS (Only)',
+                label: 'Export to CSS only',
                 icon: <Download size={14} />,
                 onClick: () => handleExport(themeId, 'css')
             },
             { separator: true },
             {
-                label: 'Delete Theme',
+                label: 'Delete theme',
                 icon: <Trash2 size={14} />,
                 danger: true,
                 onClick: () => setThemeToDelete(themeId)
@@ -325,12 +327,12 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
 
     const getMenuItemsForHeader = (): ContextMenuItem[] => [
         {
-            label: 'Export All Data',
+            label: 'Export all data',
             icon: <Download size={14} className="text-blue-400" />,
             onClick: handleExportAllData
         },
         {
-            label: 'Import All Data',
+            label: 'Import all data',
             icon: <Upload size={14} className="text-green-400" />,
             onClick: handleImportAllDataClick
         }
@@ -351,12 +353,12 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                             >
                                 Select
                             </Button>
-                            <button onClick={handleImportClick} className="p-1 rounded hover:bg-slate-700 text-slate-300" title="Import Theme">
+                            <button onClick={handleImportClick} className="p-1 rounded hover:bg-slate-700 text-slate-300" title="Import theme">
                                 <Upload size={20} />
                             </button>
                             <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".js" />
                             <input type="file" ref={allDataFileInputRef} onChange={handleAllDataFileChange} className="hidden" accept=".json" />
-                            <button onClick={() => setIsCreating(true)} className="p-1 rounded hover:bg-slate-700 text-slate-300" title="Create Theme">
+                            <button onClick={() => setIsCreating(true)} className="p-1 rounded hover:bg-slate-700 text-slate-300" title="Create theme">
                                 <Plus size={20} />
                             </button>
                             <button
@@ -366,7 +368,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                     setMenuState({ x: rect.left, y: rect.bottom, themeId: 'HEADER_MENU' });
                                 }}
                                 className="p-1 rounded hover:bg-slate-700 text-slate-300"
-                                title="Import/Export All Data"
+                                title="Import/export all data"
                             >
                                 <MoreVertical size={20} />
                             </button>
@@ -386,7 +388,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                 }}
                                 className="text-slate-500 hover:text-white"
                             >
-                                {selectedThemeIds.size > 0 ? 'Deselect All' : 'Select All'}
+                                {selectedThemeIds.size > 0 ? 'Deselect all' : 'Select all'}
                             </Button>
                             <div className="h-6 w-px bg-slate-800 mx-1"></div>
                             <Button
@@ -406,7 +408,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
             <Modal
                 isOpen={isCreating}
                 onClose={() => setIsCreating(false)}
-                title="Create New Theme"
+                title="Create new theme"
                 size="sm"
                 footer={
                     <>
@@ -419,14 +421,14 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                             onClick={handleCreate}
                             disabled={!newThemeName.trim()}
                         >
-                            Create Theme
+                            Create theme
                         </Button>
                     </>
                 }
             >
                 <div className="flex flex-col gap-4">
                     <div className="flex flex-col gap-1.5">
-                        <label className="text-xs font-semibold text-slate-400 uppercase">Theme Name</label>
+                        <label className="text-xs font-semibold text-slate-400 uppercase">Theme name</label>
                         <input
                             type="text"
                             value={newThemeName}
@@ -470,7 +472,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                 onConfirm={() => {
                     if (themeToDelete) deleteTheme(themeToDelete);
                 }}
-                title="Delete Theme"
+                title="Delete theme"
                 message={
                     <span>
                         Are you sure you want to delete theme <strong>"{themeToDeleteDetails?.name}"</strong>? This action cannot be undone.
@@ -485,17 +487,25 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                 isOpen={confirmBulkDelete}
                 onClose={() => setConfirmBulkDelete(false)}
                 onConfirm={confirmBulkDeleteAction}
-                title="Delete Themes"
+                title="Delete themes"
                 message={`Remove ${selectedThemeIds.size} theme${selectedThemeIds.size === 1 ? '' : 's'}? This action cannot be undone.`}
                 confirmLabel="Delete"
                 isDangerous
             />
 
-            {/* Alert Dialog */}
-            <AlertDialog
-                isOpen={!!alertMessage}
-                onClose={() => setAlertMessage(null)}
-                message={alertMessage}
+            {/* Bulk Export Confirmation */}
+            <ConfirmDialog
+                isOpen={!!confirmBulkExport}
+                onClose={() => setConfirmBulkExport(null)}
+                onConfirm={() => {
+                    if (confirmBulkExport) {
+                        executeBulkExport(confirmBulkExport);
+                        setConfirmBulkExport(null);
+                    }
+                }}
+                title="Export themes"
+                message={`Export ${selectedThemeIds.size} theme files? This will download multiple files.`}
+                confirmLabel="Export"
             />
 
             {/* Import Mode Selection Dialog */}
@@ -505,7 +515,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                     setIsImportDialogOpen(false);
                     setPendingImportData(null);
                 }}
-                title="Import All Data"
+                title="Import all data"
                 size="sm"
                 footer={
                     <>
@@ -541,7 +551,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                 className="mt-0.5"
                             />
                             <div className="flex flex-col">
-                                <span className="text-sm font-semibold text-slate-200">Merge (Recommended)</span>
+                                <span className="text-sm font-semibold text-slate-200">Merge (recommended)</span>
                                 <span className="text-xs text-slate-400">Add imported items alongside existing ones</span>
                             </div>
                         </label>
@@ -556,7 +566,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                 className="mt-0.5"
                             />
                             <div className="flex flex-col">
-                                <span className="text-sm font-semibold text-slate-200">Skip Duplicates</span>
+                                <span className="text-sm font-semibold text-slate-200">Skip duplicates</span>
                                 <span className="text-xs text-slate-400">Only import items with unique names</span>
                             </div>
                         </label>
@@ -571,7 +581,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                 className="mt-0.5"
                             />
                             <div className="flex flex-col">
-                                <span className="text-sm font-semibold text-red-400">Replace All</span>
+                                <span className="text-sm font-semibold text-red-400">Replace all</span>
                                 <span className="text-xs text-slate-400">⚠️ Delete all existing data and replace with import</span>
                             </div>
                         </label>
@@ -593,7 +603,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                             className="mt-2"
                             onClick={() => setIsCreating(true)}
                         >
-                            Create First Theme
+                            Create first theme
                         </Button>
                     </div>
                 )}
@@ -652,7 +662,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                                     ? 'bg-green-500/10 text-green-400 border border-green-500/20'
                                                     : 'bg-slate-700/50 text-slate-500 hover:bg-slate-700 hover:text-slate-300'
                                                 }`}
-                                            title={isSystemDisabled ? "System Disabled" : (theme.isActive ? "Disable Theme" : "Enable Theme")}
+                                            title={isSystemDisabled ? "System disabled" : (theme.isActive ? "Disable theme" : "Enable theme")}
                                         >
                                             <div className={`w-1.5 h-1.5 rounded-full ${isSystemDisabled ? 'bg-slate-600' : (theme.isActive ? 'bg-green-400 animate-pulse' : 'bg-slate-500')}`}></div>
                                             <span className="text-[10px] font-bold uppercase">{theme.isActive ? 'ON' : 'OFF'}</span>
@@ -664,7 +674,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                                     setThemeToDelete(theme.id);
                                                 }}
                                                 className="p-1 rounded text-slate-600 hover:text-red-400 hover:bg-slate-700 transition-colors"
-                                                title="Delete Theme"
+                                                title="Delete theme"
                                             >
                                                 <Trash2 size={14} />
                                             </button>
@@ -705,7 +715,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                             size="sm"
                             className="h-8 w-8 p-0 rounded-full hover:bg-slate-700 text-slate-400 hover:text-white bg-slate-700/50" // Made bigger and slightly distinct
                             onClick={() => setSelectedThemeIds(new Set())}
-                            title="Deselect All"
+                            title="Deselect all"
                         >
                             <X size={16} />
                         </Button>
@@ -719,14 +729,14 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
 
                         {viewportWidth > 600 ? (
                             <>
-                                <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(true)} title="Enable Selected">
+                                <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(true)} title="Enable selected">
                                     <Play size={14} className="mr-1.5 text-green-400" /> Enable
                                 </Button>
-                                <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(false)} title="Disable Selected">
+                                <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(false)} title="Disable selected">
                                     <Pause size={14} className="mr-1.5 text-slate-400" /> Disable
                                 </Button>
                                 <div className="h-6 w-px bg-slate-700 mx-1"></div>
-                                <Button variant="ghost" size="sm" onClick={() => handleBulkExport('js')} title="Export Selected">
+                                <Button variant="ghost" size="sm" onClick={() => handleBulkExport('js')} title="Export selected">
                                     <Download size={14} className="mr-1.5 text-blue-400" /> Export
                                 </Button>
                                 <div className="h-6 w-px bg-slate-700 mx-1"></div>

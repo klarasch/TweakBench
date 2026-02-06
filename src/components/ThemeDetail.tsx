@@ -9,6 +9,7 @@ import { Button } from './ui/Button';
 import { ConfirmDialog } from './ui/Dialog';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
 import { Trash2, Plus, Box, Play, Pause, Download, Edit, X, MoreVertical } from 'lucide-react';
+import { useToast } from './ui/Toast';
 import type { SnippetType } from '../types.ts';
 import { exportThemeToJS, exportThemeToCSS } from '../utils/impexp.ts';
 import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
@@ -43,6 +44,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     const toggleThemeItem = useStore(state => state.toggleThemeItem);
     const updateTheme = useStore(state => state.updateTheme);
     const toggleGlobal = useStore(state => state.toggleGlobal);
+    const { showToast } = useToast();
     // State
     const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
     const [showLibrary, setShowLibrary] = useState(false);
@@ -121,14 +123,6 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     const handleBulkDelete = () => {
         if (selectedSnippetIds.size === 0) return;
         setConfirmBulkDelete(true);
-    };
-
-    const confirmBulkDeleteAction = () => {
-        const { removeSnippetFromTheme } = useStore.getState();
-        selectedSnippetIds.forEach(id => removeSnippetFromTheme(themeId, id));
-        setSelectedSnippetIds(new Set());
-        setIsSelectionMode(false);
-        setConfirmBulkDelete(false);
     };
 
     const handleBulkEnable = (enable: boolean) => {
@@ -523,11 +517,13 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
         URL.revokeObjectURL(url);
     };
 
+    const [themeToDelete, setThemeToDelete] = useState(false);
+
     const getMenuItems = (itemId: string): ContextMenuItem[] => {
         if (itemId === 'THEME_HEADER_MENU') {
             return [
                 {
-                    label: theme.isActive ? 'Disable Theme' : 'Enable Theme',
+                    label: theme.isActive ? 'Disable theme' : 'Enable theme',
                     icon: theme.isActive ? <Pause size={14} /> : <Play size={14} />,
                     onClick: () => updateTheme(themeId, { isActive: !theme.isActive })
                 },
@@ -538,22 +534,16 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                     onClick: () => handleExport('js')
                 },
                 {
-                    label: 'Export to CSS (Only)',
+                    label: 'Export to CSS only',
                     icon: <Download size={14} />,
                     onClick: () => handleExport('css')
                 },
                 { separator: true },
                 {
-                    label: 'Delete Theme',
+                    label: 'Delete theme',
                     icon: <Trash2 size={14} />,
                     danger: true,
-                    onClick: () => {
-                        if (confirm(`Are you sure you want to delete theme "${theme.name}"?`)) {
-                            const { deleteTheme } = useStore.getState();
-                            deleteTheme(themeId);
-                            onBack(); // Navigate back after deletion
-                        }
-                    }
+                    onClick: () => setThemeToDelete(true)
                 }
             ];
         }
@@ -561,18 +551,18 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
         if (itemId === 'BULK_ACTIONS_MENU') {
             return [
                 {
-                    label: 'Enable Selected',
+                    label: 'Enable selected',
                     icon: <Play size={14} className="text-green-400" />,
                     onClick: () => handleBulkEnable(true)
                 },
                 {
-                    label: 'Disable Selected',
+                    label: 'Disable selected',
                     icon: <Pause size={14} className="text-slate-400" />,
                     onClick: () => handleBulkEnable(false)
                 },
                 { separator: true },
                 {
-                    label: `Delete ${selectedSnippetIds.size} Snippets`,
+                    label: `Delete ${selectedSnippetIds.size} snippets`,
                     icon: <Trash2 size={14} />,
                     danger: true,
                     onClick: handleBulkDelete
@@ -596,12 +586,12 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                 }
             },
             {
-                label: item.isEnabled ? 'Disable Snippet' : 'Enable Snippet',
+                label: item.isEnabled ? 'Disable snippet' : 'Enable snippet',
                 onClick: () => toggleThemeItem(theme.id, itemId)
             },
             { separator: true },
             {
-                label: 'Remove from Theme',
+                label: 'Remove from theme',
                 icon: <Trash2 size={14} />,
                 danger: true,
                 onClick: () => setItemToRemove(itemId)
@@ -616,7 +606,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
             const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
             const activeTab = tabs[0];
             if (!activeTab?.id) {
-                alert('No active tab found.');
+                showToast('No active tab found.', 'error');
                 return;
             }
 
@@ -626,7 +616,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
             chrome.tabs.sendMessage(activeTab.id, { type: 'SCAN_CSS_VARIABLES' }, (response) => {
                 if (chrome.runtime.lastError) {
                     console.error(chrome.runtime.lastError);
-                    alert('Could not connect to content script. Make sure the extension is running on this page.');
+                    showToast('Could not connect to content script. Make sure the extension is running on this page.', 'error');
                     return;
                 }
 
@@ -634,12 +624,12 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                     const variables = response.variables as Record<string, Record<string, string>>;
                     setImportCandidates({ variables, domain });
                 } else {
-                    alert('No CSS variables found on the page.');
+                    showToast('No CSS variables found on the page.', 'error');
                 }
             });
         } catch (e) {
             console.error(e);
-            alert('Failed to import variables.');
+            showToast('Failed to import variables.', 'error');
         }
     };
 
@@ -681,7 +671,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
         setCollapsedItems(nextCollapsed);
 
         setImportCandidates(null);
-        alert(`Imported ${count} variable groups.`);
+        showToast(`Imported ${count} variable groups.`);
     };
 
     const handleToggleCollapse = useCallback((itemId: string) => {
@@ -922,7 +912,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                             }}
                                             className="text-slate-500 hover:text-white"
                                         >
-                                            {isAllCollapsed ? 'Expand All' : 'Collapse All'}
+                                            {isAllCollapsed ? 'Expand all' : 'Collapse all'}
                                         </Button>
                                         <div className="h-6 w-px bg-slate-800 mx-1"></div>
                                         {!isSelectionMode ? (
@@ -949,7 +939,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                                     }}
                                                     className="text-slate-500 hover:text-white"
                                                 >
-                                                    {selectedSnippetIds.size > 0 ? 'Deselect All' : 'Select All'}
+                                                    {selectedSnippetIds.size > 0 ? 'Deselect all' : 'Select all'}
                                                 </Button>
                                                 <div className="h-6 w-px bg-slate-800 mx-1"></div>
                                                 <Button
@@ -976,9 +966,9 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                         onClick={handleImportVariables}
                                         className="text-slate-400 hover:text-white border-slate-700 hover:border-slate-500"
                                         icon={<Download size={14} />}
-                                        title="Import CSS Variables from Page"
+                                        title="Import CSS variables from page"
                                     >
-                                        Import Vars
+                                        Import vars
                                     </Button>
                                 )}
 
@@ -1006,7 +996,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                     size="sm"
                                     className="h-8 w-8 p-0 rounded-full hover:bg-slate-700 text-slate-400 hover:text-white bg-slate-700/50"
                                     onClick={() => setSelectedSnippetIds(new Set())}
-                                    title="Deselect All"
+                                    title="Deselect all"
                                 >
                                     <X size={16} />
                                 </Button>
@@ -1020,10 +1010,10 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
 
                                 {viewportWidth > 600 ? (
                                     <>
-                                        <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(true)} title="Enable Selected">
+                                        <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(true)} title="Enable selected">
                                             <Play size={14} className="mr-1.5 text-green-400" /> Enable
                                         </Button>
-                                        <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(false)} title="Disable Selected">
+                                        <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(false)} title="Disable selected">
                                             <Pause size={14} className="mr-1.5 text-slate-400" /> Disable
                                         </Button>
                                         <div className="h-6 w-px bg-slate-700 mx-1"></div>
@@ -1162,18 +1152,12 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                     onClose={() => setItemToRemove(null)}
                     onConfirm={() => {
                         if (itemToRemove) {
-                            useStore.getState().removeSnippetFromTheme(theme.id, itemToRemove);
-                            if (selectedItemId === itemToRemove) setSelectedItemId(null);
+                            useStore.getState().removeSnippetFromTheme(themeId, itemToRemove);
                             setItemToRemove(null);
                         }
                     }}
-                    title="Remove Snippet"
-                    message={(() => {
-                        if (!itemToRemove) return '';
-                        const item = theme.items.find(i => i.id === itemToRemove);
-                        const snippet = item ? snippets.find(s => s.id === item.snippetId) : null;
-                        return `Remove "${snippet?.name || 'this snippet'}" from the theme?`;
-                    })()}
+                    title="Remove snippet"
+                    message="Remove this snippet from the theme? The snippet will remain in your library."
                     confirmLabel="Remove"
                     isDangerous
                 />
@@ -1182,10 +1166,32 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                 <ConfirmDialog
                     isOpen={confirmBulkDelete}
                     onClose={() => setConfirmBulkDelete(false)}
-                    onConfirm={confirmBulkDeleteAction}
-                    title="Remove Snippets"
+                    onConfirm={() => {
+                        selectedSnippetIds.forEach(id => {
+                            useStore.getState().removeSnippetFromTheme(themeId, id);
+                        });
+                        setSelectedSnippetIds(new Set());
+                        setIsSelectionMode(false);
+                        setConfirmBulkDelete(false);
+                    }}
+                    title="Remove snippets"
                     message={`Remove ${selectedSnippetIds.size} snippet${selectedSnippetIds.size === 1 ? '' : 's'} from this theme?`}
                     confirmLabel="Remove"
+                    isDangerous
+                />
+
+                <ConfirmDialog
+                    isOpen={themeToDelete}
+                    onClose={() => setThemeToDelete(false)}
+                    onConfirm={() => {
+                        const { deleteTheme } = useStore.getState();
+                        deleteTheme(themeId);
+                        setThemeToDelete(false);
+                        onBack();
+                    }}
+                    title="Delete theme"
+                    message={`Are you sure you want to delete theme "${theme.name}"? This action cannot be undone.`}
+                    confirmLabel="Delete"
                     isDangerous
                 />
             </div>

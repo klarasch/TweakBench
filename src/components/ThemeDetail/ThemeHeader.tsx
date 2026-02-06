@@ -102,21 +102,21 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                         setLocalName(e.target.value);
                         updateTheme(theme.id, { name: e.target.value });
                     }}
-                    placeholder="Theme Name"
+                    placeholder="Theme name"
                 />
                 <div className="flex items-center flex-wrap gap-2 mt-2">
                     {/* Domain Config Button - Interactive */}
                     <button
                         className="flex items-center gap-1.5 text-[10px] font-medium text-slate-400 bg-slate-800/50 border border-slate-700/50 px-2 py-1 rounded-md cursor-pointer hover:bg-slate-800 hover:text-slate-200 hover:border-slate-600 transition-all select-none active:scale-95"
                         onClick={() => setShowDomainSettings(true)}
-                        title="Configure Domains"
+                        title="Configure domains"
                     >
                         <Globe size={11} />
                         {theme.domainPatterns && theme.domainPatterns.includes('<all_urls>')
-                            ? "Runs Everywhere"
+                            ? "Runs everywhere"
                             : theme.domainPatterns && theme.domainPatterns.length > 0
                                 ? `${theme.domainPatterns.length} Domain${theme.domainPatterns.length > 1 ? 's' : ''}`
-                                : "No Domains"
+                                : "No domains"
                         }
                     </button>
 
@@ -144,19 +144,19 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                         onClick={() => setConfirmEnableGlobal(true)}
                         title="Click to re-enable plugin"
                     >
-                        All Themes Disabled
+                        All themes disabled
                     </span>
                 )}
 
                 {!globalEnabled ? (
-                    <Toggle checked={false} onChange={() => { }} disabled labelOff="OFF" title="System Disabled via Master Switch" />
+                    <Toggle checked={false} onChange={() => { }} disabled labelOff="OFF" title="System disabled via master switch" />
                 ) : (
                     <Toggle
                         checked={theme.isActive}
                         onChange={() => updateTheme(theme.id, { isActive: !theme.isActive })}
                         labelOn="ON"
                         labelOff="OFF"
-                        title={theme.isActive ? "Disable Theme" : "Enable Theme"}
+                        title={theme.isActive ? "Disable theme" : "Enable theme"}
                     />
                 )}
 
@@ -164,7 +164,7 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                     variant="ghost"
                     size="icon"
                     onClick={onContextMenu}
-                    title="Theme Options"
+                    title="Theme options"
                 >
                     <MoreVertical size={18} />
                 </Button>
@@ -176,7 +176,7 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                     size="sm"
                     onClick={() => { setShowLibrary(!showLibrary); setLibraryFilter(null); }}
                     icon={<BookOpen size={14} />}
-                    title="Toggle Snippet Library"
+                    title="Toggle snippet library"
                 >
                     <span className="hidden sm:inline">Library</span>
                 </Button>
@@ -189,7 +189,7 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                     toggleGlobal();
                     setConfirmEnableGlobal(false);
                 }}
-                title="Re-enable Plugin?"
+                title="Re-enable plugin?"
                 message="This will re-enable the TweakBench plugin and all active themes."
                 confirmLabel="Re-enable"
             />
@@ -203,7 +203,7 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                             <Globe size={20} />
                         </div>
                         <div>
-                            <h3 className="text-lg font-semibold text-slate-100 tracking-tight">Domain Configuration</h3>
+                            <h3 className="text-lg font-semibold text-slate-100 tracking-tight">Domain configuration</h3>
                             <p className="text-xs font-normal text-slate-500">Control where this theme is active</p>
                         </div>
                     </div>
@@ -221,7 +221,7 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                 {/* Run Everywhere Toggle */}
                 <div className="bg-slate-800/30 rounded-lg p-4 border border-slate-800 flex items-center justify-between mb-4">
                     <div className="flex flex-col gap-1">
-                        <span className="text-sm font-semibold text-slate-200">Run Everywhere</span>
+                        <span className="text-sm font-semibold text-slate-200">Run everywhere</span>
                         <span className="text-xs text-slate-500">Inject code into all websites automatically</span>
                     </div>
                     <button
@@ -244,7 +244,7 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                 ) : (
                     <div className="flex flex-col gap-4">
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Allowed Domains</label>
+                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Allowed domains</label>
                             <div className="flex gap-2">
                                 <input
                                     className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:border-blue-500 focus:outline-none transition-colors placeholder:text-slate-600"
@@ -320,7 +320,7 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                                     <button
                                         onClick={(e) => { e.stopPropagation(); handleRemoveDomain(p); }}
                                         className="p-1.5 rounded hover:bg-red-500/20 text-slate-500 hover:text-red-400 transition-colors ml-2"
-                                        title="Remove Domain"
+                                        title="Remove domain"
                                     >
                                         <X size={14} />
                                     </button>

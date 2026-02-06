@@ -48,12 +48,12 @@ export const StatusBar: React.FC<StatusBarProps> = ({ activeUrl }) => {
                     <span className={`font-bold truncate ${!globalEnabled ? 'text-slate-600' : 'text-slate-300'}`}>{domainDisplay}</span>
                     <span className="text-[10px] text-slate-500 truncate">
                         {!globalEnabled
-                            ? "System Disabled"
+                            ? "System disabled"
                             : isInternal
-                                ? "Extension Active"
+                                ? "Extension active"
                                 : hasMatchingTheme
-                                    ? `${matchingThemes.length} Theme${matchingThemes.length > 1 ? 's' : ''} Active`
-                                    : "No Active Themes Match"
+                                    ? `${matchingThemes.length} Theme${matchingThemes.length > 1 ? 's' : ''} active`
+                                    : "No active themes match"
                         }
                     </span>
                 </div>
@@ -106,7 +106,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({ activeUrl }) => {
                                 ? 'bg-slate-900 border-green-500/50 text-green-500 hover:bg-green-500/10 hover:border-green-400'
                                 : 'bg-slate-900 border-slate-700 text-slate-500 hover:text-slate-300 hover:border-slate-500'
                                 }`}
-                            title={globalEnabled ? "Master Switch: System ON" : "Master Switch: System OFF"}
+                            title={globalEnabled ? "Master switch: system ON" : "Master switch: system OFF"}
                         >
                             <Power size={14} strokeWidth={2.5} />
                         </button>
