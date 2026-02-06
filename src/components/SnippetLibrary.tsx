@@ -4,6 +4,7 @@ import { Plus, Search, Code, FileCode, Trash2, MoreVertical, X } from 'lucide-re
 import type { Snippet } from '../types.ts';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
 import { ConfirmDialog } from './ui/Dialog';
+import { Button } from './ui/Button';
 import {
     DndContext,
     closestCenter,
@@ -37,6 +38,9 @@ interface SortableSnippetItemProps {
     onSelectSnippet?: (id: string) => void;
     setSnippetToDelete: (id: string) => void;
     usageCount: number;
+    isSelectionMode: boolean;
+    isSelected: boolean;
+    onToggleSelection: () => void;
 }
 
 const SortableSnippetItem: React.FC<SortableSnippetItemProps> = ({
@@ -52,7 +56,10 @@ const SortableSnippetItem: React.FC<SortableSnippetItemProps> = ({
     onSelect,
     onSelectSnippet,
     setSnippetToDelete,
-    usageCount
+    usageCount,
+    isSelectionMode,
+    isSelected,
+    onToggleSelection
 }) => {
     const {
         attributes,
@@ -69,6 +76,7 @@ const SortableSnippetItem: React.FC<SortableSnippetItemProps> = ({
         opacity: isDragging ? 0.5 : 1,
         zIndex: isDragging ? 10 : 'auto',
         position: 'relative' as 'relative',
+        touchAction: 'none'
     };
 
     return (
@@ -80,12 +88,21 @@ const SortableSnippetItem: React.FC<SortableSnippetItemProps> = ({
             className={`p-2 mb-1 rounded hover:bg-slate-800 cursor-pointer group flex items-center justify-between relative ${isDragging ? 'bg-slate-800 ring-1 ring-blue-500/50' : ''}`}
             onClick={() => {
                 if (isEditing) return;
-                if (onSelect) onSelect(snippet);
-                else if (onSelectSnippet) onSelectSnippet(snippet.id);
+                if (isSelectionMode) {
+                    onToggleSelection();
+                } else {
+                    if (onSelect) onSelect(snippet);
+                    else if (onSelectSnippet) onSelectSnippet(snippet.id);
+                }
             }}
             onContextMenu={(e) => handleContextMenu(e, snippet.id)}
         >
             <div className="flex items-center gap-2 overflow-hidden flex-1">
+                {isSelectionMode && (
+                    <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors shrink-0 ${isSelected ? 'bg-blue-500 border-blue-500' : 'border-slate-500 bg-transparent'}`}>
+                        {isSelected && <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                    </div>
+                )}
                 {!isEditing && (snippet.type === 'css' ? <Code size={14} className="text-blue-400 flex-none" /> : <FileCode size={14} className="text-orange-400 flex-none" />)}
                 <div className="flex flex-col overflow-hidden w-full items-start">
                     {isEditing ? (
@@ -113,7 +130,7 @@ const SortableSnippetItem: React.FC<SortableSnippetItemProps> = ({
                     {usageCount > 0 && !isEditing && <span className="text-[10px] text-slate-500">Used in {usageCount} themes</span>}
                 </div>
             </div>
-            {!isEditing && (
+            {!isEditing && !isSelectionMode && (
                 <div className="flex gap-1 items-center">
                     {/* Shortcuts */}
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -160,9 +177,10 @@ interface SnippetLibraryProps {
     onClose?: () => void;
     onSelect?: (snippet: any) => void;
     filterType?: 'css' | 'html' | null;
+    onBulkAdd?: (ids: string[]) => void;
 }
 
-export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet, onSelect, filterType, onClose }) => {
+export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet, onSelect, filterType, onClose, onBulkAdd }) => {
     const { snippets, themes, deleteSnippet, updateSnippet, reorderSnippets } = useStore();
     const [filter, setFilter] = useState('');
     const [typeFilter, setTypeFilter] = useState<'all' | 'css' | 'html'>('all');
@@ -176,6 +194,29 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
 
     // Context Menu State
     const [menuState, setMenuState] = useState<{ x: number; y: number; snippetId: string | null }>({ x: 0, y: 0, snippetId: null });
+
+    // Selection State
+    const [isSelectionMode, setIsSelectionMode] = useState(false);
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+    // Clear selection when mode changes
+    React.useEffect(() => {
+        if (!isSelectionMode) setSelectedIds(new Set());
+    }, [isSelectionMode]);
+
+    // Clear selection when filters change
+    React.useEffect(() => {
+        setSelectedIds(new Set());
+    }, [typeFilter, filter]);
+
+    const handleToggleSelection = (id: string) => {
+        setSelectedIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    };
 
     // DnD Sensors
     const sensors = useSensors(
@@ -290,6 +331,22 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [editingId]);
 
+    const handleBulkAdd = () => {
+        if (onBulkAdd) {
+            onBulkAdd(Array.from(selectedIds));
+        } else {
+            // Fallback: add one by one using onSelectSnippet?
+            // Usually SnippetLibrary is used in context where onSelectSnippet adds 1 and closes.
+            // But for bulk, we probably want to stay open or close once?
+            // If onBulkAdd is not provided, do nothing or rely on parent.
+            // But we will implement onBulkAdd in parent.
+            selectedIds.forEach(id => {
+                if (onSelectSnippet) onSelectSnippet(id);
+            });
+        }
+        setIsSelectionMode(false);
+    };
+
     const snippetToDeleteObj = snippetToDelete ? snippets.find(s => s.id === snippetToDelete) : null;
     const usageCountToDelete = snippetToDelete ? themes.reduce((acc, t) => acc + t.items.filter(i => i.snippetId === snippetToDelete).length, 0) : 0;
 
@@ -309,7 +366,6 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
                     )}
                 </div>
             </div>
-
 
 
             <ConfirmDialog
@@ -334,26 +390,35 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
             />
 
             <div className="px-2 pt-2">
-                <div className="flex bg-slate-800 rounded-lg p-1 mb-2 border border-slate-700">
-                    <button
-                        onClick={() => setTypeFilter('all')}
-                        className={`flex-1 text-xs font-medium py-1 rounded-md transition-all ${typeFilter === 'all' ? 'bg-slate-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'}`}
-                    >
-                        All
-                    </button>
-                    <button
-                        onClick={() => setTypeFilter('css')}
-                        className={`flex-1 text-xs font-medium py-1 rounded-md transition-all ${typeFilter === 'css' ? 'bg-blue-600/80 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'}`}
-                    >
-                        CSS
-                    </button>
-                    <button
-                        onClick={() => setTypeFilter('html')}
-                        className={`flex-1 text-xs font-medium py-1 rounded-md transition-all ${typeFilter === 'html' ? 'bg-orange-600/80 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'}`}
-                    >
-                        HTML
-                    </button>
-                </div>
+                {!filterType && (
+                    <div className="flex bg-slate-800 rounded-lg p-1 mb-2 border border-slate-700">
+                        <button
+                            onClick={() => setTypeFilter('all')}
+                            className={`flex-1 text-xs font-medium py-1 rounded-md transition-all ${typeFilter === 'all' ? 'bg-slate-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'}`}
+                        >
+                            All
+                        </button>
+                        <button
+                            onClick={() => setTypeFilter('css')}
+                            className={`flex-1 text-xs font-medium py-1 rounded-md transition-all ${typeFilter === 'css' ? 'bg-blue-600/80 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'}`}
+                        >
+                            CSS
+                        </button>
+                        <button
+                            onClick={() => setTypeFilter('html')}
+                            className={`flex-1 text-xs font-medium py-1 rounded-md transition-all ${typeFilter === 'html' ? 'bg-orange-600/80 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'}`}
+                        >
+                            HTML
+                        </button>
+                    </div>
+                )}
+                {filterType && (
+                    <div className="mb-2 px-1">
+                        <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+                            Showing {filterType} snippets
+                        </span>
+                    </div>
+                )}
                 <div className="flex items-center bg-slate-800 rounded px-2 py-1 mb-2">
                     <Search size={14} className="text-slate-500 mr-2" />
                     <input
@@ -363,6 +428,54 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
                         onChange={e => setFilter(e.target.value)}
                     />
                 </div>
+            </div>
+
+            {/* Selection Toolbar */}
+            <div className="px-4 py-2 border-b border-t border-slate-800 flex justify-between items-center bg-slate-900/50">
+                {!isSelectionMode ? (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsSelectionMode(true)}
+                        className="text-slate-400 hover:text-white text-xs h-7"
+                    >
+                        Select
+                    </Button>
+                ) : (
+                    <div className="flex items-center gap-2 w-full justify-between animate-in slide-in-from-top-1">
+                        <div className="flex gap-2">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                    if (selectedIds.size > 0) setSelectedIds(new Set());
+                                    else setSelectedIds(new Set(filteredSnippets.map(s => s.id)));
+                                }}
+                                className="text-slate-400 hover:text-white text-xs h-7"
+                            >
+                                {selectedIds.size > 0 ? 'Deselect all' : 'Select all'}
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setIsSelectionMode(false)}
+                                className="text-blue-400 hover:text-blue-300 text-xs h-7"
+                            >
+                                Done
+                            </Button>
+                        </div>
+                        {selectedIds.size > 0 && (
+                            <Button
+                                variant="filled"
+                                size="sm"
+                                onClick={handleBulkAdd}
+                                className="h-7 text-xs bg-blue-600 hover:bg-blue-500 text-white"
+                            >
+                                Add {selectedIds.size}
+                            </Button>
+                        )}
+                    </div>
+                )}
             </div>
 
             <div className="flex-1 overflow-y-auto p-2 pt-0">
@@ -396,6 +509,9 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
                                     onSelectSnippet={onSelectSnippet}
                                     setSnippetToDelete={setSnippetToDelete}
                                     usageCount={usageCount}
+                                    isSelectionMode={isSelectionMode}
+                                    isSelected={selectedIds.has(snippet.id)}
+                                    onToggleSelection={() => handleToggleSelection(snippet.id)}
                                 />
                             );
                         })}

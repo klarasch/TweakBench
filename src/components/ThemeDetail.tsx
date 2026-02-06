@@ -12,6 +12,7 @@ import { Trash2, Plus, Box, Play, Pause, Download, Edit, X, MoreVertical } from 
 import { useToast } from './ui/Toast';
 import type { SnippetType } from '../types.ts';
 import { exportThemeToJS, exportThemeToCSS } from '../utils/impexp.ts';
+import { QuickAddMenu } from './ThemeDetail/QuickAddMenu.tsx';
 import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
 import {
     DndContext,
@@ -43,6 +44,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     const addSnippetToTheme = useStore(state => state.addSnippetToTheme);
     const toggleThemeItem = useStore(state => state.toggleThemeItem);
     const updateTheme = useStore(state => state.updateTheme);
+
     const toggleGlobal = useStore(state => state.toggleGlobal);
     const { showToast } = useToast();
     // State
@@ -157,6 +159,9 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
     const [justDroppedId, setJustDroppedId] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useState(false);
+
+    // Quick Add State
+    const [quickAddState, setQuickAddState] = useState<{ x: number; y: number; type: 'css' | 'html' } | null>(null);
 
     // DnD Sensors
     const sensors = useSensors(
@@ -340,17 +345,71 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                 pendingFocusRef.current = null;
             }
         }, 100);
+
+        if (snippet) {
+            showToast(`Added "${snippet.name}" to theme`, 'success');
+        }
+    };
+
+    const handleBulkAddSnippets = (ids: string[]) => {
+        const addedItemIds: string[] = [];
+        let firstType: 'css' | 'html' | null = null;
+
+        ids.forEach(id => {
+            const itemId = addSnippetToTheme(themeId, id);
+            addedItemIds.push(itemId);
+            if (!firstType) {
+                const s = snippets.find(sn => sn.id === id);
+                if (s) firstType = s.type;
+            }
+        });
+
+        if (firstType) setActiveTab(firstType);
+
+        setLibraryFilter(null);
+        setShowLibrary(false);
+
+        if (addedItemIds.length > 0) {
+            setCollapsedItems(prev => {
+                const next = new Set(prev);
+                addedItemIds.forEach(id => next.delete(id));
+                return next;
+            });
+
+            const firstItemId = addedItemIds[0];
+            setSelectedItemId(firstItemId);
+            scrollSourceRef.current = 'sidebar';
+            scrollToItem(firstItemId);
+            // Pending focus for first item
+            pendingFocusRef.current = firstItemId;
+            setTimeout(() => {
+                if (editorRefs.current[firstItemId]) {
+                    editorRefs.current[firstItemId]?.focus();
+                    pendingFocusRef.current = null;
+                }
+            }, 100);
+
+            showToast(`Added ${addedItemIds.length} snippets to theme`, 'success');
+        }
     };
 
     const handleReorder = (newItems: typeof theme.items) => {
         useStore.getState().reorderThemeItems(theme.id, newItems);
     };
 
+    const toggleItemExpand = (id: string) => {
+        setCollapsedItems(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    };
+
     const handleDragStart = (event: any) => {
         setIsDragging(true);
         const draggedItemId = event.active.id as string;
 
-        // Only save cursor position for the dragged item if it was expanded and focused
         if (!collapsedItems.has(draggedItemId) && selectedItemId === draggedItemId) {
             if (editorRefs.current[draggedItemId]) {
                 const cursorPos = editorRefs.current[draggedItemId]?.getCursorPosition?.();
@@ -674,73 +733,13 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
         showToast(`Imported ${count} variable groups.`);
     };
 
-    const handleToggleCollapse = useCallback((itemId: string) => {
-        setCollapsedItems(prev => {
-            const next = new Set(prev);
-            const willExpand = prev.has(itemId);
 
-            // Store cursor position before collapsing
-            if (!willExpand && editorRefs.current[itemId]) {
-                const cursorPos = editorRefs.current[itemId]?.getCursorPosition?.();
-                console.log('[CURSOR DEBUG] Saving cursor position for', itemId, ':', cursorPos);
-                if (cursorPos) {
-                    cursorPositionsRef.current[itemId] = cursorPos;
-                }
-            }
 
-            if (willExpand) next.delete(itemId);
-            else next.add(itemId);
 
-            if (willExpand) {
-                requestAnimationFrame(() => {
-                    if (editorRefs.current[itemId]) {
-                        editorRefs.current[itemId]?.focus();
 
-                        // Restore cursor position if we have one saved
-                        const savedPos = cursorPositionsRef.current[itemId];
-                        console.log('[CURSOR DEBUG] Restoring cursor position for', itemId, ':', savedPos);
-                        if (savedPos) {
-                            editorRefs.current[itemId]?.setCursorPosition?.(savedPos.from, savedPos.to);
-                        }
-                    }
-                });
-            }
-            return next;
-        });
-    }, []);
 
-    const handleSelect = useCallback((itemId: string) => {
-        if (isSelectionMode) {
-            handleToggleSelection(itemId);
-            return;
-        }
 
-        // Only reset source if it's not already 'sidebar' (don't interfere with sidebar scroll)
-        if (scrollSourceRef.current !== 'sidebar') {
-            scrollSourceRef.current = null;
-        }
-        setSelectedItemId(itemId);
 
-        // Focus if needed (though clicking generally focuses)
-        requestAnimationFrame(() => {
-            if (editorRefs.current[itemId]) {
-                editorRefs.current[itemId]?.focus();
-            }
-        });
-    }, [isSelectionMode]);
-
-    const handleSetEditing = useCallback((itemId: string, isEditing: boolean) => {
-        setEditingSnippetId(isEditing ? itemId : null);
-    }, []);
-
-    const handleEditorRef = useCallback((itemId: string, el: any) => {
-        editorRefs.current[itemId] = el;
-        // Check pending focus on mount/ref assign
-        if (pendingFocusRef.current === itemId && el) {
-            el.focus();
-            pendingFocusRef.current = null;
-        }
-    }, []);
 
 
     return (
@@ -778,6 +777,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                     >
                         <SnippetLibrary
                             onSelectSnippet={handleAddSnippet}
+                            onBulkAdd={handleBulkAddSnippets}
                             filterType={libraryFilter}
                             onClose={() => setShowLibrary(false)}
                         />
@@ -886,6 +886,25 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                     />
                 )}
 
+                {/* Quick Add Menu */}
+                {quickAddState && (
+                    <QuickAddMenu
+                        x={quickAddState.x}
+                        y={quickAddState.y}
+                        type={quickAddState.type}
+                        onClose={() => setQuickAddState(null)}
+                        onAddSnippet={(id) => {
+                            handleAddSnippet(id);
+                            setQuickAddState(null);
+                        }}
+                        onShowLibrary={() => {
+                            setQuickAddState(null);
+                            setLibraryFilter(quickAddState.type);
+                            setShowLibrary(true);
+                        }}
+                    />
+                )}
+
                 {/* Main: Editor */}
                 <div className="flex-1 flex flex-col bg-slate-900 relative overflow-hidden">
 
@@ -971,6 +990,20 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                         Import vars
                                     </Button>
                                 )}
+
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-slate-400 hover:text-white border-slate-700 hover:border-slate-500"
+                                    onClick={(e) => {
+                                        const rect = e.currentTarget.getBoundingClientRect();
+                                        setQuickAddState({ x: rect.left, y: rect.bottom, type: activeTab });
+                                    }}
+                                    icon={<Plus size={14} />}
+                                    title="Quick add from library"
+                                >
+                                    Quick add
+                                </Button>
 
                                 <Button
                                     variant="filled"
@@ -1064,137 +1097,129 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                     <Virtuoso
                                         style={{ height: '100%' }}
                                         ref={virtuosoRef}
-                                        totalCount={filteredItems.length}
-                                        itemContent={(index) => {
-                                            const item = filteredItems[index];
-                                            return (
-                                                <SnippetStackItem
-                                                    key={item.id}
-                                                    item={item}
-                                                    themeId={themeId}
-                                                    isThemeActive={theme.isActive}
-                                                    isCollapsed={collapsedItems.has(item.id)}
-                                                    onToggleCollapse={handleToggleCollapse}
-                                                    isSelected={isSelectionMode ? selectedSnippetIds.has(item.id) : selectedItemId === item.id}
-                                                    itemRef={() => { }} // Modified in child to use dnd ref
-                                                    onKebabClick={handleKebabClick}
-                                                    isEditing={editingSnippetId === item.id}
-                                                    onSetEditing={handleSetEditing}
-                                                    onSelect={handleSelect}
-                                                    editorRef={(el) => handleEditorRef(item.id, el)}
-                                                    isSelectionMode={isSelectionMode}
-                                                />
-                                            );
-                                        }}
+                                        data={filteredItems}
+                                        itemContent={(_, item) => (
+                                            <SnippetStackItem
+                                                key={item.id}
+                                                item={item}
+                                                themeId={themeId}
+                                                isCollapsed={collapsedItems.has(item.id)}
+                                                onToggleCollapse={() => toggleItemExpand(item.id)}
+                                                isSelected={selectedSnippetIds.has(item.id) || selectedItemId === item.id}
+                                                itemRef={(el) => sidebarItemRefs.current[item.id] = el}
+                                                onKebabClick={handleKebabClick}
+                                                isEditing={editingSnippetId === item.id}
+                                                onSetEditing={(id, val) => setEditingSnippetId(val ? id : null)}
+                                                onSelect={(id) => {
+                                                    if (isSelectionMode) {
+                                                        handleToggleSelection(id);
+                                                    } else {
+                                                        setSelectedItemId(id);
+                                                        // Ensure focus isn't stolen excessively, but user clicked it.
+                                                        // SnippetStackItem handles its own internal focus for editor.
+                                                    }
+                                                }}
+                                                isThemeActive={true}
+                                                editorRef={(el: any) => editorRefs.current[item.id] = el}
+                                                isSelectionMode={isSelectionMode}
+                                            />
+                                        )}
                                     />
                                 </SortableContext>
                             </DndContext>
                         ) : (
-                            <div className="flex flex-col items-center justify-center py-20 text-center">
-                                <Box size={48} className="mb-4 text-slate-700" />
-                                <h3 className="text-slate-300 font-medium mb-1">
-                                    {(() => {
-                                        const otherTab = activeTab === 'css' ? 'html' : 'css';
-                                        const hasOtherContent = theme.items.some(item => {
-                                            const s = snippets.find(sn => sn.id === item.snippetId);
-                                            return s?.type === otherTab;
-                                        });
-                                        return hasOtherContent ? `No ${activeTab.toUpperCase()} snippets yet` : 'Start Customizing';
-                                    })()}
-                                </h3>
-                                <p className="text-slate-500 text-sm mb-6 max-w-xs">
-                                    {(() => {
-                                        const otherTab = activeTab === 'css' ? 'html' : 'css';
-                                        const hasOtherContent = theme.items.some(item => {
-                                            const s = snippets.find(sn => sn.id === item.snippetId);
-                                            return s?.type === otherTab;
-                                        });
-                                        return hasOtherContent
-                                            ? `Add your first ${activeTab.toUpperCase()} snippet to complement your ${otherTab.toUpperCase()}.`
-                                            : `This theme is empty. Add your first ${activeTab.toUpperCase()} snippet to get started.`;
-                                    })()}
+                            // Empty State
+                            <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                                <Box className="w-12 h-12 text-slate-700 mb-4" strokeWidth={1.5} />
+                                <h3 className="text-slate-400 font-medium mb-2">No {activeTab.toUpperCase()} snippets yet</h3>
+                                <p className="text-slate-500 text-sm max-w-xs mb-6">
+                                    Add your first snippet to start customizing this theme.
                                 </p>
                                 <div className="flex gap-3">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                            setLibraryFilter(activeTab);
+                                            setShowLibrary(true);
+                                        }}
+                                        className="border-slate-700 text-slate-400 hover:text-white"
+                                    >
+                                        Browse library
+                                    </Button>
                                     <Button
                                         variant="filled"
                                         onClick={() => handleCreateLocal(activeTab)}
                                         className={activeTab === 'css' ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-orange-700 hover:bg-orange-600 text-white font-bold'}
-                                        icon={<Plus size={16} />}
                                     >
-                                        Add {activeTab === 'css' ? 'CSS' : 'HTML'}
+                                        <Plus size={14} className="mr-2" />
+                                        Create new
                                     </Button>
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => setShowLibrary(true)}
-                                        className="text-slate-400 hover:text-white border-slate-700 hover:border-slate-500"
-                                    >
-                                        Choose from Library
-                                    </Button>
+
                                 </div>
                             </div>
                         )}
                     </div>
-                </div>
-                {/* Import Modal */}
-                {
-                    importCandidates && (
-                        <ImportVariablesModal
-                            variables={importCandidates.variables}
-                            onImport={handleConfirmImport}
-                            onClose={() => setImportCandidates(null)}
-                        />
-                    )
-                }
+                    {/* Import Modal */}
+                    {
+                        importCandidates && (
+                            <ImportVariablesModal
+                                variables={importCandidates.variables}
+                                onImport={handleConfirmImport}
+                                onClose={() => setImportCandidates(null)}
+                            />
+                        )
+                    }
 
-                {/* Remove Snippet Confirmation */}
-                <ConfirmDialog
-                    isOpen={!!itemToRemove}
-                    onClose={() => setItemToRemove(null)}
-                    onConfirm={() => {
-                        if (itemToRemove) {
-                            useStore.getState().removeSnippetFromTheme(themeId, itemToRemove);
-                            setItemToRemove(null);
-                        }
-                    }}
-                    title="Remove snippet"
-                    message="Remove this snippet from the theme? The snippet will remain in your library."
-                    confirmLabel="Remove"
-                    isDangerous
-                />
+                    {/* Remove Snippet Confirmation */}
+                    <ConfirmDialog
+                        isOpen={!!itemToRemove}
+                        onClose={() => setItemToRemove(null)}
+                        onConfirm={() => {
+                            if (itemToRemove) {
+                                useStore.getState().removeSnippetFromTheme(themeId, itemToRemove);
+                                setItemToRemove(null);
+                            }
+                        }}
+                        title="Remove snippet"
+                        message="Remove this snippet from the theme? The snippet will remain in your library."
+                        confirmLabel="Remove"
+                        isDangerous
+                    />
 
-                {/* Bulk Delete Confirmation */}
-                <ConfirmDialog
-                    isOpen={confirmBulkDelete}
-                    onClose={() => setConfirmBulkDelete(false)}
-                    onConfirm={() => {
-                        selectedSnippetIds.forEach(id => {
-                            useStore.getState().removeSnippetFromTheme(themeId, id);
-                        });
-                        setSelectedSnippetIds(new Set());
-                        setIsSelectionMode(false);
-                        setConfirmBulkDelete(false);
-                    }}
-                    title="Remove snippets"
-                    message={`Remove ${selectedSnippetIds.size} snippet${selectedSnippetIds.size === 1 ? '' : 's'} from this theme?`}
-                    confirmLabel="Remove"
-                    isDangerous
-                />
+                    {/* Bulk Delete Confirmation */}
+                    <ConfirmDialog
+                        isOpen={confirmBulkDelete}
+                        onClose={() => setConfirmBulkDelete(false)}
+                        onConfirm={() => {
+                            selectedSnippetIds.forEach(id => {
+                                useStore.getState().removeSnippetFromTheme(themeId, id);
+                            });
+                            setSelectedSnippetIds(new Set());
+                            setIsSelectionMode(false);
+                            setConfirmBulkDelete(false);
+                        }}
+                        title="Remove snippets"
+                        message={`Remove ${selectedSnippetIds.size} snippet${selectedSnippetIds.size === 1 ? '' : 's'} from this theme?`}
+                        confirmLabel="Remove"
+                        isDangerous
+                    />
 
-                <ConfirmDialog
-                    isOpen={themeToDelete}
-                    onClose={() => setThemeToDelete(false)}
-                    onConfirm={() => {
-                        const { deleteTheme } = useStore.getState();
-                        deleteTheme(themeId);
-                        setThemeToDelete(false);
-                        onBack();
-                    }}
-                    title="Delete theme"
-                    message={`Are you sure you want to delete theme "${theme.name}"? This action cannot be undone.`}
-                    confirmLabel="Delete"
-                    isDangerous
-                />
-            </div>
+                    <ConfirmDialog
+                        isOpen={themeToDelete}
+                        onClose={() => setThemeToDelete(false)}
+                        onConfirm={() => {
+                            const { deleteTheme } = useStore.getState();
+                            deleteTheme(themeId);
+                            setThemeToDelete(false);
+                            onBack();
+                        }}
+                        title="Delete theme"
+                        message={`Are you sure you want to delete theme "${theme.name}"? This action cannot be undone.`}
+                        confirmLabel="Delete"
+                        isDangerous
+                    />
+                </div >
+            </div >
         </div>
     );
 };
