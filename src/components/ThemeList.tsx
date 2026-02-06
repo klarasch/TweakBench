@@ -574,8 +574,9 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                 label: 'Duplicate theme',
                 icon: <Copy size={14} />,
                 onClick: () => {
-                    useStore.getState().duplicateTheme(targetId);
+                    const newThemeId = useStore.getState().duplicateTheme(targetId);
                     showToast('Theme duplicated');
+                    onSelectTheme(newThemeId);
                 }
             },
             { separator: true },

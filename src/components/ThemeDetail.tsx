@@ -35,9 +35,10 @@ import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 interface ThemeDetailProps {
     themeId: string;
     onBack: () => void;
+    onSelectTheme: (id: string) => void;
 }
 
-export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => {
+export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSelectTheme }) => {
     const theme = useStore(state => state.themes.find(t => t.id === themeId));
     const snippets = useStore(state => state.snippets);
     const globalEnabled = useStore(state => state.globalEnabled);
@@ -800,8 +801,9 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                     label: 'Duplicate theme',
                     icon: <Copy size={14} />,
                     onClick: () => {
-                        useStore.getState().duplicateTheme(themeId);
+                        const newThemeId = useStore.getState().duplicateTheme(themeId);
                         showToast('Theme duplicated');
+                        onSelectTheme(newThemeId);
                     }
                 },
                 { separator: true },

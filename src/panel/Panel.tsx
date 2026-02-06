@@ -73,7 +73,7 @@ const Panel: React.FC = () => {
                         <ThemeList onSelectTheme={handleSelectTheme} activeUrl={activeUrl} />
                     </div>
                 ) : (
-                    selectedThemeId && <ThemeDetail themeId={selectedThemeId} onBack={handleBack} />
+                    selectedThemeId && <ThemeDetail themeId={selectedThemeId} onBack={handleBack} onSelectTheme={handleSelectTheme} />
                 )}
             </div>
         </ToastProvider>
