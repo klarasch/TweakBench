@@ -25,6 +25,9 @@ interface Store extends AppState {
     importAllData: (data: { themes: Theme[], snippets: Snippet[], globalEnabled: boolean }, mode: 'merge' | 'replace' | 'skip-duplicates') => { themesAdded: number, snippetsAdded: number, skipped: number };
 
     updateSnippetAndPropagate: (id: string, newContent: string, options: { mode: 'soft' | 'force', originItemId?: string }) => void;
+
+    duplicateTheme: (themeId: string) => string;
+    duplicateThemeItem: (themeId: string, itemId: string) => void;
 }
 
 export const useStore = create<Store>((set) => ({
@@ -451,6 +454,116 @@ export const useStore = create<Store>((set) => ({
                 ...state,
                 snippets: updatedSnippets,
                 themes: updatedThemes
+            };
+            storageService.save(newState);
+            return newState;
+        });
+    },
+
+    duplicateTheme: (themeId) => {
+        let newThemeId = '';
+        set((state) => {
+            const theme = state.themes.find(t => t.id === themeId);
+            if (!theme) return state;
+
+            newThemeId = uuidv4();
+            const newSnippets = [...state.snippets];
+
+            const newItems = theme.items.map(item => {
+                const snippet = state.snippets.find(s => s.id === item.snippetId);
+                let newItemSnippetId = item.snippetId;
+
+                // If local snippet, duplicate it
+                if (snippet && snippet.isLibraryItem === false) {
+                    const newSnippetId = uuidv4();
+                    newItemSnippetId = newSnippetId;
+                    newSnippets.push({
+                        ...snippet,
+                        id: newSnippetId,
+                        name: `${snippet.name}`, // Should we toggle name? Usually local snippets just valid as is.
+                        // Or maybe we should append Copy? For local snippets inside a theme, maybe not needed if theme is copy.
+                        // But let's keep name same for now.
+                        createdAt: Date.now(),
+                        updatedAt: Date.now()
+                    });
+                }
+
+                return {
+                    ...item,
+                    id: uuidv4(),
+                    snippetId: newItemSnippetId,
+                    // overrides are copied as part of ...item
+                };
+            });
+
+            const newTheme = {
+                ...theme,
+                id: newThemeId,
+                name: `${theme.name} (Copy)`,
+                items: newItems,
+                createdAt: Date.now(),
+                updatedAt: Date.now()
+            };
+
+            const newState = {
+                ...state,
+                themes: [...state.themes, newTheme],
+                snippets: newSnippets
+            };
+            storageService.save(newState);
+            return newState;
+        });
+        return newThemeId;
+    },
+
+    duplicateThemeItem: (themeId, itemId) => {
+        set((state) => {
+            const theme = state.themes.find(t => t.id === themeId);
+            if (!theme) return state;
+
+            const item = theme.items.find(i => i.id === itemId);
+            if (!item) return state;
+
+            const snippet = state.snippets.find(s => s.id === item.snippetId);
+            if (!snippet) return state;
+
+            let newSnippetId = item.snippetId;
+            const newSnippets = [...state.snippets];
+
+            // If local snippet, duplicate the snippet itself
+            if (snippet.isLibraryItem === false) {
+                newSnippetId = uuidv4();
+                newSnippets.push({
+                    ...snippet,
+                    id: newSnippetId,
+                    name: `${snippet.name} (Copy)`,
+                    createdAt: Date.now(),
+                    updatedAt: Date.now()
+                });
+            }
+
+            const newItem = {
+                ...item,
+                id: uuidv4(),
+                snippetId: newSnippetId,
+                // overrides copied automatically
+            };
+
+            // Insert after original item
+            const originalIndex = theme.items.findIndex(i => i.id === itemId);
+            const newItems = [...theme.items];
+            newItems.splice(originalIndex + 1, 0, newItem);
+
+            const updatedTheme = {
+                ...theme,
+                items: newItems,
+                updatedAt: Date.now()
+            };
+
+            const newState = {
+                ...state,
+                themes: state.themes.map(t => t.id === themeId ? updatedTheme : t),
+                snippets: newSnippets
             };
             storageService.save(newState);
             return newState;

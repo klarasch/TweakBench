@@ -8,7 +8,7 @@ import { ImportVariablesModal } from './ThemeDetail/ImportVariablesModal.tsx';
 import { Button } from './ui/Button';
 import { ConfirmDialog } from './ui/Dialog';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
-import { Trash2, Plus, Box, Play, Pause, Download, Edit, X, MoreVertical, Unlink } from 'lucide-react';
+import { Trash2, Plus, Box, Play, Pause, Download, Edit, X, MoreVertical, Unlink, Copy } from 'lucide-react';
 import { useToast } from './ui/Toast';
 import type { SnippetType } from '../types.ts';
 import { exportThemeToJS, exportThemeToCSS } from '../utils/impexp.ts';
@@ -632,6 +632,15 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                 },
                 { separator: true },
                 {
+                    label: 'Duplicate theme',
+                    icon: <Copy size={14} />,
+                    onClick: () => {
+                        useStore.getState().duplicateTheme(themeId);
+                        showToast('Theme duplicated');
+                    }
+                },
+                { separator: true },
+                {
                     label: 'Delete theme',
                     icon: <Trash2 size={14} />,
                     danger: true,
@@ -678,7 +687,17 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                 }
             },
             {
+                label: 'Duplicate',
+                icon: <Copy size={14} />,
+                onClick: () => {
+                    useStore.getState().duplicateThemeItem(theme.id, itemId);
+                    showToast('Snippet duplicated');
+                }
+            },
+            { separator: true },
+            {
                 label: item.isEnabled ? 'Disable snippet' : 'Enable snippet',
+                icon: item.isEnabled ? <Pause size={14} /> : <Play size={14} />,
                 onClick: () => toggleThemeItem(theme.id, itemId)
             },
             ...(snippets.find(s => s.id === item.snippetId)?.isLibraryItem !== false ? [{

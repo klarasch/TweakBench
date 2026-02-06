@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../store.ts';
-import { Plus, Trash2, Play, Pause, MoreVertical, Upload, Download, Globe, X } from 'lucide-react';
+import { Plus, Trash2, Play, Pause, MoreVertical, Upload, Download, Globe, X, Copy } from 'lucide-react';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
 import { exportThemeToJS, exportThemeToCSS, parseThemeFromJS, exportAllData, importAllData } from '../utils/impexp.ts';
 import { isDomainMatch, getDomainFromUrl } from '../utils/domains.ts';
@@ -500,6 +500,15 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                 label: 'Export to CSS only',
                 icon: <Download size={14} />,
                 onClick: () => handleExport(themeId, 'css')
+            },
+            { separator: true },
+            {
+                label: 'Duplicate theme',
+                icon: <Copy size={14} />,
+                onClick: () => {
+                    useStore.getState().duplicateTheme(themeId);
+                    showToast('Theme duplicated');
+                }
             },
             { separator: true },
             {
