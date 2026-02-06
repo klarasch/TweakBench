@@ -162,6 +162,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     const [itemToRemove, setItemToRemove] = useState<string | null>(null);
     const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
     const [justDroppedId, setJustDroppedId] = useState<string | null>(null);
+    const [isDragging, setIsDragging] = useState(false);
 
     // DnD Sensors
     const sensors = useSensors(
@@ -351,7 +352,20 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
         useStore.getState().reorderThemeItems(theme.id, newItems);
     };
 
-    const handleDragStart = () => {
+    const handleDragStart = (event: any) => {
+        setIsDragging(true);
+        const draggedItemId = event.active.id as string;
+
+        // Only save cursor position for the dragged item if it was expanded and focused
+        if (!collapsedItems.has(draggedItemId) && selectedItemId === draggedItemId) {
+            if (editorRefs.current[draggedItemId]) {
+                const cursorPos = editorRefs.current[draggedItemId]?.getCursorPosition?.();
+                if (cursorPos) {
+                    cursorPositionsRef.current[draggedItemId] = cursorPos;
+                }
+            }
+        }
+
         // Collect ALL currently expanded items in the current view
         const expandedIds = new Set<string>();
         filteredItems.forEach(item => {
@@ -371,8 +385,12 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     };
 
     const handleDragEnd = (event: DragEndEvent) => {
+        setIsDragging(false);
         const { active, over } = event;
         const itemId = active.id as string;
+
+        // Check if item was expanded before drag (before we clear the ref!)
+        const shouldRestoreFocus = preDragExpandedItemsRef.current.has(itemId);
 
         // Restore expanded state for items that were expanded before drag
         setCollapsedItems(prev => {
@@ -380,15 +398,35 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
             preDragExpandedItemsRef.current.forEach(id => next.delete(id));
             return next;
         });
-        preDragExpandedItemsRef.current.clear();
+
+        // Don't clear the ref immediately - let it persist until after re-render
+        // It will be cleared in a useEffect or on next drag start
 
         // Trigger scroll on next render via effect
         setJustDroppedId(itemId);
 
-        // Check if item ended up visible (expanded), if so, queue focus
-        if (!collapsedItems.has(itemId)) { // Note: collapsedItems might not be fully updated here if we use preDrag logic? 
-            // Actually we just updated it above.
+        // Restore focus and cursor if item was expanded before drag
+        if (shouldRestoreFocus) {
             pendingFocusRef.current = itemId;
+
+            // Use requestAnimationFrame to wait for editor to mount
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    if (editorRefs.current[itemId]) {
+                        editorRefs.current[itemId]?.focus();
+                        const savedPos = cursorPositionsRef.current[itemId];
+                        if (savedPos) {
+                            editorRefs.current[itemId]?.setCursorPosition?.(savedPos.from, savedPos.to);
+                        }
+                        pendingFocusRef.current = null;
+                    }
+                    // Clear the ref after focus restoration
+                    preDragExpandedItemsRef.current.clear();
+                });
+            });
+        } else {
+            // Clear immediately if no focus restoration needed
+            preDragExpandedItemsRef.current.clear();
         }
 
         if (active.id !== over?.id) {
@@ -717,6 +755,14 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
 
     return (
         <div className="flex-1 flex flex-col min-h-0 bg-slate-900 relative overflow-hidden">
+            {/* Global cursor style during drag */}
+            {isDragging && (
+                <style>{`
+                    * {
+                        cursor: grabbing !important;
+                    }
+                `}</style>
+            )}
             {/* ... (Header) ... */}
             <ThemeHeader
                 theme={theme}

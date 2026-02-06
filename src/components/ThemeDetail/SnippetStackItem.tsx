@@ -56,6 +56,7 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
         transition: isDragging ? undefined : transition, // Remove transition when dragging for snappy feel
         zIndex: isDragging ? 10 : 'auto', // High Z-Index when dragging
         opacity: isDragging ? 0.8 : 1,
+        cursor: isDragging ? 'grabbing' : undefined,
     };
 
     if (!s) return null;
@@ -76,7 +77,7 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                         ? 'bg-slate-900 border-slate-700 shadow-sm'
                         : 'bg-slate-900/50 border-slate-800 opacity-75 grayscale-[0.3]'
                 }
-                ${isDragging ? 'shadow-2xl border-blue-500 scale-[1.02] z-50 cursor-grabbing' : ''}
+                ${isDragging ? 'shadow-2xl border-blue-500 scale-[1.02] z-50 [&_*]:!cursor-grabbing' : ''}
             `}
             onClick={() => {
                 // Ensure clicking anywhere selects the item (unless handled by child)
@@ -89,7 +90,7 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                 className={`
                     flex items-center gap-3 px-3 py-2 select-none transition-colors outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset
                     ${isCollapsed ? 'hover:bg-slate-800' : 'bg-slate-800/30 border-b border-slate-800/50'}
-                    ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}
+                    ${isDragging ? 'cursor-grabbing' : ''}
                 `}
                 onClick={(e) => {
                     if (isSelectionMode) {
