@@ -476,7 +476,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
             setActiveTab(snippet.type);
         }
 
-        const itemId = addSnippetToTheme(themeId, snippetId);
+        const itemId = addSnippetToTheme(themeId, snippetId, selectedItemId || undefined);
         setShowLibrary(false);
         setLibraryFilter(null);
         setSelectedItemId(itemId);
@@ -512,7 +512,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
         let firstType: 'css' | 'html' | null = null;
 
         ids.forEach(id => {
-            const itemId = addSnippetToTheme(themeId, id);
+            const itemId = addSnippetToTheme(themeId, id, selectedItemId || undefined);
             addedItemIds.push(itemId);
             if (!firstType) {
                 const s = snippets.find(sn => sn.id === id);
@@ -703,7 +703,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
             relatedSnippetIds: [],
             isLibraryItem: false
         });
-        const itemId = addSnippetToTheme(themeId, id);
+        const itemId = addSnippetToTheme(themeId, id, selectedItemId || undefined);
 
         // Auto-select and scroll
         setSelectedItemId(itemId);
@@ -768,12 +768,21 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     const [themeToDelete, setThemeToDelete] = useState(false);
 
     const getMenuItems = (itemId: string): ContextMenuItem[] => {
+        const { clipboardSnippet } = useStore.getState();
+
         if (itemId === 'THEME_HEADER_MENU') {
             return [
                 {
                     label: theme.isActive ? 'Disable theme' : 'Enable theme',
                     icon: theme.isActive ? <Pause size={14} /> : <Play size={14} />,
                     onClick: () => updateTheme(themeId, { isActive: !theme.isActive })
+                },
+                { separator: true },
+                {
+                    label: 'Paste snippet',
+                    icon: <Copy size={14} className="rotate-180" />, // Using Copy icon rotated/altered for paste feel or just Copy
+                    disabled: !clipboardSnippet,
+                    onClick: handlePaste
                 },
                 { separator: true },
                 {
@@ -871,6 +880,11 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                     showToast('Snippet duplicated');
                 }
             },
+            {
+                label: 'Copy',
+                icon: <Copy size={14} />,
+                onClick: () => handleCopy(itemId)
+            },
             { separator: true },
             {
                 label: item.isEnabled ? 'Disable snippet' : 'Enable snippet',
@@ -952,7 +966,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                 relatedSnippetIds: [],
                 isLibraryItem: false
             });
-            const itemId = addSnippetToTheme(themeId, id);
+            const itemId = addSnippetToTheme(themeId, id, selectedItemId || undefined);
             // We want to collapse these by default to avoid UI thrashing
             newSnippetIds.push(itemId);
             count++;
@@ -1002,6 +1016,125 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
 
         showToast('Snippet detached to local copy', 'success');
     };
+
+    const handleCopy = useCallback((itemId: string) => {
+        const item = theme.items.find(i => i.id === itemId);
+        if (!item) return;
+
+        const snippet = snippets.find(s => s.id === item.snippetId);
+        if (!snippet) return;
+
+        const copyData = {
+            snippet: { ...snippet },
+            overrides: item.overrides ? { ...item.overrides } : undefined
+        };
+
+        useStore.getState().setClipboardSnippet(copyData);
+
+        // Also write to system clipboard as JSON for cross-theme/cross-window copy-paste
+        try {
+            const json = JSON.stringify({ type: 'TWEAK_BENCH_SNIPPET', data: copyData });
+            navigator.clipboard.writeText(json);
+            showToast(`Copied "${snippet.name}" to clipboard`);
+        } catch (err) {
+            console.error('Failed to copy to system clipboard:', err);
+            showToast(`Copied "${snippet.name}" (internal only)`);
+        }
+    }, [theme, snippets, showToast]);
+
+    const handlePaste = useCallback(async () => {
+        let pasteData: { snippet: any, overrides?: any } | null = null;
+
+        // 1. Try internal clipboard first
+        const internalClipboard = useStore.getState().clipboardSnippet;
+        if (internalClipboard) {
+            pasteData = internalClipboard;
+        } else {
+            // 2. Try system clipboard
+            try {
+                const text = await navigator.clipboard.readText();
+                const parsed = JSON.parse(text);
+                if (parsed.type === 'TWEAK_BENCH_SNIPPET' && parsed.data) {
+                    pasteData = parsed.data;
+                }
+            } catch (err) {
+                // Ignore if not valid JSON or not our format
+            }
+        }
+
+        if (!pasteData) {
+            showToast('Nothing to paste', 'error');
+            return;
+        }
+
+        const { snippet, overrides } = pasteData;
+
+        // Create a new snippet in the store
+        // We strip the ID to ensure it's treated as new if it's from another context
+        const newSnippetId = addSnippet({
+            name: `${snippet.name}`,
+            type: snippet.type,
+            content: snippet.content,
+            selector: snippet.selector,
+            position: snippet.position,
+            relatedSnippetIds: [], // Clear relations for now as we don't know if they exist here
+            isLibraryItem: snippet.isLibraryItem ?? false
+        });
+
+        const onItemAdded = (itemId: string) => {
+            // Apply overrides if any
+            if (overrides) {
+                useStore.getState().updateThemeItem(themeId, itemId, { overrides });
+            }
+
+            setSelectedItemId(itemId);
+            setCollapsedItems(prev => {
+                const next = new Set(prev);
+                next.delete(itemId);
+                return next;
+            });
+            pendingFocusRef.current = itemId;
+            scrollSourceRef.current = 'sidebar';
+            scrollToItem(itemId);
+
+            setTimeout(() => {
+                if (editorRefs.current[itemId]) {
+                    editorRefs.current[itemId]?.focus();
+                    pendingFocusRef.current = null;
+                }
+            }, 100);
+
+            showToast(`Pasted "${snippet.name}"`);
+        };
+
+        const newItemId = addSnippetToTheme(themeId, newSnippetId, selectedItemId || undefined);
+        onItemAdded(newItemId);
+
+    }, [themeId, selectedItemId, addSnippet, addSnippetToTheme, showToast]);
+
+    // Keyboard shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Cmd+V / Ctrl+V to paste
+            if ((e.metaKey || e.ctrlKey) && e.key === 'v') {
+                // Don't paste if we're in an input/textarea/editor
+                const target = e.target as HTMLElement;
+                if (
+                    target.tagName === 'INPUT' ||
+                    target.tagName === 'TEXTAREA' ||
+                    target.closest('.cm-editor') // CodeMirror
+                ) {
+                    return;
+                }
+
+                e.preventDefault();
+                handlePaste();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [handlePaste]);
 
 
     return (

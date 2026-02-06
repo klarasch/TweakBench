@@ -15,7 +15,7 @@ interface Store extends AppState {
     updateTheme: (id: string, updates: Partial<Theme>) => void;
     deleteTheme: (id: string) => void;
 
-    addSnippetToTheme: (themeId: string, snippetId: string) => string;
+    addSnippetToTheme: (themeId: string, snippetId: string, afterItemId?: string) => string;
     toggleThemeItem: (themeId: string, itemId: string) => void;
     removeSnippetFromTheme: (themeId: string, itemId: string) => void;
     updateThemeItem: (themeId: string, itemId: string, updates: Partial<import('./types.ts').ThemeItem>) => void;
@@ -24,6 +24,9 @@ interface Store extends AppState {
     reorderSnippets: (newSnippets: Snippet[]) => void;
     toggleGlobal: () => void;
     importAllData: (data: { themes: Theme[], snippets: Snippet[], globalEnabled: boolean }, mode: 'merge' | 'replace' | 'skip-duplicates') => { themesAdded: number, snippetsAdded: number, skipped: number };
+
+    clipboardSnippet: { snippet: Snippet, overrides?: import('./types.ts').ThemeItem['overrides'] } | null;
+    setClipboardSnippet: (data: { snippet: Snippet, overrides?: import('./types.ts').ThemeItem['overrides'] } | null) => void;
 
     updateSnippetAndPropagate: (id: string, newContent: string, options: { mode: 'soft' | 'force', originItemId?: string }) => void;
 
@@ -40,6 +43,7 @@ export const useStore = create<Store>((set) => ({
     snippets: [],
     activeThemeId: null,
     globalEnabled: true,
+    clipboardSnippet: null,
 
     loadFromStorage: async () => {
         const data = await storageService.load();
@@ -108,7 +112,6 @@ export const useStore = create<Store>((set) => ({
         // IN IMPORT: I can just DELETE the default snippet item after creation if I want cleaner import.
         // Or I can just accept the "Main CSS" is there. 
         // For now, I will keep the default creation logic but RETURN THE ID to fix the type error.
-
         const snippetId = uuidv4();
         const mainSnippet: Snippet = {
             id: snippetId,
@@ -119,17 +122,14 @@ export const useStore = create<Store>((set) => ({
             updatedAt: Date.now(),
             relatedSnippetIds: [],
         };
-
         const themeItem = {
             id: uuidv4(),
             snippetId: snippetId,
             isEnabled: true,
         };
-
         // If themeData has items, use them instead of default?
         // Existing logic forced [themeItem].
         // Let's keep existing logic to avoid breaking manual flow, just return ID.
-
         const newTheme: Theme = {
             ...themeData,
             items: themeData.items ?? [themeItem],
@@ -137,7 +137,6 @@ export const useStore = create<Store>((set) => ({
             createdAt: Date.now(),
             updatedAt: Date.now(),
         };
-
         set((state) => {
             // Only add mainSnippet if we actually used it (i.e. themeData.items was undefined)
             const shouldUseDefault = !themeData.items;
@@ -149,7 +148,6 @@ export const useStore = create<Store>((set) => ({
             storageService.save(newState);
             return newState;
         });
-
         return themeId;
     },
 
@@ -157,7 +155,6 @@ export const useStore = create<Store>((set) => ({
         set((state) => {
             const theme = state.themes.find(t => t.id === id);
             if (!theme) return state;
-
             let finalThemes = state.themes;
             // Handle Switch Group Logic
             if (theme.groupId) {
@@ -169,7 +166,6 @@ export const useStore = create<Store>((set) => ({
                             : t
                     );
                 }
-
                 // 2. Domain Sync: If domains changed, sync to group
                 if (updates.domainPatterns) {
                     finalThemes = finalThemes.map(t =>
@@ -179,16 +175,13 @@ export const useStore = create<Store>((set) => ({
                     );
                 }
             }
-
             const newState = {
                 ...state,
                 themes: finalThemes.map((t) => (t.id === id ? { ...t, ...updates, updatedAt: Date.now() } : t)),
             };
-
             const isImmediate = updates.isActive !== undefined || updates.domainPatterns !== undefined;
             storageService.save(newState, { immediate: isImmediate });
             if (isImmediate) broadcastStateUpdate(newState);
-
             return newState;
         });
     },
@@ -204,7 +197,7 @@ export const useStore = create<Store>((set) => ({
         });
     },
 
-    addSnippetToTheme: (themeId, snippetId) => {
+    addSnippetToTheme: (themeId: string, snippetId: string, afterItemId?: string) => {
         const itemId = uuidv4();
         set((state) => {
             const theme = state.themes.find(t => t.id === themeId);
@@ -216,7 +209,19 @@ export const useStore = create<Store>((set) => ({
                 isEnabled: true,
             };
 
-            const updatedTheme = { ...theme, items: [...theme.items, newItem], updatedAt: Date.now() };
+            let updatedItems = [...theme.items];
+            if (afterItemId) {
+                const index = updatedItems.findIndex(i => i.id === afterItemId);
+                if (index !== -1) {
+                    updatedItems.splice(index + 1, 0, newItem);
+                } else {
+                    updatedItems.push(newItem);
+                }
+            } else {
+                updatedItems.push(newItem);
+            }
+
+            const updatedTheme = { ...theme, items: updatedItems, updatedAt: Date.now() };
 
             const newState = {
                 ...state,
@@ -324,6 +329,10 @@ export const useStore = create<Store>((set) => ({
             storageService.save(newState);
             return newState;
         });
+    },
+
+    setClipboardSnippet: (data) => {
+        set({ clipboardSnippet: data });
     },
 
     toggleGlobal: () => {
