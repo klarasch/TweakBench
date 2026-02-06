@@ -48,6 +48,7 @@ interface SortableThemeItemProps {
     onKebabClick: (e: React.MouseEvent) => void;
     onUpdateTheme: (updates: Partial<Theme>) => void;
     onDeleteClick: (e: React.MouseEvent) => void;
+    onDomainClick?: (e: React.MouseEvent) => void;
 }
 
 // Wrapper for Sortable functionality for generic items
@@ -165,6 +166,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
 
     // Domain Config State
     const [editingDomainGroup, setEditingDomainGroup] = useState<string | null>(null);
+    const [editingDomainTheme, setEditingDomainTheme] = useState<string | null>(null);
     const [isCreatingGroup, setIsCreatingGroup] = useState(false);
 
     // Responsive State
@@ -1001,6 +1003,10 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                             e.stopPropagation();
                                             setThemeToDelete(item.id);
                                         }}
+                                        onDomainClick={(e) => {
+                                            e.stopPropagation();
+                                            setEditingDomainTheme(item.id);
+                                        }}
                                     />
                                 )
                             ))}
@@ -1095,6 +1101,15 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                 onClose={() => setEditingDomainGroup(null)}
                 themes={themes}
                 groupId={editingDomainGroup || undefined}
+                onUpdateTheme={updateTheme}
+                activeUrl={activeUrl}
+            />
+
+            {/* Domain Configuration Modal for Individual Themes */}
+            <DomainConfigurationModal
+                isOpen={!!editingDomainTheme}
+                onClose={() => setEditingDomainTheme(null)}
+                themes={editingDomainTheme ? themes.filter(t => t.id === editingDomainTheme) : []}
                 onUpdateTheme={updateTheme}
                 activeUrl={activeUrl}
             />

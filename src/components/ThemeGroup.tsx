@@ -4,6 +4,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Globe, MoreVertical, Link as LinkIcon, CheckSquare, ChevronDown, Plus } from 'lucide-react';
 import { ThemeItem } from './ThemeItem';
 import type { Theme } from '../types';
+import { isDomainMatch } from '../utils/domains';
 
 interface ThemeGroupProps {
     id: string; // Group ID (or pseudo ID for dnd)
@@ -64,6 +65,13 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
     const isAllSelected = themes.every(t => selectedThemeIds.has(t.id));
     const isSomeSelected = themes.some(t => selectedThemeIds.has(t.id));
 
+    // Find active theme in group
+    const activeTheme = themes.find(t => t.isActive);
+
+    // Check if active theme matches current URL
+    const isMatch = activeUrl && activeTheme ? isDomainMatch(activeTheme.domainPatterns, activeUrl) : false;
+    const isActiveOnTab = activeTheme?.isActive && globalEnabled && isMatch;
+
     const handleGroupSelect = () => {
         if (isSomeSelected && !isAllSelected) {
             // If partially selected, deselect all
@@ -78,6 +86,14 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
         }
     };
 
+    const handleHeaderClick = (e: React.MouseEvent) => {
+        // Only toggle if clicking on the header itself, not interactive elements
+        if ((e.target as HTMLElement).closest('button')) {
+            return;
+        }
+        onToggleCollapse();
+    };
+
     return (
         <div
             ref={setNodeRef}
@@ -86,12 +102,19 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
             {...listeners} // Drag handle is entire group for now, or maybe just header?
             // Let's make entire group draggable for ease, unless interacting with internal items
             className={`
-                rounded-lg border border-blue-900/30 bg-slate-900/50 overflow-hidden mb-2
+                rounded-lg border overflow-hidden mb-2
+                ${isCollapsed && isActiveOnTab
+                    ? 'border-green-500/50 bg-slate-800 shadow-[0_0_10px_-2px_rgba(34,197,94,0.15)]'
+                    : 'border-blue-900/30 bg-slate-900/50'
+                }
                 ${isDragging ? 'shadow-xl ring-2 ring-blue-500/50 z-10' : ''}
             `}
         >
             {/* Group Header */}
-            <div className="flex items-center justify-between p-2 bg-slate-800/80 border-b border-blue-900/30">
+            <div
+                className="flex items-center justify-between p-2 bg-slate-800/80 border-b border-blue-900/30 cursor-pointer hover:bg-slate-800"
+                onClick={handleHeaderClick}
+            >
                 <div className="flex items-center gap-2 min-w-0">
                     <div
                         className="p-1 rounded bg-blue-500/10 text-blue-400"
@@ -126,6 +149,30 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
                             {domainPatterns.join(', ')}
                         </span>
                     </button>
+
+                    {isCollapsed && activeTheme && (
+                        <div className="flex items-center gap-2 ml-2 min-w-0">
+                            <span className="text-xs text-slate-500">•</span>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onSelectTheme(activeTheme.id);
+                                }}
+                                className="text-xs text-slate-300 hover:text-white truncate"
+                                title={`Active: ${activeTheme.name}`}
+                            >
+                                {activeTheme.name}
+                            </button>
+                        </div>
+                    )}
+                    {isCollapsed && !activeTheme && (
+                        <div className="flex items-center gap-2 ml-2 min-w-0">
+                            <span className="text-xs text-slate-500">•</span>
+                            <span className="text-xs text-slate-500 italic">
+                                No theme enabled
+                            </span>
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex items-center gap-1">
@@ -145,17 +192,48 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
                         </div>
                     ) : (
                         <>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onGroupContextMenu(e, themes[0].groupId!, { x: e.pageX, y: e.pageY, action: 'add-theme' });
-                                }}
-                                className="p-1 rounded text-slate-500 hover:text-white hover:bg-slate-700 pointer-events-auto"
-                                onPointerDown={e => e.stopPropagation()} // Prevent drag
-                                title="Add theme to group"
-                            >
-                                <Plus size={14} />
-                            </button>
+                            {isCollapsed && activeTheme && (
+                                <>
+                                    {isActiveOnTab && (
+                                        <div className="flex items-center gap-1.5 text-[10px] font-medium px-2 py-1 rounded-full text-green-400/90 bg-green-500/5">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]"></div>
+                                            Active on this tab
+                                        </div>
+                                    )}
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (!globalEnabled) return;
+                                            onUpdateTheme(activeTheme.id, { isActive: !activeTheme.isActive });
+                                        }}
+                                        onPointerDown={e => e.stopPropagation()}
+                                        disabled={!globalEnabled}
+                                        className={`p-1 rounded flex items-center gap-1.5 px-2 transition-colors ${!globalEnabled
+                                            ? 'bg-slate-800/50 text-slate-600 cursor-not-allowed opacity-50'
+                                            : activeTheme.isActive
+                                                ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+                                                : 'bg-slate-700/50 text-slate-500 hover:bg-slate-700 hover:text-slate-300'
+                                            }`}
+                                        title={!globalEnabled ? "System disabled" : (activeTheme.isActive ? "Disable theme" : "Enable theme")}
+                                    >
+                                        <div className={`w-1.5 h-1.5 rounded-full ${!globalEnabled ? 'bg-slate-600' : (activeTheme.isActive ? 'bg-green-400 animate-pulse' : 'bg-slate-500')}`}></div>
+                                        <span className="text-[10px] font-bold uppercase">{activeTheme.isActive ? 'ON' : 'OFF'}</span>
+                                    </button>
+                                </>
+                            )}
+                            {!isCollapsed && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onGroupContextMenu(e, themes[0].groupId!, { x: e.pageX, y: e.pageY, action: 'add-theme' });
+                                    }}
+                                    className="p-1 rounded text-slate-500 hover:text-white hover:bg-slate-700 pointer-events-auto"
+                                    onPointerDown={e => e.stopPropagation()} // Prevent drag
+                                    title="Add theme to group"
+                                >
+                                    <Plus size={14} />
+                                </button>
+                            )}
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();

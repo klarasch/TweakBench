@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trash2, MoreVertical } from 'lucide-react';
+import { Trash2, MoreVertical, Globe } from 'lucide-react';
 import type { Theme } from '../types';
 import { isDomainMatch } from '../utils/domains';
 
@@ -15,6 +15,7 @@ export interface ThemeItemProps {
     onKebabClick: (e: React.MouseEvent) => void;
     onUpdateTheme: (updates: Partial<Theme>) => void;
     onDeleteClick: (e: React.MouseEvent) => void;
+    onDomainClick?: (e: React.MouseEvent) => void;
     // DnD props passed from parent wrapper
     dragHandleProps?: any;
     isDragging?: boolean;
@@ -34,6 +35,7 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
     onKebabClick,
     onUpdateTheme,
     onDeleteClick,
+    onDomainClick,
     dragHandleProps,
     isDragging,
     setNodeRef,
@@ -79,8 +81,30 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
                     <span className={`font-medium truncate ${isActiveOnTab ? 'text-green-400' : 'text-slate-200'} ${isSelected ? 'text-white' : ''}`}>
                         {theme.name}
                     </span>
+                    {!theme.groupId && onDomainClick && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onDomainClick(e);
+                            }}
+                            onPointerDown={e => e.stopPropagation()}
+                            className="flex items-center gap-1.5 min-w-0 hover:bg-slate-700/50 px-1.5 py-0.5 rounded transition-colors cursor-pointer"
+                            title="Configure domains"
+                        >
+                            <Globe size={12} className="text-slate-500 shrink-0" />
+                            <span className="text-xs font-semibold text-slate-300 truncate max-w-[150px]">
+                                {theme.domainPatterns.join(', ')}
+                            </span>
+                        </button>
+                    )}
                 </div>
                 <div className="flex gap-1 items-center">
+                    {isActiveOnTab && (
+                        <div className="flex items-center gap-1.5 text-[10px] font-medium px-2 py-1 rounded-full text-green-400/90 bg-green-500/5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]"></div>
+                            Active on this tab
+                        </div>
+                    )}
                     <div className="flex gap-1">
                         <button
                             onClick={(e) => {
@@ -123,21 +147,6 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
                     )}
                 </div>
             </div>
-            {!theme.groupId && (
-                <div className={`flex justify-between items-center text-xs ${isSelectionMode ? 'pl-7' : ''}`}>
-                    <div className="flex items-center gap-2 max-w-[200px]">
-                        <span className="text-slate-400 truncate">
-                            {theme.domainPatterns.join(', ')}
-                        </span>
-                    </div>
-                    {isActiveOnTab && (
-                        <div className="flex items-center gap-1.5 text-[10px] font-medium px-2 py-1 rounded-full text-green-400/90 bg-green-500/5">
-                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]"></div>
-                            Active on this tab
-                        </div>
-                    )}
-                </div>
-            )}
         </div>
     );
 };
