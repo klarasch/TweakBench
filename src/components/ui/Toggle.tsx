@@ -27,9 +27,9 @@ export const Toggle: React.FC<ToggleProps> = ({
     const getTooltip = () => {
         if (title) return title;
         if (disabled) return "System disabled";
-        if (!checked) return "Theme disabled";
+        if (!checked) return "Disabled";
         if (isActive) return "Enabled and active on this tab";
-        return "Enabled but inactive on this tab";
+        return "Enabled but inactive";
     };
 
     return (

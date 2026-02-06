@@ -311,7 +311,15 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                         isActive={isThemeActive && item.isEnabled && isMatch}
                         onChange={() => toggleThemeItem(themeId, item.id)}
                         size="sm"
-                        disabled={!isThemeActive}
+                        title={
+                            !item.isEnabled
+                                ? "Snippet disabled"
+                                : !isThemeActive
+                                    ? "Enabled but inactive (Theme is OFF)"
+                                    : !isMatch
+                                        ? "Enabled but inactive (No domain match for this tab)"
+                                        : "Enabled and active on this tab"
+                        }
                     />
 
                     {/* Kebab Menu */}

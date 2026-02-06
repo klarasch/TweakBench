@@ -1,8 +1,8 @@
 import React from 'react';
-import { useSortable } from '@dnd-kit/sortable';
+import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Globe, MoreVertical, Link as LinkIcon, CheckSquare, ChevronDown, Plus } from 'lucide-react';
-import { ThemeItem } from './ThemeItem';
+import { SortableThemeItem } from './SortableThemeItem';
 import type { Theme } from '../types';
 import { isDomainMatch } from '../utils/domains';
 
@@ -61,6 +61,9 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
         position: 'relative' as 'relative',
     };
 
+    // Forces collapsed state during dragging if the group is being dragged
+    const effectivelyCollapsed = isCollapsed || isDragging;
+
     // Calculate selection state for group
     const isAllSelected = themes.every(t => selectedThemeIds.has(t.id));
     const isSomeSelected = themes.some(t => selectedThemeIds.has(t.id));
@@ -98,24 +101,24 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
         <div
             ref={setNodeRef}
             style={style}
-            {...attributes}
-            {...listeners} // Drag handle is entire group for now, or maybe just header?
-            // Let's make entire group draggable for ease, unless interacting with internal items
             className={`
                 rounded-lg border overflow-hidden transition-all
                 ${isActiveOnTab
-                    ? isCollapsed
+                    ? effectivelyCollapsed
                         ? 'border-green-500/50 bg-slate-800 shadow-[0_0_10px_-2px_rgba(34,197,94,0.15)]'
                         : 'border-green-500/25 bg-slate-900/50'
                     : 'border-slate-800 bg-slate-900/50'
                 }
-                ${isDragging ? 'shadow-xl ring-2 ring-blue-500/50 z-10' : ''}
+                ${effectivelyCollapsed ? 'bg-slate-800/50' : ''}
+                ${isDragging ? 'shadow-xl ring-2 ring-blue-500/50 z-10 border-blue-500/50' : ''}
             `}
         >
-            {/* Group Header */}
+            {/* Group Header - Drag handle is now here only */}
             <div
-                className={`flex items-center justify-between p-2 bg-slate-800/80 cursor-pointer hover:bg-slate-800 transition-colors ${!isCollapsed ? 'border-b border-slate-700/50' : ''}`}
+                className={`flex items-center justify-between p-2 bg-slate-800/80 cursor-grab active:cursor-grabbing hover:bg-slate-800 transition-colors ${!effectivelyCollapsed ? 'border-b border-slate-700/50' : ''}`}
                 onClick={handleHeaderClick}
+                {...attributes}
+                {...listeners}
             >
                 <div className="flex items-center gap-2 min-w-0">
                     <button
@@ -127,7 +130,7 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
                         onPointerDown={e => e.stopPropagation()}
                         title={isCollapsed ? 'Expand group' : 'Collapse group'}
                     >
-                        <ChevronDown size={14} className={`transition-transform ${isCollapsed ? '-rotate-90' : ''}`} />
+                        <ChevronDown size={14} className={`transition-transform ${effectivelyCollapsed ? '-rotate-90' : ''}`} />
                     </button>
 
                     <div
@@ -152,7 +155,7 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
                         </span>
                     </button>
 
-                    {isCollapsed && activeTheme && (
+                    {effectivelyCollapsed && activeTheme && (
                         <div className="flex items-center gap-2 ml-2 min-w-0">
                             <span className="text-xs text-slate-500">•</span>
                             <button
@@ -167,7 +170,7 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
                             </button>
                         </div>
                     )}
-                    {isCollapsed && !activeTheme && (
+                    {effectivelyCollapsed && !activeTheme && (
                         <div className="flex items-center gap-2 ml-2 min-w-0">
                             <span className="text-xs text-slate-500">•</span>
                             <span className="text-xs text-slate-500 italic">
@@ -194,7 +197,7 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
                         </div>
                     ) : (
                         <>
-                            {isCollapsed && activeTheme && (
+                            {effectivelyCollapsed && activeTheme && (
                                 <>
                                     {isActiveOnTab && (
                                         <div className="flex items-center gap-1.5 text-[10px] font-medium px-2 py-1 rounded-full text-green-400/90 bg-green-500/5">
@@ -223,7 +226,7 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
                                     </button>
                                 </>
                             )}
-                            {!isCollapsed && (
+                            {!effectivelyCollapsed && (
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -251,33 +254,37 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
                 </div>
             </div>
 
-            {/* Themes List */}
-            {!isCollapsed && (
+            {/* Themes List - Wrapped in SortableContext */}
+            {!effectivelyCollapsed && (
                 <div className="flex flex-col">
-                    {themes.map((theme, index) => (
-                        <div key={theme.id}>
-                            {index > 0 && <div className="mx-4 h-px bg-slate-800/50" />}
-                            <ThemeItem
-                                theme={theme}
-                                activeUrl={activeUrl}
-                                isSelectionMode={isSelectionMode}
-                                isSelected={selectedThemeIds.has(theme.id)}
-                                globalEnabled={globalEnabled}
-                                onSelect={() => onSelectTheme(theme.id)}
-                                onToggleSelection={() => onToggleSelection(theme.id)}
-                                onContextMenu={(e) => onContextMenu(e, theme.id)}
-                                onKebabClick={(e) => {
-                                    e.stopPropagation();
-                                    onContextMenu(e, theme.id);
-                                }}
-                                onUpdateTheme={(updates) => onUpdateTheme(theme.id, updates)}
-                                onDeleteClick={(e) => onDeleteTheme(e, theme.id)}
-                                isOtherInGroupActive={themes.some(t => t.isActive && t.id !== theme.id)}
-                                isNested={true}
-                                style={{}}
-                            />
-                        </div>
-                    ))}
+                    <SortableContext
+                        items={themes.map(t => t.id)}
+                        strategy={verticalListSortingStrategy}
+                    >
+                        {themes.map((theme, index) => (
+                            <div key={theme.id}>
+                                {index > 0 && <div className="mx-4 h-px bg-slate-800/50" />}
+                                <SortableThemeItem
+                                    theme={theme}
+                                    activeUrl={activeUrl}
+                                    isSelectionMode={isSelectionMode}
+                                    isSelected={selectedThemeIds.has(theme.id)}
+                                    globalEnabled={globalEnabled}
+                                    onSelect={() => onSelectTheme(theme.id)}
+                                    onToggleSelection={() => onToggleSelection(theme.id)}
+                                    onContextMenu={(e) => onContextMenu(e, theme.id)}
+                                    onKebabClick={(e) => {
+                                        e.stopPropagation();
+                                        onContextMenu(e, theme.id);
+                                    }}
+                                    onUpdateTheme={(updates) => onUpdateTheme(theme.id, updates)}
+                                    onDeleteClick={(e) => onDeleteTheme(e, theme.id)}
+                                    isOtherInGroupActive={themes.some(t => t.isActive && t.id !== theme.id)}
+                                    isNested={true}
+                                />
+                            </div>
+                        ))}
+                    </SortableContext>
                 </div>
             )}
         </div>

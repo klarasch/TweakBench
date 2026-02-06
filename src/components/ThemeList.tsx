@@ -9,7 +9,6 @@ import { Modal } from './ui/Modal';
 import { ConfirmDialog } from './ui/Dialog';
 import { useToast } from './ui/Toast';
 import type { Theme } from '../types.ts';
-import { ThemeItem } from './ThemeItem'; // Import new component
 import { ThemeGroup } from './ThemeGroup'; // Import new component
 import { DomainConfigurationModal } from './DomainConfigurationModal'; // New import
 import {
@@ -26,9 +25,7 @@ import {
     SortableContext,
     sortableKeyboardCoordinates,
     verticalListSortingStrategy,
-    useSortable,
 } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 
 interface ThemeListProps {
@@ -36,51 +33,7 @@ interface ThemeListProps {
     activeUrl: string | null;
 }
 
-interface SortableThemeItemProps {
-    theme: Theme;
-    activeUrl: string | null;
-    isSelectionMode: boolean;
-    isSelected: boolean;
-    globalEnabled: boolean;
-    onSelect: () => void;
-    onToggleSelection: () => void;
-    onContextMenu: (e: React.MouseEvent) => void;
-    onKebabClick: (e: React.MouseEvent) => void;
-    onUpdateTheme: (updates: Partial<Theme>) => void;
-    onDeleteClick: (e: React.MouseEvent) => void;
-    onDomainClick?: (e: React.MouseEvent) => void;
-    isOtherInGroupActive: boolean;
-}
-
-// Wrapper for Sortable functionality for generic items
-const SortableThemeItemWrapper: React.FC<SortableThemeItemProps> = (props) => {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging
-    } = useSortable({ id: props.theme.id, disabled: props.isSelectionMode });
-
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.5 : 1,
-        zIndex: isDragging ? 20 : 'auto',
-        position: 'relative' as 'relative',
-    };
-
-    return (
-        <ThemeItem
-            {...props}
-            setNodeRef={setNodeRef}
-            style={style}
-            dragHandleProps={{ ...attributes, ...listeners }}
-            isDragging={isDragging}
-        />
-    );
-};
+import { SortableThemeItem } from './SortableThemeItem';
 
 export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }) => {
     const { themes, snippets, addTheme, deleteTheme, updateTheme, addSnippet, addSnippetToTheme, globalEnabled, importAllData: importData, reorderThemes, createThemeGroup, ungroupThemes, createEmptyGroup } = useStore();
@@ -189,30 +142,95 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
         const { active, over } = event;
         if (!over || active.id === over.id) return;
 
-        const oldIndex = displayItems.findIndex(i => i.id === active.id);
-        const newIndex = displayItems.findIndex(i => i.id === over.id);
+        const activeId = active.id as string;
+        const overId = over.id as string;
 
-        if (oldIndex !== -1 && newIndex !== -1) {
-            // Reorder displayItems first
-            const newDisplayItems = arrayMove(displayItems, oldIndex, newIndex);
+        // 1. Identify what is being dragged and what it's being dragged over
+        const activeTheme = themes.find(t => t.id === activeId);
+        const overTheme = themes.find(t => t.id === overId);
+        const activeGroup = displayItems.find(i => i.id === activeId && i.type === 'group');
+        const overGroup = displayItems.find(i => i.id === overId && i.type === 'group');
 
-            // Flatten back to themes
-            const newThemes: Theme[] = [];
-            newDisplayItems.forEach(item => {
-                if (item.type === 'theme') {
-                    newThemes.push(item.data);
-                } else {
-                    // Spread group themes. Ensure we keep their relative order? Yes, preserving internal order.
-                    // Wait, groupThemes in displayItems might be just a filter result.
-                    // If we move a group, we move ALL its members.
-                    // The internal order within a group is determined by the ORIGINAL array order essentially.
-                    // But if we use 'groupThemes' which is filtered from 'themes', they are already in relative order.
-                    newThemes.push(...item.themes);
+        let newThemes = [...themes];
+
+        if (activeTheme) {
+            // CASE: DRAGGING A THEME
+            let targetGroupId: string | undefined = undefined;
+            let targetDomainPatterns: string[] | undefined = undefined;
+
+            if (overGroup && overGroup.type === 'group') {
+                // Dragged onto a group header
+                targetGroupId = overId;
+                targetDomainPatterns = overGroup.domainPatterns;
+            } else if (overTheme) {
+                // Dragged onto another theme (could be in a group or top-level)
+                targetGroupId = overTheme.groupId;
+                if (targetGroupId) {
+                    const groupItem = displayItems.find(i => i.id === targetGroupId && i.type === 'group');
+                    if (groupItem && groupItem.type === 'group') {
+                        targetDomainPatterns = groupItem.domainPatterns;
+                    }
                 }
-            });
+            }
 
-            reorderThemes(newThemes);
+            // Update theme's group and domains if changed
+            if (activeTheme.groupId !== targetGroupId) {
+                let shouldBeActive = activeTheme.isActive;
+
+                // Requirement: If dropping an active theme into a group where there already is an active theme, disable it
+                if (targetGroupId && activeTheme.isActive) {
+                    const hasActiveInTargetGroup = themes.some(t => t.groupId === targetGroupId && t.isActive && t.id !== activeId);
+                    if (hasActiveInTargetGroup) {
+                        shouldBeActive = false;
+                    }
+                }
+
+                newThemes = newThemes.map(t => t.id === activeId ? {
+                    ...t,
+                    groupId: targetGroupId,
+                    domainPatterns: targetDomainPatterns || t.domainPatterns,
+                    isActive: shouldBeActive,
+                    updatedAt: Date.now()
+                } : t);
+            }
+
+            // Handle Reordering
+            const oldIndex = newThemes.findIndex(t => t.id === activeId);
+            let newIndex = newThemes.findIndex(t => t.id === overId);
+
+            if (overGroup) {
+                // If landed on a group header, move to start of group
+                const groupThemes = newThemes.filter(t => t.groupId === overId);
+                if (groupThemes.length > 0) {
+                    newIndex = newThemes.findIndex(t => t.id === groupThemes[0].id);
+                }
+            }
+
+            if (oldIndex !== -1 && newIndex !== -1) {
+                newThemes = arrayMove(newThemes, oldIndex, newIndex);
+            }
+        } else if (activeGroup) {
+            // CASE: DRAGGING A GROUP
+            // This is easier: move all group members to the position of 'over'
+            const oldDisplayIndex = displayItems.findIndex(i => i.id === activeId);
+            const newDisplayIndex = displayItems.findIndex(i => i.id === overId);
+
+            if (oldDisplayIndex !== -1 && newDisplayIndex !== -1) {
+                const newDisplayItems = arrayMove(displayItems, oldDisplayIndex, newDisplayIndex);
+                const finalThemes: Theme[] = [];
+                newDisplayItems.forEach(item => {
+                    if (item.type === 'theme') {
+                        finalThemes.push(item.data);
+                    } else {
+                        // All members of the group move together
+                        finalThemes.push(...item.themes);
+                    }
+                });
+                newThemes = finalThemes;
+            }
         }
+
+        reorderThemes(newThemes);
     };
 
     useEffect(() => {
@@ -1004,8 +1022,8 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                         onContextMenu={handleContextMenu}
                                         onGroupContextMenu={handleGroupContextMenu}
                                         onUpdateTheme={updateTheme}
-                                        onDeleteTheme={(e, id) => { e.stopPropagation(); setThemeToDelete(id); }}
-                                        onDomainClick={(e) => {
+                                        onDeleteTheme={(e: React.MouseEvent, id: string) => { e.stopPropagation(); setThemeToDelete(id); }}
+                                        onDomainClick={(e: React.MouseEvent) => {
                                             e.stopPropagation();
                                             setEditingDomainGroup(item.id);
                                         }}
@@ -1023,7 +1041,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                         }}
                                     />
                                 ) : (
-                                    <SortableThemeItemWrapper
+                                    <SortableThemeItem
                                         key={item.id}
                                         theme={item.data}
                                         isOtherInGroupActive={false}
@@ -1033,14 +1051,14 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                         globalEnabled={globalEnabled}
                                         onSelect={() => onSelectTheme(item.id)}
                                         onToggleSelection={() => handleToggleSelection(item.id)}
-                                        onContextMenu={(e) => handleContextMenu(e, item.id)}
-                                        onKebabClick={(e) => handleKebabClick(e, item.id)}
-                                        onUpdateTheme={(updates) => updateTheme(item.id, updates)}
-                                        onDeleteClick={(e) => {
+                                        onContextMenu={(e: React.MouseEvent) => handleContextMenu(e, item.id)}
+                                        onKebabClick={(e: React.MouseEvent) => handleKebabClick(e, item.id)}
+                                        onUpdateTheme={(updates: Partial<Theme>) => updateTheme(item.id, updates)}
+                                        onDeleteClick={(e: React.MouseEvent) => {
                                             e.stopPropagation();
                                             setThemeToDelete(item.id);
                                         }}
-                                        onDomainClick={(e) => {
+                                        onDomainClick={(e: React.MouseEvent) => {
                                             e.stopPropagation();
                                             setEditingDomainTheme(item.id);
                                         }}
@@ -1151,7 +1169,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                 onClose={() => setIsCreatingGroup(false)}
                 activeUrl={activeUrl}
                 mode="create"
-                onCreateGroup={(domainPatterns) => {
+                onCreateGroup={(domainPatterns: string[]) => {
                     createEmptyGroup(domainPatterns);
                     setIsCreatingGroup(false);
                     showToast('Domain group created');
