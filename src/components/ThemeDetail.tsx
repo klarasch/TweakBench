@@ -120,12 +120,15 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
 
     const handleBulkDelete = () => {
         if (selectedSnippetIds.size === 0) return;
-        if (confirm(`Remove ${selectedSnippetIds.size} snippets from this theme?`)) {
-            const { removeSnippetFromTheme } = useStore.getState();
-            selectedSnippetIds.forEach(id => removeSnippetFromTheme(themeId, id));
-            setSelectedSnippetIds(new Set());
-            setIsSelectionMode(false);
-        }
+        setConfirmBulkDelete(true);
+    };
+
+    const confirmBulkDeleteAction = () => {
+        const { removeSnippetFromTheme } = useStore.getState();
+        selectedSnippetIds.forEach(id => removeSnippetFromTheme(themeId, id));
+        setSelectedSnippetIds(new Set());
+        setIsSelectionMode(false);
+        setConfirmBulkDelete(false);
     };
 
     const handleBulkEnable = (enable: boolean) => {
@@ -157,6 +160,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
     const [menuState, setMenuState] = useState<{ x: number; y: number; itemId: string | null; source?: 'sidebar' | 'stack' }>({ x: 0, y: 0, itemId: null });
     const [renamingSidebarItemId, setRenamingSidebarItemId] = useState<string | null>(null);
     const [itemToRemove, setItemToRemove] = useState<string | null>(null);
+    const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
     const [justDroppedId, setJustDroppedId] = useState<string | null>(null);
 
     // DnD Sensors
@@ -885,46 +889,66 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                                                 Select
                                             </Button>
                                         ) : (
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => setIsSelectionMode(false)}
-                                                className="text-blue-400 font-medium"
-                                            >
-                                                Done
-                                            </Button>
+                                            <>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        if (selectedSnippetIds.size > 0) {
+                                                            setSelectedSnippetIds(new Set());
+                                                        } else {
+                                                            const allIds = new Set(filteredItems.map(item => item.id));
+                                                            setSelectedSnippetIds(allIds);
+                                                        }
+                                                    }}
+                                                    className="text-slate-500 hover:text-white"
+                                                >
+                                                    {selectedSnippetIds.size > 0 ? 'Deselect All' : 'Select All'}
+                                                </Button>
+                                                <div className="h-6 w-px bg-slate-800 mx-1"></div>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => setIsSelectionMode(false)}
+                                                    className="text-blue-400 font-medium"
+                                                >
+                                                    Done
+                                                </Button>
+                                            </>
                                         )}
                                     </>
                                 );
                             })()}
                         </div>
 
-                        <div className="flex gap-2">
-                            {activeTab === 'css' && (
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleImportVariables}
-                                    className="text-slate-400 hover:text-white border-slate-700 hover:border-slate-500"
-                                    icon={<Download size={14} />}
-                                    title="Import CSS Variables from Page"
-                                >
-                                    Import Vars
-                                </Button>
-                            )}
+                        {!isSelectionMode && (
+                            <div className="flex gap-2">
+                                {activeTab === 'css' && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleImportVariables}
+                                        className="text-slate-400 hover:text-white border-slate-700 hover:border-slate-500"
+                                        icon={<Download size={14} />}
+                                        title="Import CSS Variables from Page"
+                                    >
+                                        Import Vars
+                                    </Button>
+                                )}
 
-                            <Button
-                                variant="filled"
-                                size="sm"
-                                onClick={() => handleCreateLocal(activeTab)}
-                                // Make HTML orange button use black text for better contrast against orange-600? Or go darker orange?
-                                // User requested darker orange with white label (AA contrast)
-                                className={activeTab === 'css' ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-orange-700 hover:bg-orange-600 text-white font-bold'}
-                                icon={<Plus size={10} />}
-                            >
-                                Add {activeTab === 'css' ? 'CSS' : 'HTML'}
-                            </Button>
-                        </div>
+                                <Button
+                                    variant="filled"
+                                    size="sm"
+                                    onClick={() => handleCreateLocal(activeTab)}
+                                    // Make HTML orange button use black text for better contrast against orange-600? Or go darker orange?
+                                    // User requested darker orange with white label (AA contrast)
+                                    className={activeTab === 'css' ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-orange-700 hover:bg-orange-600 text-white font-bold'}
+                                    icon={<Plus size={10} />}
+                                >
+                                    Add {activeTab === 'css' ? 'CSS' : 'HTML'}
+                                </Button>
+                            </div>
+                        )}
                     </div>
 
                     {/* Bulk Actions Bar for Theme Detail */}
@@ -1104,6 +1128,17 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack }) => 
                         const snippet = item ? snippets.find(s => s.id === item.snippetId) : null;
                         return `Remove "${snippet?.name || 'this snippet'}" from the theme?`;
                     })()}
+                    confirmLabel="Remove"
+                    isDangerous
+                />
+
+                {/* Bulk Delete Confirmation */}
+                <ConfirmDialog
+                    isOpen={confirmBulkDelete}
+                    onClose={() => setConfirmBulkDelete(false)}
+                    onConfirm={confirmBulkDeleteAction}
+                    title="Remove Snippets"
+                    message={`Remove ${selectedSnippetIds.size} snippet${selectedSnippetIds.size === 1 ? '' : 's'} from this theme?`}
                     confirmLabel="Remove"
                     isDangerous
                 />

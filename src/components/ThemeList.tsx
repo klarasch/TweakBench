@@ -24,6 +24,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
 
     // Dialog States
     const [themeToDelete, setThemeToDelete] = useState<string | null>(null);
+    const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
     const [alertMessage, setAlertMessage] = useState<string | null>(null);
 
     const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -216,11 +217,14 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
 
     const handleBulkDelete = () => {
         if (selectedThemeIds.size === 0) return;
-        if (confirm(`Are you sure you want to delete ${selectedThemeIds.size} themes?`)) {
-            selectedThemeIds.forEach(id => deleteTheme(id));
-            setSelectedThemeIds(new Set());
-            setIsSelectionMode(false);
-        }
+        setConfirmBulkDelete(true);
+    };
+
+    const confirmBulkDeleteAction = () => {
+        selectedThemeIds.forEach(id => deleteTheme(id));
+        setSelectedThemeIds(new Set());
+        setIsSelectionMode(false);
+        setConfirmBulkDelete(false);
     };
 
     const handleBulkEnable = (enable: boolean) => {
@@ -368,14 +372,32 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                             </button>
                         </>
                     ) : (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setIsSelectionMode(false)}
-                            className="text-blue-400 font-medium"
-                        >
-                            Done
-                        </Button>
+                        <>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                    if (selectedThemeIds.size > 0) {
+                                        setSelectedThemeIds(new Set());
+                                    } else {
+                                        const allIds = new Set(themes.map(t => t.id));
+                                        setSelectedThemeIds(allIds);
+                                    }
+                                }}
+                                className="text-slate-500 hover:text-white"
+                            >
+                                {selectedThemeIds.size > 0 ? 'Deselect All' : 'Select All'}
+                            </Button>
+                            <div className="h-6 w-px bg-slate-800 mx-1"></div>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setIsSelectionMode(false)}
+                                className="text-blue-400 font-medium"
+                            >
+                                Done
+                            </Button>
+                        </>
                     )}
                 </div>
             </div>
@@ -454,6 +476,17 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                         Are you sure you want to delete theme <strong>"{themeToDeleteDetails?.name}"</strong>? This action cannot be undone.
                     </span>
                 }
+                confirmLabel="Delete"
+                isDangerous
+            />
+
+            {/* Bulk Delete Confirmation */}
+            <ConfirmDialog
+                isOpen={confirmBulkDelete}
+                onClose={() => setConfirmBulkDelete(false)}
+                onConfirm={confirmBulkDeleteAction}
+                title="Delete Themes"
+                message={`Remove ${selectedThemeIds.size} theme${selectedThemeIds.size === 1 ? '' : 's'}? This action cannot be undone.`}
                 confirmLabel="Delete"
                 isDangerous
             />
