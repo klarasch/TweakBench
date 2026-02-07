@@ -41,16 +41,17 @@ interface ThemeDetailProps {
 }
 
 export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSelectTheme }) => {
+    // Selective selectors to avoid unnecessary re-renders of the whole detail view
     const themes = useStore(state => state.themes);
-    const theme = themes.find(t => t.id === themeId);
+    const theme = useMemo(() => themes.find(t => t.id === themeId), [themes, themeId]);
     const snippets = useStore(state => state.snippets);
     const globalEnabled = useStore(state => state.globalEnabled);
     const addSnippet = useStore(state => state.addSnippet);
     const addSnippetToTheme = useStore(state => state.addSnippetToTheme);
     const toggleThemeItem = useStore(state => state.toggleThemeItem);
     const updateTheme = useStore(state => state.updateTheme);
-
     const toggleGlobal = useStore(state => state.toggleGlobal);
+
     const { showToast } = useToast();
     // State
     const [selectedItemId, setSelectedItemId] = useState<string | null>(null);

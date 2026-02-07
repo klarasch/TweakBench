@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useStore } from '../store.ts';
 import { Plus, Trash2, Play, Pause, MoreVertical, Upload, Download, Globe, X, Copy, Link as LinkIcon, Ungroup } from 'lucide-react';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
@@ -37,7 +37,22 @@ interface ThemeListProps {
 import { SortableThemeItem } from './SortableThemeItem';
 
 export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }) => {
-    const { themes, snippets, addTheme, deleteTheme, updateTheme, addSnippet, addSnippetToTheme, globalEnabled, activeThemeId, importAllData: importData, reorderThemes, createThemeGroup, ungroupThemes, createEmptyGroup } = useStore();
+    // Selective selectors to minimize re-renders
+    const themes = useStore(state => state.themes);
+    const snippets = useStore(state => state.snippets);
+    const addTheme = useStore(state => state.addTheme);
+    const deleteTheme = useStore(state => state.deleteTheme);
+    const updateTheme = useStore(state => state.updateTheme);
+    const addSnippet = useStore(state => state.addSnippet);
+    const addSnippetToTheme = useStore(state => state.addSnippetToTheme);
+    const globalEnabled = useStore(state => state.globalEnabled);
+    const activeThemeId = useStore(state => state.activeThemeId);
+    const importStoreData = useStore(state => state.importAllData);
+    const reorderThemes = useStore(state => state.reorderThemes);
+    const createThemeGroup = useStore(state => state.createThemeGroup);
+    const ungroupThemes = useStore(state => state.ungroupThemes);
+    const createEmptyGroup = useStore(state => state.createEmptyGroup);
+
     const { showToast } = useToast();
 
     // Creation Modal State
@@ -139,7 +154,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
         })
     );
 
-    const handleDragEnd = (event: DragEndEvent) => {
+    const handleDragEnd = useCallback((event: DragEndEvent) => {
         const { active, over } = event;
         if (!over || active.id === over.id) return;
 
@@ -232,7 +247,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
         }
 
         reorderThemes(newThemes);
-    };
+    }, [themes, displayItems, reorderThemes]);
 
     useEffect(() => {
         const handleResize = () => setViewportWidth(window.innerWidth);
@@ -322,7 +337,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                 const importedData = importAllData(content);
                 if (importedData) {
                     if (themes.length === 0) {
-                        importData(importedData, 'replace');
+                        importStoreData(importedData, 'replace');
                         showToast(`Imported ${importedData.themes.length} themes`);
                     } else {
                         setPendingImportData(importedData);
@@ -388,7 +403,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
             if (importedData) {
                 if (themes.length === 0) {
                     // Skip dialog if no themes exist
-                    importData(importedData, 'replace');
+                    importStoreData(importedData, 'replace');
                     showToast(`Imported ${importedData.themes.length} themes and ${importedData.snippets.length} snippets`);
                 } else {
                     setPendingImportData(importedData);
@@ -405,7 +420,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
     const handleConfirmImport = () => {
         if (!pendingImportData) return;
 
-        const result = importData(pendingImportData, importMode);
+        const result = importStoreData(pendingImportData, importMode);
         setIsImportDialogOpen(false);
         setPendingImportData(null);
 

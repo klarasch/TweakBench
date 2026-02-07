@@ -10,7 +10,7 @@ let lastProcessedTimestamp: number = 0;
 
 let updateTimeout: any = null;
 let transitionTimeout: any = null;
-const TRANSITION_DURATION = 250; // ms
+const TRANSITION_DURATION = 150; // ms
 const TRANSITION_STYLE_ID = 'tb-transition-manager';
 
 function setupTransition() {
@@ -19,11 +19,10 @@ function setupTransition() {
     style.id = TRANSITION_STYLE_ID;
     style.textContent = `
         .tb-transitioning, .tb-transitioning * {
-            transition: background-color ${TRANSITION_DURATION}ms ease, 
-                        color ${TRANSITION_DURATION}ms ease, 
-                        border-color ${TRANSITION_DURATION}ms ease, 
-                        opacity ${TRANSITION_DURATION}ms ease, 
-                        filter ${TRANSITION_DURATION}ms ease !important;
+            transition: background-color ${TRANSITION_DURATION}ms cubic-bezier(0.4, 0, 0.2, 1), 
+                        color ${TRANSITION_DURATION}ms cubic-bezier(0.4, 0, 0.2, 1), 
+                        border-color ${TRANSITION_DURATION}ms cubic-bezier(0.4, 0, 0.2, 1), 
+                        opacity ${TRANSITION_DURATION}ms cubic-bezier(0.4, 0, 0.2, 1) !important;
         }
     `;
     document.head.appendChild(style);
@@ -35,22 +34,23 @@ function startTransition() {
     if (transitionTimeout) clearTimeout(transitionTimeout);
     transitionTimeout = setTimeout(() => {
         document.documentElement.classList.remove('tb-transitioning');
-    }, TRANSITION_DURATION + 50);
+    }, TRANSITION_DURATION + 20); // Faster cleanup
 }
 
 // Message Listener for State Updates
-chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
-    if (request.type === 'PING') {
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    if (message.type === 'PING') {
         console.log('TweakBench: PING received');
         sendResponse('PONG');
     }
 
-    if (request.type === 'STATE_UPDATED') {
-        console.log('TweakBench: State Updated via messaging');
-        debouncedUpdate(request.state);
+    if (message.type === 'STATE_UPDATED') {
+        console.log('TweakBench: State Updated via messaging (Direct)');
+        // Direct updates from panel/active tab bypass debounce for maximum snappiness
+        updateStyles(message.state);
     }
 
-    if (request.type === 'SCAN_CSS_VARIABLES') {
+    if (message.type === 'SCAN_CSS_VARIABLES') {
         console.log('TweakBench: Scanning CSS Variables');
         const variables: Record<string, Record<string, string>> = {};
 
@@ -99,87 +99,93 @@ function debouncedUpdate(state: AppState) {
     }, 10); // Very short debounce to catch nearly simultaneous storage/message updates
 }
 
+let lastProcessedGlobalEnabled: boolean | null = null;
+
 function updateStyles(state: AppState) {
-    // Deduplication check: if this state is older or same as what we just processed, skip.
-    // We use a timestamp (or could hash the entire state, but this is lighter).
-    // Note: AppState doesn't necessarily have a global updatedAt, but themes do.
-    // Let's use the max updatedAt across all themes + snippets.
+    const globalEnabled = state.globalEnabled ?? true;
+    const currentUrl = window.location.href;
+
+    // 1. Pre-Match Orchestration: 
+    // If no active themes match THIS URL, and we have nothing injected, skip EVERYTHING.
+    const themes = state.themes || [];
+    const hasMatch = themes.some(t => t.isActive && isDomainMatch(t.domainPatterns, currentUrl));
+    const hasInjections = injectedStyles.size > 0 || injectedElements.size > 0;
+
+    if (!hasMatch && !hasInjections && globalEnabled) {
+        return;
+    }
+
+    // Deduplication check
     const latestChange = Math.max(
         ...state.themes.map(t => t.updatedAt || 0),
         ...state.snippets.map(s => s.updatedAt || 0)
     );
 
-    if (latestChange > 0 && latestChange <= lastProcessedTimestamp) {
-        console.log('TweakBench: Skipping redundant update (already processed or older)');
+    const isDifferentGlobal = globalEnabled !== lastProcessedGlobalEnabled;
+    const isNewerContent = latestChange > lastProcessedTimestamp;
+
+    if (!isDifferentGlobal && !isNewerContent && latestChange > 0) {
         return;
     }
-    lastProcessedTimestamp = latestChange;
 
-    console.log('TweakBench: Updating Styles/HTML', state);
-    startTransition();
-    const activeSnippetIds = new Set<string>();
+    lastProcessedTimestamp = Math.max(lastProcessedTimestamp, latestChange);
+    lastProcessedGlobalEnabled = globalEnabled;
 
-    // Prepare snippet map for O(1) lookup
-    const snippets = state.snippets || [];
-    const snippetMap = new Map(snippets.map(s => [s.id, s]));
+    // Batch all updates into a single frame
+    requestAnimationFrame(() => {
+        console.log('TweakBench: Updating Styles (Batched & Filtered)', state);
 
-    const themes = state.themes || [];
-    const globalEnabled = state.globalEnabled ?? true;
-    const currentUrl = window.location.href;
+        // Only trigger transition if we actually have work to do (avoid noise)
+        if (hasMatch || hasInjections) {
+            startTransition();
+        }
 
-    if (!globalEnabled) {
-        console.log('TweakBench: Global Disabled');
-        // Fall through to cleanup (activeSnippetIds will be empty)
-    } else {
-        themes.forEach(theme => {
-            if (!theme.isActive) return;
-            // Check Domain Patterns
-            if (theme.domainPatterns && theme.domainPatterns.length > 0 && !isDomainMatch(theme.domainPatterns, currentUrl)) {
-                return;
-            }
+        const activeSnippetIds = new Set<string>();
+        const snippets = state.snippets || [];
+        const snippetMap = new Map(snippets.map(s => [s.id, s]));
 
-            theme.items.forEach(item => {
-                if (!item.isEnabled) return;
-
-                const snippet = snippetMap.get(item.snippetId);
-                if (snippet) {
-                    // Merge overrides
-                    const effectiveSnippet = {
-                        ...snippet,
-                        ...item.overrides,
-                        content: item.overrides?.content ?? snippet.content,
-                        selector: item.overrides?.selector ?? snippet.selector,
-                        position: item.overrides?.position ?? snippet.position
-                    };
-
-                    activeSnippetIds.add(snippet.id);
-                    if (snippet.type === 'css') {
-                        injectOrUpdateStyle(snippet.id, effectiveSnippet.content);
-                    } else if (snippet.type === 'html') {
-                        injectOrUpdateHTML(snippet.id, effectiveSnippet);
-                    }
+        if (globalEnabled) {
+            themes.forEach(theme => {
+                if (!theme.isActive) return;
+                if (theme.domainPatterns && theme.domainPatterns.length > 0 && !isDomainMatch(theme.domainPatterns, currentUrl)) {
+                    return;
                 }
+
+                theme.items.forEach(item => {
+                    if (!item.isEnabled) return;
+                    const snippet = snippetMap.get(item.snippetId);
+                    if (snippet) {
+                        const effectiveSnippet = {
+                            ...snippet,
+                            ...item.overrides,
+                        };
+
+                        activeSnippetIds.add(snippet.id);
+                        if (snippet.type === 'css') {
+                            injectOrUpdateStyle(snippet.id, effectiveSnippet.content);
+                        } else if (snippet.type === 'html') {
+                            injectOrUpdateHTML(snippet.id, effectiveSnippet);
+                        }
+                    }
+                });
             });
-        });
-    }
-
-    // Cleanup CSS
-    for (const [id, styleEl] of injectedStyles.entries()) {
-        if (!activeSnippetIds.has(id)) {
-            console.log('TweakBench: Removing CSS snippet', id);
-            styleEl.remove();
-            injectedStyles.delete(id);
         }
-    }
 
-    // Cleanup HTML
-    for (const [id, el] of injectedElements.entries()) {
-        if (!activeSnippetIds.has(id)) {
-            console.log('TweakBench: Removing HTML snippet', id);
-            el.remove();
-            injectedElements.delete(id);
+        // Cleanup in the same frame
+        for (const [id, styleEl] of injectedStyles.entries()) {
+            if (!activeSnippetIds.has(id)) {
+                styleEl.remove();
+                injectedStyles.delete(id);
+            }
         }
-    }
+
+        for (const [id, el] of injectedElements.entries()) {
+            if (!activeSnippetIds.has(id)) {
+                el.remove();
+                injectedElements.delete(id);
+            }
+        }
+    });
 }
 
 function injectOrUpdateStyle(id: string, content: string) {
