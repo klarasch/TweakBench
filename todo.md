@@ -12,6 +12,7 @@ Actually, it's already possible to inject JS through injecting ```<script>``` ta
 [ ] 3: in all places where domain is configured, when there aren't any domains yet, user may not notice that they have to enter or click plus to offer the first one
 [ ] 5: add a way to import/export domain group (in import, don't make it another option, just update to "Import theme or group)
 [ ] 4: use same cursors for drag and drop in theme list as are in theme detail (regular pointer, grabbing throughout movement)
+[ ] 2: introduce
 
 # Bugs (1 – non-critical, 5 – critical)
 [x] current: when duplicating a theme in a group, it becomes active and there are two active themes in the group; expected: the duplicate is inactive

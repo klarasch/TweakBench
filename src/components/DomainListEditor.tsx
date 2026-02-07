@@ -73,7 +73,7 @@ export const DomainListEditor: React.FC<DomainListEditorProps> = ({ domainPatter
                     Enter a domain (e.g. <code className="bg-slate-800 px-1 rounded">google.com</code>) or pattern (<code className="bg-slate-800 px-1 rounded">*.gov</code>).
                 </p>
 
-                {currentDomain && (!domainPatterns.includes(currentDomain)) && (
+                {currentDomain && domainPatterns.length > 0 && (!domainPatterns.includes(currentDomain)) && (
                     <button
                         onClick={() => {
                             onUpdate([...domainPatterns, currentDomain]);
@@ -88,8 +88,20 @@ export const DomainListEditor: React.FC<DomainListEditorProps> = ({ domainPatter
 
             <div className="space-y-2 max-h-[240px] overflow-y-auto pr-1">
                 {domainPatterns.length === 0 && (
-                    <div className="text-center py-6 text-slate-500 text-sm">
-                        No domains configured.<br />The theme will not run anywhere.
+                    <div className="text-center py-6 text-slate-500 text-sm border border-dashed border-slate-800 rounded-lg bg-slate-800/20">
+                        No domains configured.<br />
+                        <span className="text-xs">The theme will not run anywhere.</span>
+                        {currentDomain && (
+                            <div className="mt-4 pt-4 border-t border-slate-800/50">
+                                <button
+                                    onClick={() => onUpdate([...domainPatterns, currentDomain])}
+                                    className="mx-auto flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 rounded-full transition-colors font-medium border border-blue-500/20"
+                                >
+                                    <Plus size={14} />
+                                    Add {currentDomain}
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
                 {domainPatterns.map((p, i) => (

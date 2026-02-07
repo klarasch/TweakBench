@@ -3,6 +3,7 @@ import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities';
 import { Globe, MoreVertical, Link as LinkIcon, CheckSquare, ChevronDown, Plus } from 'lucide-react';
 import { SortableThemeItem } from './SortableThemeItem';
+import { Toggle } from './ui/Toggle';
 import type { Theme } from '../types';
 import { isDomainMatch } from '../utils/domains';
 
@@ -55,7 +56,7 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
 
     const style = {
         transform: CSS.Transform.toString(transform),
-        transition,
+        transition: transition || undefined, // use dnd-kit default or none if not provided
         opacity: isDragging ? 0.5 : 1,
         zIndex: isDragging ? 10 : 'auto',
         position: 'relative' as 'relative',
@@ -115,7 +116,10 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
         >
             {/* Group Header - Drag handle is now here only */}
             <div
-                className={`flex items-center justify-between p-2 bg-slate-800/80 cursor-grab active:cursor-grabbing hover:bg-slate-800 transition-colors ${!effectivelyCollapsed ? 'border-b border-slate-700/50' : ''}`}
+                className={`flex items-center justify-between p-3 bg-slate-800/80 transition-all active:scale-[0.99] group/header
+                    ${isDragging ? 'cursor-grabbing shadow-xl ring-2 ring-blue-500/50 z-10' : 'cursor-pointer'}
+                    ${!effectivelyCollapsed ? 'border-b border-slate-700/50 hover:bg-slate-800' : 'hover:bg-slate-800/90'}
+                `}
                 onClick={handleHeaderClick}
                 {...attributes}
                 {...listeners}
@@ -206,25 +210,15 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
                                             Active on this tab
                                         </div>
                                     )}
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (!globalEnabled) return;
-                                            onUpdateTheme(activeTheme.id, { isActive: !activeTheme.isActive });
-                                        }}
-                                        onPointerDown={e => e.stopPropagation()}
-                                        disabled={!globalEnabled}
-                                        className={`p-1 rounded flex items-center gap-1.5 px-2 transition-colors ${!globalEnabled
-                                            ? 'bg-slate-800/50 text-slate-600 cursor-not-allowed opacity-50'
-                                            : activeTheme.isActive
-                                                ? 'bg-green-500/10 text-green-400 border border-green-500/20'
-                                                : 'bg-slate-700/50 text-slate-500 hover:bg-slate-700 hover:text-slate-300'
-                                            }`}
-                                        title={!globalEnabled ? "System disabled" : (activeTheme.isActive ? "Disable theme" : "Enable theme")}
-                                    >
-                                        <div className={`w-1.5 h-1.5 rounded-full ${!globalEnabled ? 'bg-slate-600' : (activeTheme.isActive ? 'bg-green-400 animate-pulse' : 'bg-slate-500')}`}></div>
-                                        <span className="text-[10px] font-bold uppercase">{activeTheme.isActive ? 'ON' : 'OFF'}</span>
-                                    </button>
+                                    <div className="mr-1">
+                                        <Toggle
+                                            checked={activeTheme.isActive}
+                                            isActive={isActiveOnTab}
+                                            onChange={(checked) => onUpdateTheme(activeTheme.id, { isActive: checked })}
+                                            disabled={!globalEnabled}
+                                            size="sm"
+                                        />
+                                    </div>
                                 </>
                             )}
                             {!effectivelyCollapsed && (

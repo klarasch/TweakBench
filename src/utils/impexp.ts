@@ -224,31 +224,52 @@ export const importAllData = (jsonContent: string): ExportedData['data'] | null 
     try {
         const parsed = JSON.parse(jsonContent) as ExportedData;
 
-        // Validate structure
-        if (!parsed.version || !parsed.data) {
-            return null;
-        }
+        // Detect if it's a full backup or a group export
+        const isGroupExport = (parsed as any).type === 'group';
+        const data = isGroupExport ? (parsed as any).data : (parsed as any).data || parsed;
 
-        if (!Array.isArray(parsed.data.themes) || !Array.isArray(parsed.data.snippets)) {
+        // Validate structure
+        if (!data.themes || !Array.isArray(data.themes)) {
             return null;
         }
 
         // Basic validation of required fields
-        const hasValidThemes = parsed.data.themes.every(t =>
+        const hasValidThemes = data.themes.every((t: any) =>
             t.id && t.name && Array.isArray(t.domainPatterns) && Array.isArray(t.items)
         );
 
-        const hasValidSnippets = parsed.data.snippets.every(s =>
-            s.id && s.name && s.type && s.content !== undefined
-        );
+        if (!hasValidThemes) return null;
 
-        if (!hasValidThemes || !hasValidSnippets) {
-            return null;
-        }
+        // If it's a full backup, it should have snippets too
+        if (data.snippets && !Array.isArray(data.snippets)) return null;
 
-        return parsed.data;
+        return {
+            themes: data.themes,
+            snippets: data.snippets || [],
+            globalEnabled: data.globalEnabled ?? true,
+            activeThemeId: data.activeThemeId ?? null
+        };
     } catch (e) {
         console.error('Failed to parse import data:', e);
         return null;
     }
+};
+
+export const exportGroupToJSON = (groupId: string, allThemes: Theme[], allSnippets: Snippet[]): string => {
+    const groupThemes = allThemes.filter(t => t.groupId === groupId);
+    const snippetIds = new Set<string>();
+    groupThemes.forEach(t => t.items.forEach(item => snippetIds.add(item.snippetId)));
+    const groupSnippets = allSnippets.filter(s => snippetIds.has(s.id));
+
+    const exportData = {
+        version: '1.0',
+        type: 'group',
+        exportedAt: Date.now(),
+        data: {
+            themes: groupThemes,
+            snippets: groupSnippets,
+            groupId // Include to preserve group identity if possible
+        }
+    };
+    return JSON.stringify(exportData, null, 2);
 };

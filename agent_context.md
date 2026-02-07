@@ -12,7 +12,7 @@
 - Uses React for UI.
 - Communicates between panel/popup and content scripts via messaging.
 - **Copy**: Use sentence case for all UI labels, buttons, and copy.
-- Current Version: 0.1.7
+- Current Version: 0.1.8
 
 ## Current Task
 - Finalizing starter kit and documentation.

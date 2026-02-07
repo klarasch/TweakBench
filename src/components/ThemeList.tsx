@@ -11,6 +11,7 @@ import { useToast } from './ui/Toast';
 import type { Theme } from '../types.ts';
 import { ThemeGroup } from './ThemeGroup'; // Import new component
 import { DomainConfigurationModal } from './DomainConfigurationModal'; // New import
+import { exportGroupToJSON } from '../utils/impexp.ts';
 import {
     DndContext,
     closestCenter,
@@ -290,7 +291,19 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
         onSelectTheme(newId);
     };
 
-    // ... (Import/Export logic kept same)
+    const handleExportGroup = (groupId: string) => {
+        const groupThemes = themes.filter(t => t.groupId === groupId);
+        const groupName = groupThemes.length > 0 ? groupThemes[0].domainPatterns[0] || 'domain_group' : 'domain_group';
+        const content = exportGroupToJSON(groupId, themes, snippets);
+        const blob = new Blob([content], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `TweakBench_Group_${groupName.replace(/[*.]/g, '_')}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('Group exported');
+    };
 
     const handleImportClick = () => {
         fileInputRef.current?.click();
@@ -303,15 +316,34 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
         const reader = new FileReader();
         reader.onload = (event) => {
             const content = event.target?.result as string;
-            const importedData = parseThemeFromJS(content);
-            if (importedData) {
+
+            // 1. Try to parse as JSON (Full workspace or Group)
+            try {
+                const importedData = importAllData(content);
+                if (importedData) {
+                    if (themes.length === 0) {
+                        importData(importedData, 'replace');
+                        showToast(`Imported ${importedData.themes.length} themes`);
+                    } else {
+                        setPendingImportData(importedData);
+                        setIsImportDialogOpen(true);
+                    }
+                    return;
+                }
+            } catch (e) {
+                // Not JSON or parse error, try JS
+            }
+
+            // 2. Try to parse as JS (Single theme)
+            const importedTheme = parseThemeFromJS(content);
+            if (importedTheme) {
                 const newThemeId = addTheme({
-                    name: importedData.name,
-                    domainPatterns: importedData.domainPatterns,
+                    name: importedTheme.name,
+                    domainPatterns: importedTheme.domainPatterns,
                     items: [],
                     isActive: true
                 });
-                importedData.snippets.forEach(s => {
+                importedTheme.snippets.forEach(s => {
                     const newSnippetId = addSnippet({
                         name: s.name,
                         type: s.type,
@@ -321,9 +353,9 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                     });
                     addSnippetToTheme(newThemeId, newSnippetId);
                 });
-                showToast(`Imported theme: ${importedData.name}`);
+                showToast(`Imported theme: ${importedTheme.name}`);
             } else {
-                showToast('Failed to parse theme from file.', 'error');
+                showToast('Failed to parse file. Please ensure it\'s a valid TweakBench export.', 'error');
             }
         };
         reader.readAsText(file);
@@ -522,6 +554,11 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                         showToast('Themes ungrouped');
                     }
                 },
+                {
+                    label: 'Export group',
+                    icon: <Download size={14} className="text-blue-400" />,
+                    onClick: () => handleExportGroup(groupId)
+                },
                 { separator: true },
                 {
                     label: 'Delete group',
@@ -625,7 +662,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
 
     const getMenuItemsForHeader = (): ContextMenuItem[] => [
         {
-            label: 'Import theme',
+            label: 'Import theme or group',
             icon: <Upload size={14} className="text-green-400" />,
             onClick: handleImportClick
         },
@@ -716,7 +753,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                     Create theme
                                 </Button>
                             </div>
-                            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".js" />
+                            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".js,.json" />
                             <input type="file" ref={allDataFileInputRef} onChange={handleAllDataFileChange} className="hidden" accept=".json" />
                             <button
                                 onClick={(e) => {

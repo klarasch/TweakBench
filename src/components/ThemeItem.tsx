@@ -53,7 +53,8 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
             ref={setNodeRef}
             style={style}
             {...dragHandleProps}
-            className={`p-3 rounded-lg border flex flex-col gap-2 cursor-pointer transition-all active:scale-[0.99] group
+            className={`p-3 rounded-lg border flex flex-col gap-2 transition-all active:scale-[0.99] group
+                ${isDragging ? 'cursor-grabbing' : 'cursor-pointer'}
                 ${isSelected
                     ? 'bg-blue-900/20 border-blue-500/50'
                     : isActiveOnTab
@@ -97,8 +98,8 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
                             title="Configure domains"
                         >
                             <Globe size={12} className="text-slate-500 shrink-0" />
-                            <span className="text-xs font-semibold text-slate-300 truncate max-w-[150px]">
-                                {theme.domainPatterns.join(', ')}
+                            <span className={`text-xs font-semibold truncate max-w-[150px] ${theme.domainPatterns.length === 0 ? 'text-slate-500 italic' : 'text-slate-300'}`}>
+                                {theme.domainPatterns.length === 0 ? 'No domains configured' : theme.domainPatterns.join(', ')}
                             </span>
                         </button>
                     )}

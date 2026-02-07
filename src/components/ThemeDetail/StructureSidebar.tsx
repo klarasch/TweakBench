@@ -49,7 +49,7 @@ export const StructureSidebar: React.FC<StructureSidebarProps> = ({
             {/* Snippet List (Structure View) */}
             <div className="space-y-2">
                 <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Structure ({activeTab})</div>
-                <Reorder.Group axis="y" values={items} onReorder={onReorder}>
+                <Reorder.Group axis="y" values={items} onReorder={onReorder} transition={{ type: "spring", stiffness: 600, damping: 30, mass: 1 }}>
                     <div className="space-y-2">
                         {items.map(item => {
                             const s = snippets.find(sn => sn.id === item.snippetId);
