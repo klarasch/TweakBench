@@ -559,6 +559,14 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                     icon: <Download size={14} className="text-blue-400" />,
                     onClick: () => handleExportGroup(groupId)
                 },
+                {
+                    label: 'Duplicate group',
+                    icon: <Copy size={14} />,
+                    onClick: () => {
+                        useStore.getState().duplicateThemeGroup(groupId);
+                        showToast('Group duplicated');
+                    }
+                },
                 { separator: true },
                 {
                     label: 'Delete group',
@@ -1239,6 +1247,16 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                     showToast('Domain group created');
                 }}
             />
+
+            {/* Sticky Footer */}
+            <div className="fixed bottom-0 text-[10px] text-slate-600 px-4 py-5 w-full bg-slate-900/95 backdrop-blur-sm border-t border-slate-800/60 text-center z-10 transition-colors shadow-[0_-10px_20px_rgba(0,0,0,0.1)]">
+                <p>
+                    vibe coded by <a href="https://github.com/klarasch" target="_blank" rel="noopener noreferrer" className="text-slate-500 decoration-dotted underline-offset-2 font-medium hover:text-slate-300 transition-colors">Klára</a> using <a href="https://antigravity.google/" target="_blank" rel="noopener noreferrer" className="decoration-dotted underline-offset-2 font-medium text-slate-500 hover:text-slate-300 transition-colors">Antigravity</a>
+                </p>
+                <p className="mt-1">
+                    if you enjoy this, <a href="https://buymeacoffee.com/ksch" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-300 transition-colors font-semibold">buy me a coffee</a>, thanks! &lt;3
+                </p>
+            </div>
         </div>
     );
 };

@@ -199,7 +199,7 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
                     )}
                 </div>
 
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 ml-2">
                     {!isSelectionMode && (
                         <>
                             {effectivelyCollapsed && activeTheme && (
@@ -210,15 +210,13 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
                                             Active on this tab
                                         </div>
                                     )}
-                                    <div className="mr-1">
-                                        <Toggle
-                                            checked={activeTheme.isActive}
-                                            isActive={isActiveOnTab}
-                                            onChange={(checked) => onUpdateTheme(activeTheme.id, { isActive: checked })}
-                                            disabled={!globalEnabled}
-                                            size="sm"
-                                        />
-                                    </div>
+                                    <Toggle
+                                        checked={activeTheme.isActive}
+                                        isActive={isActiveOnTab}
+                                        onChange={(checked) => onUpdateTheme(activeTheme.id, { isActive: checked })}
+                                        disabled={!globalEnabled}
+                                        size="sm"
+                                    />
                                 </>
                             )}
                             {!effectivelyCollapsed && (

@@ -8,18 +8,19 @@ Actually, it's already possible to inject JS through injecting ```<script>``` ta
 # Improvements (1 – least priority, 5 — highest priority)
 [x] 2: in zero state (no themes yet), offer to load an example
 [x] 5: in overflow menu of a group, add option to duplicate the group
-[ ] 4: improve drag experience in themes list and (currently, the motion is aggressively smoothing, making it feel sluggish and unnatural)
-[ ] 3: in all places where domain is configured, when there aren't any domains yet, user may not notice that they have to enter or click plus to offer the first one
-[ ] 5: add a way to import/export domain group (in import, don't make it another option, just update to "Import theme or group)
-[ ] 4: use same cursors for drag and drop in theme list as are in theme detail (regular pointer, grabbing throughout movement)
-[ ] 2: introduce
+[x] 4: improve drag experience in themes list and theme detail
+[x] 3: in all places where domain is configured, when there aren't any domains yet, user may not notice that they have to enter or click plus to offer the first one
+[x] 5: add a way to import/export domain group (in import, don't make it another option, just update to "Import theme or group)
+[x] 4: use same cursors for drag and drop in theme list as are in theme detail (pointer on hover, grabbing during movement)
+[x] 3: cosmetic: collapsed group header should use the same size toggle as theme cards in theme list and match its alignment
+[x] 2: add footer with credits and coffee link
 
 # Bugs (1 – non-critical, 5 – critical)
 [x] current: when duplicating a theme in a group, it becomes active and there are two active themes in the group; expected: the duplicate is inactive
 [x] current: when importing to a zero state, dialogue asking how to handle conflicts is shown; expected: no dialogue is shown and the imported theme is activated
 [x] current: when there is just 1 theme in a group, on its detail badge "Inactive (another theme in group is active)" is shown; expected: group inactive
 [x] 3: cosmetic: outline button and filled button have slightly different heights
-[ ] 3: cosmetic: collapsed group header should use the same size toggle as theme cards in theme list
+[x] 3: cosmetic: collapsed group header should use the same size toggle as theme cards in theme list
 
 ---
 

@@ -32,6 +32,7 @@ interface Store extends AppState {
 
     duplicateTheme: (themeId: string) => string;
     duplicateThemeItem: (themeId: string, itemId: string) => void;
+    duplicateThemeGroup: (groupId: string) => void;
 
     createThemeGroup: (themeIds: string[]) => void;
     ungroupThemes: (themeIds: string[]) => void;
@@ -624,7 +625,6 @@ export const useStore = create<Store>((set, get) => ({
         });
         return newThemeId;
     },
-
     duplicateThemeItem: (themeId: string, itemId: string) => {
         set((state: Store) => {
             const theme = state.themes.find(t => t.id === themeId);
@@ -675,6 +675,60 @@ export const useStore = create<Store>((set, get) => ({
                 snippets: newSnippets
             };
             storageService.save(newState);
+            return newState;
+        });
+    },
+
+    duplicateThemeGroup: (groupId: string) => {
+        set((state: Store) => {
+            const groupThemes = state.themes.filter(t => t.groupId === groupId);
+            if (groupThemes.length === 0) return state;
+
+            const newGroupId = uuidv4();
+            const newSnippets = [...state.snippets];
+            const newThemesToAdd: Theme[] = [];
+
+            groupThemes.forEach(theme => {
+                const newThemeId = uuidv4();
+                const newItems = theme.items.map(item => {
+                    const snippet = state.snippets.find(s => s.id === item.snippetId);
+                    let newItemSnippetId = item.snippetId;
+
+                    if (snippet && snippet.isLibraryItem === false) {
+                        const newSnippetId = uuidv4();
+                        newItemSnippetId = newSnippetId;
+                        newSnippets.push({
+                            ...snippet,
+                            id: newSnippetId,
+                            createdAt: Date.now(),
+                            updatedAt: Date.now()
+                        });
+                    }
+
+                    return {
+                        ...item,
+                        id: uuidv4(),
+                        snippetId: newItemSnippetId
+                    };
+                });
+
+                newThemesToAdd.push({
+                    ...theme,
+                    id: newThemeId,
+                    name: `${theme.name} (Copy)`,
+                    items: newItems,
+                    groupId: newGroupId,
+                    createdAt: Date.now(),
+                    updatedAt: Date.now()
+                });
+            });
+
+            const newState = {
+                ...state,
+                themes: [...state.themes, ...newThemesToAdd],
+                snippets: newSnippets
+            };
+            storageService.save(newState, { immediate: true });
             return newState;
         });
     },
