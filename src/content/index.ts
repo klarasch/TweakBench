@@ -6,6 +6,36 @@ const STORAGE_KEY = 'tweakbench_data';
 const injectedStyles = new Map<string, HTMLStyleElement>();
 const injectedElements = new Map<string, HTMLElement>();
 
+let updateTimeout: any = null;
+let transitionTimeout: any = null;
+const TRANSITION_DURATION = 250; // ms
+const TRANSITION_STYLE_ID = 'tb-transition-manager';
+
+function setupTransition() {
+    if (document.getElementById(TRANSITION_STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = TRANSITION_STYLE_ID;
+    style.textContent = `
+        .tb-transitioning, .tb-transitioning * {
+            transition: background-color ${TRANSITION_DURATION}ms ease, 
+                        color ${TRANSITION_DURATION}ms ease, 
+                        border-color ${TRANSITION_DURATION}ms ease, 
+                        opacity ${TRANSITION_DURATION}ms ease, 
+                        filter ${TRANSITION_DURATION}ms ease !important;
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+function startTransition() {
+    setupTransition();
+    document.documentElement.classList.add('tb-transitioning');
+    if (transitionTimeout) clearTimeout(transitionTimeout);
+    transitionTimeout = setTimeout(() => {
+        document.documentElement.classList.remove('tb-transitioning');
+    }, TRANSITION_DURATION + 50);
+}
+
 // Message Listener for State Updates
 chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
     if (request.type === 'PING') {
@@ -15,7 +45,7 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
 
     if (request.type === 'STATE_UPDATED') {
         console.log('TweakBench: State Updated via messaging');
-        updateStyles(request.state);
+        debouncedUpdate(request.state);
     }
 
     if (request.type === 'SCAN_CSS_VARIABLES') {
@@ -60,8 +90,16 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
 
 import { isDomainMatch } from '../utils/domains.ts';
 
+function debouncedUpdate(state: AppState) {
+    if (updateTimeout) clearTimeout(updateTimeout);
+    updateTimeout = setTimeout(() => {
+        updateStyles(state);
+    }, 10); // Very short debounce to catch nearly simultaneous storage/message updates
+}
+
 function updateStyles(state: AppState) {
     console.log('TweakBench: Updating Styles/HTML', state);
+    startTransition();
     const activeSnippetIds = new Set<string>();
 
     // Prepare snippet map for O(1) lookup
@@ -149,7 +187,6 @@ function injectOrUpdateStyle(id: string, content: string) {
     if (!styleEl.isConnected) {
         document.head.appendChild(styleEl);
     }
-
     if (styleEl.textContent !== content) {
         styleEl.textContent = content;
         styleEl.setAttribute('data-updated', Date.now().toString());
@@ -198,16 +235,23 @@ function injectOrUpdateHTML(id: string, snippet: any) {
     newEl.setAttribute('data-tb-generated', isWrapped ? 'wrapped' : 'direct');
     newEl.setAttribute('data-tb-position', position);
     newEl.setAttribute('data-tb-selector', selector);
-    // Store content hash/string to avoid re-renders if identical?
-    // Actually, we are replacing the element, so we can't easily compare existing.
-    // We could check if existing el matches?
+    newEl.setAttribute('data-tb-content-raw', snippet.content);
 
     // Check if we need to replace existing
-    // If existing exists, we just replace it.
-    // Optimization: If content is same, do nothing?
-    // Hard to check because `el.innerHTML` might not match `snippet.content` if we unwrapped.
-    // `el.outerHTML` tracking is better.
-    // Let's simplified approach: Always replace if it exists (reactivity).
+    // Optimization: If content is same, do nothing
+    if (el && inDOM) {
+        // We use data-tb-content-hash or just compare innerHTML (risky but better than nothing)
+        // Actually, comparing snippet.content directly with a stored attribute is cleanest.
+        const lastContent = el.getAttribute('data-tb-content-raw');
+        if (lastContent === snippet.content) {
+            // Still check position/selector in case they changed
+            const lastPosition = el.getAttribute('data-tb-position');
+            const lastSelector = el.getAttribute('data-tb-selector');
+            if (lastPosition === position && lastSelector === selector) {
+                return; // Nothing changed
+            }
+        }
+    }
 
     if (el && inDOM) {
         // Check if we strictly need to update (avoid flash)
@@ -253,13 +297,13 @@ chrome.storage.local.get([STORAGE_KEY], (result) => {
     console.log('TweakBench: Initial Load', result);
     const data = result[STORAGE_KEY] as AppState;
     if (data) {
-        updateStyles(data);
+        debouncedUpdate(data);
     }
 });
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
     if (areaName === 'local' && changes[STORAGE_KEY]) {
         console.log('TweakBench: Storage Changed', changes[STORAGE_KEY].newValue);
-        updateStyles(changes[STORAGE_KEY].newValue as AppState);
+        debouncedUpdate(changes[STORAGE_KEY].newValue as AppState);
     }
 });
