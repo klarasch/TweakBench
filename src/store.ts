@@ -23,7 +23,7 @@ interface Store extends AppState {
     reorderThemes: (newThemes: Theme[]) => void;
     reorderSnippets: (newSnippets: Snippet[]) => void;
     toggleGlobal: () => void;
-    importAllData: (data: { themes: Theme[], snippets: Snippet[], globalEnabled: boolean }, mode: 'merge' | 'replace' | 'skip-duplicates') => { themesAdded: number, snippetsAdded: number, skipped: number };
+    importAllData: (data: { themes: Theme[], snippets: Snippet[], globalEnabled: boolean, activeThemeId?: string | null }, mode: 'merge' | 'replace' | 'skip-duplicates') => { themesAdded: number, snippetsAdded: number, skipped: number };
 
     clipboardSnippet: { snippet: Snippet, overrides?: import('./types.ts').ThemeItem['overrides'] } | null;
     setClipboardSnippet: (data: { snippet: Snippet, overrides?: import('./types.ts').ThemeItem['overrides'] } | null) => void;
@@ -36,9 +36,10 @@ interface Store extends AppState {
     createThemeGroup: (themeIds: string[]) => void;
     ungroupThemes: (themeIds: string[]) => void;
     createEmptyGroup: (domainPatterns: string[]) => string;
+    loadExampleData: () => Promise<void>;
 }
 
-export const useStore = create<Store>((set) => ({
+export const useStore = create<Store>((set, get) => ({
     themes: [],
     snippets: [],
     activeThemeId: null,
@@ -55,7 +56,7 @@ export const useStore = create<Store>((set) => ({
         });
     },
 
-    addSnippet: (snippetData) => {
+    addSnippet: (snippetData: Omit<Snippet, 'id' | 'createdAt' | 'updatedAt'>) => {
         const id = uuidv4();
         const newSnippet: Snippet = {
             ...snippetData,
@@ -74,8 +75,8 @@ export const useStore = create<Store>((set) => ({
         return id;
     },
 
-    updateSnippet: (id, updates) => {
-        set((state) => {
+    updateSnippet: (id: string, updates: Partial<Snippet>) => {
+        set((state: Store) => {
             const newState = {
                 ...state,
                 snippets: state.snippets.map((s) => (s.id === id ? { ...s, ...updates, updatedAt: Date.now() } : s)),
@@ -85,8 +86,8 @@ export const useStore = create<Store>((set) => ({
         });
     },
 
-    deleteSnippet: (id) => {
-        set((state) => {
+    deleteSnippet: (id: string) => {
+        set((state: Store) => {
             const newState = {
                 ...state,
                 snippets: state.snippets.filter((s) => s.id !== id),
@@ -96,7 +97,7 @@ export const useStore = create<Store>((set) => ({
         });
     },
 
-    addTheme: (themeData) => {
+    addTheme: (themeData: Omit<Theme, 'id' | 'createdAt' | 'updatedAt'>) => {
         const themeId = uuidv4();
         // If items are provided, use them. If empty, create default snippet.
         // Actually, checking if items are empty is a good heuristic.
@@ -140,9 +141,18 @@ export const useStore = create<Store>((set) => ({
         set((state) => {
             // Only add mainSnippet if we actually used it (i.e. themeData.items was undefined)
             const shouldUseDefault = !themeData.items;
+
+            // Handle group exclusivity: if new theme is active, deactivate others in the same group
+            let currentThemes = [...state.themes];
+            if (newTheme.isActive && newTheme.groupId) {
+                currentThemes = currentThemes.map(t =>
+                    t.groupId === newTheme.groupId ? { ...t, isActive: false } : t
+                );
+            }
+
             const newState = {
                 ...state,
-                themes: [...state.themes, newTheme],
+                themes: [...currentThemes, newTheme],
                 snippets: shouldUseDefault ? [...state.snippets, mainSnippet] : state.snippets
             };
             storageService.save(newState);
@@ -151,8 +161,8 @@ export const useStore = create<Store>((set) => ({
         return themeId;
     },
 
-    updateTheme: (id, updates) => {
-        set((state) => {
+    updateTheme: (id: string, updates: Partial<Theme>) => {
+        set((state: Store) => {
             const theme = state.themes.find(t => t.id === id);
             if (!theme) return state;
             let finalThemes = state.themes;
@@ -175,9 +185,21 @@ export const useStore = create<Store>((set) => ({
                     );
                 }
             }
+            // Handle group exclusivity if isActive is being set to true
+            let updatedThemes = finalThemes.map((t) => (t.id === id ? { ...t, ...updates, updatedAt: Date.now() } : t));
+
+            const targetTheme = updatedThemes.find(t => t.id === id);
+            if (targetTheme?.isActive && targetTheme?.groupId) {
+                updatedThemes = updatedThemes.map(t =>
+                    (t.groupId === targetTheme.groupId && t.id !== id)
+                        ? { ...t, isActive: false, updatedAt: Date.now() }
+                        : t
+                );
+            }
+
             const newState = {
                 ...state,
-                themes: finalThemes.map((t) => (t.id === id ? { ...t, ...updates, updatedAt: Date.now() } : t)),
+                themes: updatedThemes,
             };
             const isImmediate = updates.isActive !== undefined || updates.domainPatterns !== undefined;
             storageService.save(newState, { immediate: isImmediate });
@@ -186,8 +208,8 @@ export const useStore = create<Store>((set) => ({
         });
     },
 
-    deleteTheme: (id) => {
-        set((state) => {
+    deleteTheme: (id: string) => {
+        set((state: Store) => {
             const newState = {
                 ...state,
                 themes: state.themes.filter((t) => t.id !== id),
@@ -198,13 +220,13 @@ export const useStore = create<Store>((set) => ({
     },
 
     addSnippetToTheme: (themeId: string, snippetId: string, afterItemId?: string) => {
-        const itemId = uuidv4();
-        set((state) => {
+        let themeItemId = uuidv4();
+        set((state: Store) => {
             const theme = state.themes.find(t => t.id === themeId);
             if (!theme) return state;
 
             const newItem = {
-                id: itemId,
+                id: themeItemId,
                 snippetId,
                 isEnabled: true,
             };
@@ -231,11 +253,11 @@ export const useStore = create<Store>((set) => ({
             broadcastStateUpdate(newState);
             return newState;
         });
-        return itemId;
+        return themeItemId;
     },
 
-    toggleThemeItem: (themeId, itemId) => {
-        set((state) => {
+    toggleThemeItem: (themeId: string, itemId: string) => {
+        set((state: Store) => {
             const theme = state.themes.find(t => t.id === themeId);
             if (!theme) return state;
 
@@ -255,8 +277,8 @@ export const useStore = create<Store>((set) => ({
         })
     },
 
-    removeSnippetFromTheme: (themeId, itemId) => {
-        set((state) => {
+    removeSnippetFromTheme: (themeId: string, itemId: string) => {
+        set((state: Store) => {
             const theme = state.themes.find(t => t.id === themeId);
             if (!theme) return state;
 
@@ -275,8 +297,8 @@ export const useStore = create<Store>((set) => ({
         });
     },
 
-    updateThemeItem: (themeId, itemId, updates) => {
-        set((state) => {
+    updateThemeItem: (themeId: string, itemId: string, updates: Partial<import('./types.ts').ThemeItem>) => {
+        set((state: Store) => {
             const theme = state.themes.find(t => t.id === themeId);
             if (!theme) return state;
 
@@ -295,8 +317,8 @@ export const useStore = create<Store>((set) => ({
         });
     },
 
-    reorderThemeItems: (themeId, newItems) => {
-        set((state) => {
+    reorderThemeItems: (themeId: string, newItems: import('./types.ts').ThemeItem[]) => {
+        set((state: Store) => {
             const newState = {
                 ...state,
                 themes: state.themes.map(t => {
@@ -309,8 +331,8 @@ export const useStore = create<Store>((set) => ({
         });
     },
 
-    reorderThemes: (newThemes) => {
-        set((state) => {
+    reorderThemes: (newThemes: Theme[]) => {
+        set((state: Store) => {
             const newState = {
                 ...state,
                 themes: newThemes.map(t => ({ ...t, updatedAt: Date.now() }))
@@ -320,8 +342,8 @@ export const useStore = create<Store>((set) => ({
         });
     },
 
-    reorderSnippets: (newSnippets) => {
-        set((state) => {
+    reorderSnippets: (newSnippets: Snippet[]) => {
+        set((state: Store) => {
             const newState = {
                 ...state,
                 snippets: newSnippets.map(s => ({ ...s, updatedAt: Date.now() }))
@@ -331,12 +353,12 @@ export const useStore = create<Store>((set) => ({
         });
     },
 
-    setClipboardSnippet: (data) => {
+    setClipboardSnippet: (data: { snippet: Snippet, overrides?: import('./types.ts').ThemeItem['overrides'] } | null) => {
         set({ clipboardSnippet: data });
     },
 
     toggleGlobal: () => {
-        set((state) => {
+        set((state: Store) => {
             const newState = {
                 ...state,
                 globalEnabled: !state.globalEnabled
@@ -347,19 +369,21 @@ export const useStore = create<Store>((set) => ({
         });
     },
 
-    importAllData: (data, mode) => {
+    importAllData: (data: { themes: Theme[], snippets: Snippet[], globalEnabled: boolean, activeThemeId?: string | null }, mode: 'merge' | 'replace' | 'skip-duplicates') => {
         let themesAdded = 0;
         let snippetsAdded = 0;
         let skipped = 0;
 
-        set((state) => {
+        set((state: Store) => {
             let newThemes: Theme[] = [];
             let newSnippets: Snippet[] = [];
+            let activeThemeId = state.activeThemeId;
 
             if (mode === 'replace') {
                 // Replace mode: use imported data directly with updated timestamps
                 newThemes = data.themes.map(t => ({ ...t, updatedAt: Date.now() }));
                 newSnippets = data.snippets.map(s => ({ ...s, updatedAt: Date.now() }));
+                activeThemeId = data.activeThemeId || null;
                 themesAdded = newThemes.length;
                 snippetsAdded = newSnippets.length;
             } else if (mode === 'merge') {
@@ -367,8 +391,10 @@ export const useStore = create<Store>((set) => ({
                 newSnippets = [...state.snippets];
                 newThemes = [...state.themes];
 
-                // Create ID mapping for snippets
+                // Create ID mapping for snippets and groups
                 const snippetIdMap = new Map<string, string>();
+                const groupIdMap = new Map<string, string>();
+
                 data.snippets.forEach(snippet => {
                     const newId = uuidv4();
                     snippetIdMap.set(snippet.id, newId);
@@ -381,7 +407,7 @@ export const useStore = create<Store>((set) => ({
                     snippetsAdded++;
                 });
 
-                // Import themes with remapped snippet IDs
+                // Import themes with remapped snippet IDs and group IDs
                 data.themes.forEach(theme => {
                     const newThemeId = uuidv4();
                     const remappedItems = theme.items.map(item => ({
@@ -389,10 +415,20 @@ export const useStore = create<Store>((set) => ({
                         id: uuidv4(),
                         snippetId: snippetIdMap.get(item.snippetId) || item.snippetId
                     }));
+
+                    let newGroupId = theme.groupId;
+                    if (theme.groupId) {
+                        if (!groupIdMap.has(theme.groupId)) {
+                            groupIdMap.set(theme.groupId, uuidv4());
+                        }
+                        newGroupId = groupIdMap.get(theme.groupId);
+                    }
+
                     newThemes.push({
                         ...theme,
                         id: newThemeId,
                         items: remappedItems,
+                        groupId: newGroupId,
                         updatedAt: Date.now(),
                         createdAt: Date.now()
                     });
@@ -406,6 +442,7 @@ export const useStore = create<Store>((set) => ({
                 const existingSnippetNames = new Set(state.snippets.map(s => s.name.toLowerCase()));
                 const existingThemeNames = new Set(state.themes.map(t => t.name.toLowerCase()));
                 const snippetIdMap = new Map<string, string>();
+                const groupIdMap = new Map<string, string>();
 
                 // Import snippets
                 data.snippets.forEach(snippet => {
@@ -439,10 +476,20 @@ export const useStore = create<Store>((set) => ({
                             id: uuidv4(),
                             snippetId: snippetIdMap.get(item.snippetId)!
                         }));
+
+                    let newGroupId = theme.groupId;
+                    if (theme.groupId) {
+                        if (!groupIdMap.has(theme.groupId)) {
+                            groupIdMap.set(theme.groupId, uuidv4());
+                        }
+                        newGroupId = groupIdMap.get(theme.groupId);
+                    }
+
                     newThemes.push({
                         ...theme,
                         id: newThemeId,
                         items: remappedItems,
+                        groupId: newGroupId,
                         updatedAt: Date.now(),
                         createdAt: Date.now()
                     });
@@ -451,21 +498,27 @@ export const useStore = create<Store>((set) => ({
                 });
             }
 
+            if (!data || !data.themes || !data.snippets) {
+                console.error('Import failed: Invalid data structure', data);
+                return state;
+            }
+
             const newState = {
                 ...state,
                 themes: newThemes,
                 snippets: newSnippets,
-                globalEnabled: mode === 'replace' ? data.globalEnabled : state.globalEnabled
+                activeThemeId: activeThemeId,
+                globalEnabled: mode === 'replace' ? (data.globalEnabled ?? true) : state.globalEnabled
             };
-            storageService.save(newState);
+            storageService.save(newState, { immediate: true });
             return newState;
         });
 
         return { themesAdded, snippetsAdded, skipped };
     },
 
-    updateSnippetAndPropagate: (id, newContent, options) => {
-        set((state) => {
+    updateSnippetAndPropagate: (id: string, newContent: string, options: { mode: 'soft' | 'force', originItemId?: string }) => {
+        set((state: Store) => {
             // 1. Update the master snippet
             const updatedSnippets = state.snippets.map(s =>
                 s.id === id ? { ...s, content: newContent, updatedAt: Date.now() } : s
@@ -506,9 +559,9 @@ export const useStore = create<Store>((set) => ({
         });
     },
 
-    duplicateTheme: (themeId) => {
+    duplicateTheme: (themeId: string) => {
         let newThemeId = '';
-        set((state) => {
+        set((state: Store) => {
             const theme = state.themes.find(t => t.id === themeId);
             if (!theme) return state;
 
@@ -547,23 +600,33 @@ export const useStore = create<Store>((set) => ({
                 id: newThemeId,
                 name: `${theme.name} (Copy)`,
                 items: newItems,
+                isActive: theme.isActive, // Keep active state
                 createdAt: Date.now(),
                 updatedAt: Date.now()
             };
 
+            let currentThemes = [...state.themes];
+
+            // If origin was active and in a group, the new one stays active and others are disabled
+            if (newTheme.isActive && newTheme.groupId) {
+                currentThemes = currentThemes.map(t =>
+                    (t.groupId === newTheme.groupId) ? { ...t, isActive: false } : t
+                );
+            }
+
             const newState = {
                 ...state,
-                themes: [...state.themes, newTheme],
+                themes: [...currentThemes, newTheme],
                 snippets: newSnippets
             };
-            storageService.save(newState);
+            storageService.save(newState, { immediate: true });
             return newState;
         });
         return newThemeId;
     },
 
-    duplicateThemeItem: (themeId, itemId) => {
-        set((state) => {
+    duplicateThemeItem: (themeId: string, itemId: string) => {
+        set((state: Store) => {
             const theme = state.themes.find(t => t.id === themeId);
             if (!theme) return state;
 
@@ -616,8 +679,8 @@ export const useStore = create<Store>((set) => ({
         });
     },
 
-    createThemeGroup: (themeIds) => {
-        set((state) => {
+    createThemeGroup: (themeIds: string[]) => {
+        set((state: Store) => {
             if (themeIds.length < 2) return state;
             const groupId = uuidv4();
 
@@ -635,11 +698,6 @@ export const useStore = create<Store>((set) => ({
             // Or allow one to remain active?
             // Safer to allow the *last* active one to stay, or just let the user toggle.
             // But if multiple are active, we MUST turn off all but one.
-            // Let's keep the one that appears latest in the list active, or just disable all except the first active one found.
-
-            // We'll traverse the current themes array to respect order, or just iterate `themeIds`?
-            // Iterating `themeIds` is safer if the user intention matters.
-            // Actually, we can just enforce the rule: Only ONE can be active.
             // Let's pick the first active one in `themeIds` as the winner, others get disabled.
 
             const themesToGroup = state.themes.filter(t => themeIds.includes(t.id));
@@ -666,8 +724,8 @@ export const useStore = create<Store>((set) => ({
         });
     },
 
-    ungroupThemes: (themeIds) => {
-        set((state) => {
+    ungroupThemes: (themeIds: string[]) => {
+        set((state: Store) => {
             const updatedThemes = state.themes.map(t => {
                 if (!themeIds.includes(t.id)) return t;
                 // Remove groupId. Keep domains and active state as is.
@@ -682,7 +740,7 @@ export const useStore = create<Store>((set) => ({
         });
     },
 
-    createEmptyGroup: (domainPatterns) => {
+    createEmptyGroup: (domainPatterns: string[]) => {
         const groupId = uuidv4();
         const themeId = uuidv4();
 
@@ -707,5 +765,23 @@ export const useStore = create<Store>((set) => ({
         });
 
         return groupId;
+    },
+
+    loadExampleData: async () => {
+        try {
+            console.log('Loading starter kit from:', chrome.runtime.getURL('starter_kit.json'));
+            const response = await fetch(chrome.runtime.getURL('starter_kit.json'));
+            if (!response.ok) throw new Error(`Fetch failed: ${response.status}`);
+            const content = await response.json();
+
+            if (content && content.data) {
+                get().importAllData(content.data, 'replace');
+                console.log('Starter kit data found and imported');
+            } else {
+                console.error('Starter kit file found but data missing or invalid format', content);
+            }
+        } catch (e: any) {
+            console.error('Failed to load example data:', e.message || e);
+        }
     }
 }));

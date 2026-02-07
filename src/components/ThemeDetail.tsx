@@ -41,7 +41,8 @@ interface ThemeDetailProps {
 }
 
 export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSelectTheme }) => {
-    const theme = useStore(state => state.themes.find(t => t.id === themeId));
+    const themes = useStore(state => state.themes);
+    const theme = themes.find(t => t.id === themeId);
     const snippets = useStore(state => state.snippets);
     const globalEnabled = useStore(state => state.globalEnabled);
     const addSnippet = useStore(state => state.addSnippet);
@@ -1161,6 +1162,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
                 setLibraryFilter={setLibraryFilter}
                 globalEnabled={globalEnabled}
                 toggleGlobal={toggleGlobal}
+                isOtherInGroupActive={themes.some((t: any) => t.groupId === theme.groupId && t.id !== theme.id && t.isActive)}
                 onContextMenu={(e) => {
                     e.stopPropagation();
                     setMenuState({ x: e.currentTarget.getBoundingClientRect().left, y: e.currentTarget.getBoundingClientRect().bottom, itemId: 'THEME_HEADER_MENU', source: 'stack' });

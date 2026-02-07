@@ -19,20 +19,20 @@ export const Button: React.FC<ButtonProps> = ({
     ...props
 }) => {
 
-    const baseStyles = "inline-flex items-center justify-center font-medium transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed rounded-md";
+    const baseStyles = "inline-flex items-center justify-center font-medium transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed rounded-md box-border overflow-hidden";
 
     const variants = {
-        filled: "bg-blue-600 text-white hover:bg-blue-500 active:bg-blue-700 shadow-sm",
+        filled: "bg-blue-600 text-white hover:bg-blue-500 active:bg-blue-700 shadow-sm border border-transparent",
         outline: "bg-transparent border border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white hover:border-slate-600",
-        ghost: "bg-transparent text-slate-400 hover:text-white hover:bg-slate-800",
-        danger: "bg-red-600 text-white hover:bg-red-500",
-        "danger-ghost": "bg-transparent text-slate-500 hover:text-red-400 hover:bg-red-500/10",
+        ghost: "bg-transparent text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent",
+        danger: "bg-red-600 text-white hover:bg-red-500 border border-transparent",
+        "danger-ghost": "bg-transparent text-slate-500 hover:text-red-400 hover:bg-red-500/10 border border-transparent",
     };
 
     const sizes = {
-        sm: "h-6 px-2 text-[11px] gap-1.5 rounded",
-        md: "h-8 px-3 text-xs gap-2 rounded-md",
-        lg: "h-10 px-5 text-sm gap-2 rounded-md",
+        sm: "h-6 px-2 text-[11px] leading-none gap-1.5 rounded flex-shrink-0",
+        md: "h-8 px-3 text-xs gap-2 rounded-md flex-shrink-0 min-h-[32px]",
+        lg: "h-10 px-5 text-sm gap-2 rounded-md flex-shrink-0 min-h-[40px]",
         icon: "h-7 w-7 p-0 rounded-md", // slightly smaller icon button
     };
 

@@ -1,0 +1,284 @@
+{
+    "version": "1.0",
+    "exportedAt": 1738928565000,
+    "data": {
+        "themes": [
+            {
+                "id": "e8a9d1b6-0b3b-4b1a-9c1a-1a2b3c4d5e6f",
+                "name": "Wikipedia: Serif Reading",
+                "domainPatterns": [
+                    "wikipedia.org"
+                ],
+                "isActive": true,
+                "groupId": "3d1c9c81-fc74-4d57-8ae8-863677685069",
+                "createdAt": 1738928565000,
+                "updatedAt": 1738928565000,
+                "items": [
+                    {
+                        "id": "f81d4fae-7dec-11d0-a765-00a0c91e6bf6",
+                        "snippetId": "lib-font-serif",
+                        "isEnabled": true
+                    }
+                ]
+            },
+            {
+                "id": "b4c9e2c7-1c4c-5c2b-ac2b-2b3c4d5e6f7a",
+                "name": "Wikipedia: Sans Modern",
+                "domainPatterns": [
+                    "wikipedia.org"
+                ],
+                "isActive": false,
+                "groupId": "3d1c9c81-fc74-4d57-8ae8-863677685069",
+                "createdAt": 1738928565000,
+                "updatedAt": 1738928565000,
+                "items": [
+                    {
+                        "id": "2b30193e-83b3-c392-1192-9cad0e1f2031",
+                        "snippetId": "lib-font-sans",
+                        "isEnabled": true
+                    }
+                ]
+            },
+            {
+                "id": "c92ab9c9-e26b-4dc6-b517-d518a4ece613",
+                "name": "Wikipedia: Sepia Mode",
+                "domainPatterns": [
+                    "wikipedia.org"
+                ],
+                "isActive": true,
+                "groupId": "6bb3642a-4bdc-43e1-bfec-e2331045b8c6",
+                "createdAt": 1738928565000,
+                "updatedAt": 1738928565000,
+                "items": [
+                    {
+                        "id": "50da8b0e-e7c8-4143-9f60-4be2d1506d0a",
+                        "snippetId": "wiki-sepia-css",
+                        "isEnabled": true
+                    }
+                ]
+            },
+            {
+                "id": "fda16305-c208-4fe5-bf88-e39f77567cf5",
+                "name": "Wikipedia: Dark Mode",
+                "domainPatterns": [
+                    "wikipedia.org"
+                ],
+                "isActive": false,
+                "groupId": "6bb3642a-4bdc-43e1-bfec-e2331045b8c6",
+                "createdAt": 1738928565000,
+                "updatedAt": 1738928565000,
+                "items": [
+                    {
+                        "id": "6ef2cf38-b1f9-46e5-8739-a56726abf122",
+                        "snippetId": "wiki-dark-css",
+                        "isEnabled": true
+                    }
+                ]
+            },
+            {
+                "id": "f5a815d3-5650-4e5e-b3e0-fcbeec5511e7",
+                "name": "Global: Tools & Utils",
+                "domainPatterns": [
+                    "<all_urls>"
+                ],
+                "isActive": true,
+                "createdAt": 1738928565000,
+                "updatedAt": 1738928565000,
+                "items": [
+                    {
+                        "id": "item-scroll-top",
+                        "snippetId": "lib-scroll-top-html",
+                        "isEnabled": true
+                    },
+                    {
+                        "id": "item-smooth-scroll",
+                        "snippetId": "lib-smooth-scroll",
+                        "isEnabled": true
+                    }
+                ]
+            },
+            {
+                "id": "44ab9a7b-d135-44a7-9b6b-4365e3a59df9",
+                "name": "ChatGPT: Zen Reader",
+                "domainPatterns": [
+                    "chatgpt.com"
+                ],
+                "isActive": true,
+                "createdAt": 1738928565000,
+                "updatedAt": 1738928565000,
+                "items": [
+                    {
+                        "id": "682ab70f-f7a1-40ed-83fa-4f12bb71660a",
+                        "snippetId": "gpt-typography-css",
+                        "isEnabled": true
+                    },
+                    {
+                        "id": "4437d3fd-8ad0-443e-be96-740cc82d82b1",
+                        "snippetId": "gpt-zen-badge-html",
+                        "isEnabled": true
+                    }
+                ]
+            },
+            {
+                "id": "github-dev-theme",
+                "name": "GitHub: Developer Pro",
+                "domainPatterns": [
+                    "github.com"
+                ],
+                "isActive": true,
+                "createdAt": 1738928565000,
+                "updatedAt": 1738928565000,
+                "items": [
+                    {
+                        "id": "item-fira-code",
+                        "snippetId": "lib-font-mono",
+                        "isEnabled": true
+                    },
+                    {
+                        "id": "item-github-wide",
+                        "snippetId": "gh-wide-layout",
+                        "isEnabled": true
+                    }
+                ]
+            }
+        ],
+        "snippets": [
+            {
+                "id": "lib-font-serif",
+                "name": "Library: Typography - Serif Reading",
+                "type": "css",
+                "content": "/* Premium serif typography for focus */\nhtml, body, .mw-body, article {\n  font-family: 'Charter', 'Georgia', serif !important;\n  line-height: 1.62 !important;\n  -webkit-font-smoothing: antialiased;\n}",
+                "isLibraryItem": true,
+                "relatedSnippetIds": [],
+                "createdAt": 1738928565000,
+                "updatedAt": 1738928565000
+            },
+            {
+                "id": "lib-font-sans",
+                "name": "Library: Typography - Modern Sans",
+                "type": "css",
+                "content": "/* Clean sans-serif UI stack (Inter) */\nhtml, body, .mw-body, article {\n  font-family: 'Inter', system-ui, -apple-system, sans-serif !important;\n  letter-spacing: -0.011em !important;\n  line-height: 1.5 !important;\n}",
+                "isLibraryItem": true,
+                "relatedSnippetIds": [],
+                "createdAt": 1738928565000,
+                "updatedAt": 1738928565000
+            },
+            {
+                "id": "lib-font-mono",
+                "name": "Library: Typography - Fira Code Mono",
+                "type": "css",
+                "content": "/* Modern coding font with ligatures */\npre, code, .blob-code, .blob-num, .react-code-text {\n  font-family: 'Fira Code', 'Cascadia Code', monospace !important;\n  font-variant-ligatures: contextual;\n}",
+                "isLibraryItem": true,
+                "relatedSnippetIds": [],
+                "createdAt": 1738928565000,
+                "updatedAt": 1738928565000
+            },
+            {
+                "id": "lib-font-robot",
+                "name": "Library: Typography - Roboto Sans",
+                "type": "css",
+                "content": "/* Google's signature sans-serif */\nbody {\n  font-family: 'Roboto', sans-serif !important;\n}",
+                "isLibraryItem": true,
+                "relatedSnippetIds": [],
+                "createdAt": 1738928565000,
+                "updatedAt": 1738928565000
+            },
+            {
+                "id": "lib-font-montserrat",
+                "name": "Library: Typography - Montserrat",
+                "type": "css",
+                "content": "/* Bold geometric sans-serif */\nbody {\n  font-family: 'Montserrat', sans-serif !important;\n  text-rendering: optimizeLegibility;\n}",
+                "isLibraryItem": true,
+                "relatedSnippetIds": [],
+                "createdAt": 1738928565000,
+                "updatedAt": 1738928565000
+            },
+            {
+                "id": "lib-font-playfair",
+                "name": "Library: Typography - Playfair Display",
+                "type": "css",
+                "content": "/* Elegant high-contrast serif */\nh1, h2, h3, .title {\n  font-family: 'Playfair Display', serif !important;\n  font-weight: 900 !important;\n}",
+                "isLibraryItem": true,
+                "relatedSnippetIds": [],
+                "createdAt": 1738928565000,
+                "updatedAt": 1738928565000
+            },
+            {
+                "id": "lib-smooth-scroll",
+                "name": "Library: UI - Smooth Scrolling",
+                "type": "css",
+                "content": "html { scroll-behavior: smooth !important; }",
+                "isLibraryItem": true,
+                "relatedSnippetIds": [],
+                "createdAt": 1738928565000,
+                "updatedAt": 1738928565000
+            },
+            {
+                "id": "lib-scroll-top-html",
+                "name": "Library: UI - Scroll to Top Button",
+                "type": "html",
+                "selector": "body",
+                "position": "append",
+                "content": "<button id=\"tb-scroll-top\" style=\"position: fixed; bottom: 30px; right: 30px; z-index: 9999; background: #3b82f6; color: white; border: none; width: 44px; height: 44px; rounded: 50%; border-radius: 50%; box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; display: flex; items-center; justify-content: center; font-size: 20px; transition: transform 0.2s;\" onclick=\"window.scrollTo({top: 0, behavior: 'smooth'})\">↑</button>\n<style>\n#tb-scroll-top:hover { transform: translateY(-4px); background: #2563eb; }\n#tb-scroll-top:active { transform: scale(0.9); }\n</style>",
+                "isLibraryItem": true,
+                "relatedSnippetIds": [],
+                "createdAt": 1738928565000,
+                "updatedAt": 1738928565000
+            },
+            {
+                "id": "wiki-sepia-css",
+                "name": "Wiki: Sepia Palette",
+                "type": "css",
+                "content": "body {\n  background-color: #f4ecd8 !important;\n  color: #5b4636 !important;\n}\n.mw-body, #content {\n  background: transparent !important;\n  border: none !important;\n}\na { color: #a05a2c !important; }",
+                "isLibraryItem": false,
+                "relatedSnippetIds": [],
+                "createdAt": 1738928565000,
+                "updatedAt": 1738928565000
+            },
+            {
+                "id": "wiki-dark-css",
+                "name": "Wiki: Midnight Dark",
+                "type": "css",
+                "content": "body {\n  background-color: #0d1117 !important;\n  color: #c9d1d9 !important;\n}\n.mw-body, #content {\n  background: #161b22 !important;\n  color: #c9d1d9 !important;\n  border-color: #30363d !important;\n}\na { color: #58a6ff !important; }\nimg { filter: brightness(0.8) contrast(1.2); }",
+                "isLibraryItem": false,
+                "relatedSnippetIds": [],
+                "createdAt": 1738928565000,
+                "updatedAt": 1738928565000
+            },
+            {
+                "id": "gpt-typography-css",
+                "name": "GPT: Readability Polish",
+                "type": "css",
+                "content": "main .prose {\n  max-width: 800px !important;\n  margin: 0 auto !important;\n  line-height: 1.75 !important;\n  font-size: 1.1rem !important;\n}\n.dark main .prose { color: #e5e7eb !important; }",
+                "isLibraryItem": false,
+                "relatedSnippetIds": [],
+                "createdAt": 1738928565000,
+                "updatedAt": 1738928565000
+            },
+            {
+                "id": "gpt-zen-badge-html",
+                "name": "GPT: Zen Status Badge",
+                "type": "html",
+                "selector": "body",
+                "position": "prepend",
+                "content": "<div style=\"position: fixed; top: 12px; right: 80px; z-index: 50; padding: 4px 10px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); border-radius: 20px; color: #10b981; font-size: 10px; font-weight: bold; letter-spacing: 0.05em; pointer-events: none;\">ZEN MODE</div>",
+                "isLibraryItem": false,
+                "relatedSnippetIds": [],
+                "createdAt": 1738928565000,
+                "updatedAt": 1738928565000
+            },
+            {
+                "id": "gh-wide-layout",
+                "name": "GitHub: Ultra Wide Layout",
+                "type": "css",
+                "content": ".container-xl, .container-lg {\n  max-width: none !important;\n  padding-left: 32px !important;\n  padding-right: 32px !important;\n}\n.repository-content { width: 100% !important; }",
+                "isLibraryItem": false,
+                "relatedSnippetIds": [],
+                "createdAt": 1738928565000,
+                "updatedAt": 1738928565000
+            }
+        ],
+        "globalEnabled": true,
+        "activeThemeId": null
+    }
+}

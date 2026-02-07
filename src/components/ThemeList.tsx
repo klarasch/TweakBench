@@ -36,7 +36,7 @@ interface ThemeListProps {
 import { SortableThemeItem } from './SortableThemeItem';
 
 export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }) => {
-    const { themes, snippets, addTheme, deleteTheme, updateTheme, addSnippet, addSnippetToTheme, globalEnabled, importAllData: importData, reorderThemes, createThemeGroup, ungroupThemes, createEmptyGroup } = useStore();
+    const { themes, snippets, addTheme, deleteTheme, updateTheme, addSnippet, addSnippetToTheme, globalEnabled, activeThemeId, importAllData: importData, reorderThemes, createThemeGroup, ungroupThemes, createEmptyGroup } = useStore();
     const { showToast } = useToast();
 
     // Creation Modal State
@@ -58,7 +58,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
     // Import All Data State
     const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
     const [importMode, setImportMode] = useState<'merge' | 'replace' | 'skip-duplicates'>('merge');
-    const [pendingImportData, setPendingImportData] = useState<{ themes: any[], snippets: any[], globalEnabled: boolean } | null>(null);
+    const [pendingImportData, setPendingImportData] = useState<{ themes: any[], snippets: any[], globalEnabled: boolean, activeThemeId?: string | null } | null>(null);
 
     // Selection State
     const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -331,7 +331,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
     };
 
     const handleExportAllData = () => {
-        const content = exportAllData(themes, snippets, globalEnabled);
+        const content = exportAllData(themes, snippets, globalEnabled, activeThemeId);
         const blob = new Blob([content], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -354,8 +354,14 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
             const content = event.target?.result as string;
             const importedData = importAllData(content);
             if (importedData) {
-                setPendingImportData(importedData);
-                setIsImportDialogOpen(true);
+                if (themes.length === 0) {
+                    // Skip dialog if no themes exist
+                    importData(importedData, 'replace');
+                    showToast(`Imported ${importedData.themes.length} themes and ${importedData.snippets.length} snippets`);
+                } else {
+                    setPendingImportData(importedData);
+                    setIsImportDialogOpen(true);
+                }
             } else {
                 showToast('Failed to parse import file. Please ensure it\'s a valid TweakBench backup.', 'error');
             }
@@ -994,15 +1000,26 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                             <Plus size={24} className="opacity-50" />
                         </div>
                         <p className="font-medium text-slate-400">No themes yet</p>
-                        <p className="text-xs max-w-[200px] mx-auto">Create a theme to start customizing your web experience.</p>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="mt-2"
-                            onClick={() => setIsCreating(true)}
-                        >
-                            Create first theme
-                        </Button>
+                        <p className="text-xs max-w-[200px] mx-auto">Create a theme or load some examples to start customizing your web experience.</p>
+                        <div className="flex gap-2 mt-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={async () => {
+                                    await useStore.getState().loadExampleData();
+                                    showToast('Starter kit loaded');
+                                }}
+                            >
+                                Load starter kit
+                            </Button>
+                            <Button
+                                variant="filled"
+                                size="sm"
+                                onClick={() => setIsCreating(true)}
+                            >
+                                Create first theme
+                            </Button>
+                        </div>
                     </div>
                 )}
                 <DndContext

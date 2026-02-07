@@ -202,17 +202,19 @@ export interface ExportedData {
         themes: Theme[];
         snippets: Snippet[];
         globalEnabled: boolean;
+        activeThemeId: string | null;
     };
 }
 
-export const exportAllData = (themes: Theme[], snippets: Snippet[], globalEnabled: boolean): string => {
+export const exportAllData = (themes: Theme[], snippets: Snippet[], globalEnabled: boolean, activeThemeId: string | null): string => {
     const exportData: ExportedData = {
         version: '1.0',
         exportedAt: Date.now(),
         data: {
             themes,
             snippets,
-            globalEnabled
+            globalEnabled,
+            activeThemeId
         }
     };
     return JSON.stringify(exportData, null, 2);

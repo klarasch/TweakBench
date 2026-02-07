@@ -20,6 +20,7 @@ interface ThemeHeaderProps {
     globalEnabled: boolean;
     toggleGlobal: () => void;
     onContextMenu: (e: React.MouseEvent) => void;
+    isOtherInGroupActive?: boolean;
 }
 
 export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
@@ -32,7 +33,8 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
     setLibraryFilter,
     globalEnabled,
     toggleGlobal,
-    onContextMenu
+    onContextMenu,
+    isOtherInGroupActive
 }) => {
     const activeUrl = useActiveTab();
     const [localName, setLocalName] = useState(theme.name);
@@ -107,8 +109,8 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                             {isMatch
                                 ? theme.isActive
                                     ? "Active on this tab"
-                                    : theme.groupId
-                                        ? "Inactive (another theme in group is active)"
+                                    : (theme.groupId && isOtherInGroupActive)
+                                        ? "Group active"
                                         : "Inactive"
                                 : "Inactive"}
                         </div>
