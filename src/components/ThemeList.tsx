@@ -703,7 +703,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
     return (
         <div className="flex flex-col gap-4 relative pb-20">
             <div className="flex justify-between items-center px-1">
-                <h2 className="text-lg font-bold text-slate-100 tracking-tight">Themes</h2>
+                <h2 className="text-lg font-bold text-slate-100 tracking-tight">Tweaks</h2>
                 <div className="flex items-center gap-1">
                     {!isSelectionMode ? (
                         <>
