@@ -42,15 +42,19 @@ interface ThemeDetailProps {
 
 export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSelectTheme }) => {
     // Selective selectors to avoid unnecessary re-renders of the whole detail view
-    const themes = useStore(state => state.themes);
-    const theme = useMemo(() => themes.find(t => t.id === themeId), [themes, themeId]);
-    const snippets = useStore(state => state.snippets);
+    const theme = useStore(useCallback(state => state.themes.find(t => t.id === themeId), [themeId]));
     const globalEnabled = useStore(state => state.globalEnabled);
+    const isOtherInGroupActive = useStore(useCallback(state => {
+        const t = state.themes.find(th => th.id === themeId);
+        if (!t?.groupId) return false;
+        return state.themes.some(th => th.groupId === t.groupId && th.id !== themeId && th.isActive);
+    }, [themeId]));
+    // Actions are stable, but use store.getState() or stable selectors to avoid re-renders
     const addSnippet = useStore(state => state.addSnippet);
     const addSnippetToTheme = useStore(state => state.addSnippetToTheme);
-    const toggleThemeItem = useStore(state => state.toggleThemeItem);
     const updateTheme = useStore(state => state.updateTheme);
     const toggleGlobal = useStore(state => state.toggleGlobal);
+    const snippets = useStore(useCallback(state => state.snippets, [])); // Need snippets for library list, but try to minimize
 
     const { showToast } = useToast();
     // State
@@ -148,6 +152,24 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
 
     const activeUrl = useActiveTab();
     const isMatch = activeUrl && theme ? isDomainMatch(theme.domainPatterns, activeUrl) : false;
+
+    // Ref Cleanup Logic (to prevent background creep)
+    // Only runs when items are added or removed
+    useEffect(() => {
+        if (!theme) return;
+        const currentItemIds = new Set(theme.items.map(i => i.id));
+
+        // Clean up stale refs
+        Object.keys(sidebarItemRefs.current).forEach(id => {
+            if (!currentItemIds.has(id)) delete sidebarItemRefs.current[id];
+        });
+        Object.keys(editorRefs.current).forEach(id => {
+            if (!currentItemIds.has(id)) delete editorRefs.current[id];
+        });
+        Object.keys(cursorPositionsRef.current).forEach(id => {
+            if (!currentItemIds.has(id)) delete cursorPositionsRef.current[id];
+        });
+    }, [theme?.items.length]);
 
     // Responsive & Popover State
     const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
@@ -557,7 +579,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
         useStore.getState().reorderThemeItems(theme.id, newItems);
     };
 
-    const toggleItemExpand = (id: string) => {
+    const toggleItemExpand = useCallback((id: string) => {
         setCollapsedItems(prev => {
             const next = new Set(prev);
             if (next.has(id)) {
@@ -589,7 +611,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
             }
             return next;
         });
-    };
+    }, []);
 
     const handleDragStart = () => {
         setIsDragging(true);
@@ -746,6 +768,26 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
         setMenuState({ x: rect.left, y: rect.bottom, itemId, source: 'stack' });
     }, []);
 
+    const handleSelect = useCallback((id: string) => {
+        if (isSelectionMode) {
+            handleToggleSelection(id);
+        } else {
+            setSelectedItemId(id);
+        }
+    }, [isSelectionMode, handleToggleSelection]);
+
+    const handleSetEditing = useCallback((id: string, isEditing: boolean) => {
+        setEditingSnippetId(isEditing ? id : null);
+    }, []);
+
+    const setItemRef = useCallback((id: string, el: HTMLDivElement | null) => {
+        sidebarItemRefs.current[id] = el;
+    }, []);
+
+    const setEditorRef = useCallback((id: string, el: any) => {
+        editorRefs.current[id] = el;
+    }, []);
+
     const handleExport = (type: 'js' | 'css') => {
         if (!theme) return;
 
@@ -894,7 +936,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
             {
                 label: item.isEnabled ? 'Disable snippet' : 'Enable snippet',
                 icon: item.isEnabled ? <Pause size={14} /> : <Play size={14} />,
-                onClick: () => toggleThemeItem(theme.id, itemId)
+                onClick: () => useStore.getState().toggleThemeItem(theme.id, itemId)
             },
             ...(snippets.find(s => s.id === item.snippetId)?.isLibraryItem !== false ? [{
                 label: 'Detach from library',
@@ -1163,7 +1205,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
                 setLibraryFilter={setLibraryFilter}
                 globalEnabled={globalEnabled}
                 toggleGlobal={toggleGlobal}
-                isOtherInGroupActive={themes.some((t: any) => t.groupId === theme.groupId && t.id !== theme.id && t.isActive)}
+                isOtherInGroupActive={isOtherInGroupActive}
                 onContextMenu={(e) => {
                     e.stopPropagation();
                     setMenuState({ x: e.currentTarget.getBoundingClientRect().left, y: e.currentTarget.getBoundingClientRect().bottom, itemId: 'THEME_HEADER_MENU', source: 'stack' });
@@ -1534,24 +1576,16 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
                                                 item={item}
                                                 themeId={themeId}
                                                 isCollapsed={collapsedItems.has(item.id)}
-                                                onToggleCollapse={() => toggleItemExpand(item.id)}
+                                                onToggleCollapse={toggleItemExpand}
                                                 isSelected={selectedSnippetIds.has(item.id) || selectedItemId === item.id}
-                                                itemRef={(el) => sidebarItemRefs.current[item.id] = el}
+                                                itemRef={setItemRef}
                                                 onKebabClick={handleKebabClick}
                                                 isEditing={editingSnippetId === item.id}
-                                                onSetEditing={(id, val) => setEditingSnippetId(val ? id : null)}
-                                                onSelect={(id) => {
-                                                    if (isSelectionMode) {
-                                                        handleToggleSelection(id);
-                                                    } else {
-                                                        setSelectedItemId(id);
-                                                        // Ensure focus isn't stolen excessively, but user clicked it.
-                                                        // SnippetStackItem handles its own internal focus for editor.
-                                                    }
-                                                }}
+                                                onSetEditing={handleSetEditing}
+                                                onSelect={handleSelect}
                                                 isThemeActive={theme?.isActive ?? false}
                                                 isMatch={isMatch}
-                                                editorRef={(el: any) => editorRefs.current[item.id] = el}
+                                                editorRef={setEditorRef}
                                                 isSelectionMode={isSelectionMode}
                                                 searchQuery={searchQuery}
                                                 currentMatch={currentMatch?.itemId === item.id ? currentMatch.match : null}

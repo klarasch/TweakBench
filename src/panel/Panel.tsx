@@ -29,8 +29,8 @@ const Panel: React.FC = () => {
                         }
 
                         chrome.tabs.sendMessage(tab.id, { type: 'PING' })
-                            .then(() => setIsConnected(true))
-                            .catch(() => setIsConnected(false));
+                            .then(() => setIsConnected(prev => prev === true ? prev : true))
+                            .catch(() => setIsConnected(prev => prev === false ? prev : false));
                     }
                 });
             } else {

@@ -10,7 +10,7 @@ import * as parserPostcss from "prettier/plugins/postcss";
 import * as parserHtml from "prettier/plugins/html";
 
 import { autocompletion } from '@codemirror/autocomplete';
-import type { Snippet } from '../types';
+import { useStore } from '../store';
 
 interface CodeEditorProps {
     value: string;
@@ -20,7 +20,6 @@ interface CodeEditorProps {
     className?: string;
     autoHeight?: boolean;
     onFocus?: () => void;
-    snippets?: Snippet[];
     searchQuery?: string;
     currentMatch?: { from: number; to: number } | null;
 }
@@ -33,7 +32,7 @@ export interface CodeEditorRef {
     setCursorPosition: (from: number, to: number) => void;
 }
 
-export const CodeEditor = React.forwardRef<CodeEditorRef, CodeEditorProps>((props, ref) => {
+export const CodeEditor = React.memo(React.forwardRef<CodeEditorRef, CodeEditorProps>((props, ref) => {
     const {
         value,
         onChange,
@@ -125,15 +124,16 @@ export const CodeEditor = React.forwardRef<CodeEditorRef, CodeEditorProps>((prop
     }, []);
 
     const cssVariableCompletions = useCallback((context: any) => {
-        if (mode !== 'css' || !props.snippets) return null;
+        if (mode !== 'css') return null;
 
         const word = context.matchBefore(/--[\w-]*/);
         if (!word) return null;
         if (word.from === word.to && !context.explicit) return null;
 
         const variables = new Map<string, string>();
+        const snippets = useStore.getState().snippets;
 
-        props.snippets.forEach(snippet => {
+        snippets.forEach(snippet => {
             if (snippet.type !== 'css') return;
             const regex = /--([-\w]+):\s*([^;]+)/g;
             let match;
@@ -152,7 +152,7 @@ export const CodeEditor = React.forwardRef<CodeEditorRef, CodeEditorProps>((prop
             from: word.from,
             options
         };
-    }, [mode, props.snippets]);
+    }, [mode]);
 
     // Search highlighting extension
     const searchHighlightExtension = React.useMemo(() => {
@@ -269,5 +269,5 @@ export const CodeEditor = React.forwardRef<CodeEditorRef, CodeEditorProps>((prop
             />
         </div>
     );
-});
+}));
 CodeEditor.displayName = 'CodeEditor';

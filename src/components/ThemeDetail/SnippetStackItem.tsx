@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useStore } from '../../store.ts';
 import { CodeEditor } from '../CodeEditor.tsx';
 import { MoreVertical, ChevronDown, ChevronRight, Terminal, FileCode, Upload, BookOpen } from 'lucide-react';
@@ -17,14 +17,14 @@ interface SnippetStackItemProps {
     isCollapsed: boolean;
     onToggleCollapse: (id: string) => void;
     isSelected: boolean;
-    itemRef: (el: HTMLDivElement | null) => void;
+    itemRef: (id: string, el: HTMLDivElement | null) => void;
     onKebabClick: (e: React.MouseEvent, itemId: string) => void;
     isEditing: boolean;
     onSetEditing: (id: string, isEditing: boolean) => void;
     onSelect: (id: string) => void;
     isThemeActive: boolean;
     isMatch: boolean;
-    editorRef?: React.Ref<any>;
+    editorRef?: (id: string, instance: any) => void;
     isSelectionMode?: boolean;
     searchQuery?: string;
     currentMatch?: { from: number; to: number } | null;
@@ -48,8 +48,9 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
     searchQuery,
     currentMatch
 }) => {
-    const { snippets, updateSnippet, updateThemeItem, toggleThemeItem, themes, updateSnippetAndPropagate } = useStore();
-    const s = snippets.find(sn => sn.id === item.snippetId);
+    // Only subscribe to snippets that matter for this specific item rendering logic
+    const s = useStore(useCallback((state: any) => state.snippets.find((sn: any) => sn.id === item.snippetId), [item.snippetId]));
+    const updateSnippetAndPropagate = useStore(state => state.updateSnippetAndPropagate);
 
     // Confirmation dialogs
     const [confirmPush, setConfirmPush] = useState(false); // Standard push (no conflicts)
@@ -62,9 +63,10 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
         e.stopPropagation();
         if (!s) return;
 
-        // Check for other overrides
-        const otherOverridesCount = themes.reduce((acc, t) => {
-            return acc + t.items.filter(i =>
+        // Check for other overrides - use getState() to avoid reactive subscription
+        const allThemes = useStore.getState().themes;
+        const otherOverridesCount = allThemes.reduce((acc: number, t: any) => {
+            return acc + (t.items as any[]).filter((i: any) =>
                 i.snippetId === s.id &&
                 i.overrides?.content !== undefined &&
                 i.id !== item.id // exclude self
@@ -101,7 +103,7 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
         <div
             ref={(node) => {
                 setNodeRef(node);
-                itemRef(node);
+                itemRef(item.id, node);
             }}
             style={style}
             {...attributes}
@@ -176,7 +178,7 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                                 autoFocus
                                 className="bg-slate-950 text-white text-sm font-medium border border-blue-500 rounded px-1.5 py-0.5 outline-none flex-1 min-w-0 w-full"
                                 value={s.name}
-                                onChange={(e) => updateSnippet(s.id, { name: e.target.value })}
+                                onChange={(e) => useStore.getState().updateSnippet(s.id, { name: e.target.value })}
                                 onFocus={(e) => e.target.select()}
                                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
                                 onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
@@ -309,7 +311,7 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                     <Toggle
                         checked={item.isEnabled}
                         isActive={isThemeActive && item.isEnabled && isMatch}
-                        onChange={() => toggleThemeItem(themeId, item.id)}
+                        onChange={() => useStore.getState().toggleThemeItem(themeId, item.id)}
                         size="sm"
                         title={
                             !item.isEnabled
@@ -344,7 +346,7 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                                 className="bg-transparent text-slate-300 text-sm font-mono w-full outline-none placeholder:text-slate-700"
                                 placeholder="CSS Selector (e.g. .container)"
                                 value={item.overrides?.selector ?? s.selector ?? ''}
-                                onChange={(e) => updateThemeItem(themeId, item.id, {
+                                onChange={(e) => useStore.getState().updateThemeItem(themeId, item.id, {
                                     overrides: { ...item.overrides, selector: e.target.value }
                                 })}
                                 title="CSS selector target"
@@ -355,7 +357,7 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                             <select
                                 className="bg-transparent text-slate-300 text-sm w-full outline-none cursor-pointer"
                                 value={item.overrides?.position ?? s.position ?? 'beforeend'}
-                                onChange={(e) => updateThemeItem(themeId, item.id, {
+                                onChange={(e) => useStore.getState().updateThemeItem(themeId, item.id, {
                                     overrides: { ...item.overrides, position: e.target.value as any }
                                 })}
                                 title="Injection position"
@@ -375,13 +377,13 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                 !isCollapsed && (
                     <div className="flex flex-col border-t border-slate-800">
                         <CodeEditor
-                            ref={editorRef}
+                            ref={(el) => editorRef?.(item.id, el)}
                             value={item.overrides?.content ?? s.content}
                             onChange={(val) => {
                                 if (s.isLibraryItem === false) {
-                                    updateSnippet(s.id, { content: val });
+                                    useStore.getState().updateSnippet(s.id, { content: val });
                                 } else {
-                                    updateThemeItem(themeId, item.id, {
+                                    useStore.getState().updateThemeItem(themeId, item.id, {
                                         overrides: { ...item.overrides, content: val }
                                     });
                                 }
@@ -392,7 +394,6 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                             onFocus={() => {
                                 onSelect(item.id);
                             }}
-                            snippets={snippets}
                             searchQuery={searchQuery}
                             currentMatch={currentMatch}
                         />
@@ -467,7 +468,7 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                 isOpen={confirmRevert}
                 onClose={() => setConfirmRevert(false)}
                 onConfirm={() => {
-                    updateThemeItem(themeId, item.id, { overrides: undefined });
+                    useStore.getState().updateThemeItem(themeId, item.id, { overrides: undefined });
                     setConfirmRevert(false);
                 }}
                 title="Revert to library"
@@ -481,7 +482,7 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                 onClose={() => setConfirmReset(false)}
                 onConfirm={() => {
                     if (s.originalContent) {
-                        updateSnippet(s.id, { content: s.originalContent });
+                        useStore.getState().updateSnippet(s.id, { content: s.originalContent });
                     }
                     setConfirmReset(false);
                 }}
@@ -495,7 +496,7 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                 isOpen={confirmSave}
                 onClose={() => setConfirmSave(false)}
                 onConfirm={() => {
-                    updateSnippet(s.id, { isLibraryItem: true });
+                    useStore.getState().updateSnippet(s.id, { isLibraryItem: true });
                     setConfirmSave(false);
                 }}
                 title="Publish to library"

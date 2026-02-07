@@ -7,6 +7,8 @@ const injectedStyles = new Map<string, HTMLStyleElement>();
 const injectedElements = new Map<string, HTMLElement>();
 
 let lastProcessedTimestamp: number = 0;
+let lastProcessedGlobalEnabled: boolean | null = null;
+let lastActiveThemeIds = new Set<string>();
 
 let updateTimeout: any = null;
 let transitionTimeout: any = null;
@@ -99,16 +101,16 @@ function debouncedUpdate(state: AppState) {
     }, 10); // Very short debounce to catch nearly simultaneous storage/message updates
 }
 
-let lastProcessedGlobalEnabled: boolean | null = null;
-
 function updateStyles(state: AppState) {
     const globalEnabled = state.globalEnabled ?? true;
     const currentUrl = window.location.href;
 
-    // 1. Pre-Match Orchestration: 
-    // If no active themes match THIS URL, and we have nothing injected, skip EVERYTHING.
+    // 1. Pre-Match Orchestration
     const themes = state.themes || [];
-    const hasMatch = themes.some(t => t.isActive && isDomainMatch(t.domainPatterns, currentUrl));
+    const activeThemesForThisTab = themes.filter(t => t.isActive && isDomainMatch(t.domainPatterns, currentUrl));
+    const currentActiveThemeIds = new Set(activeThemesForThisTab.map(t => t.id));
+
+    const hasMatch = currentActiveThemeIds.size > 0;
     const hasInjections = injectedStyles.size > 0 || injectedElements.size > 0;
 
     if (!hasMatch && !hasInjections && globalEnabled) {
@@ -131,12 +133,29 @@ function updateStyles(state: AppState) {
     lastProcessedTimestamp = Math.max(lastProcessedTimestamp, latestChange);
     lastProcessedGlobalEnabled = globalEnabled;
 
+    // Determine if we need a transition (structural change vs content update)
+    let needsTransition = false;
+    if (isDifferentGlobal) {
+        needsTransition = true;
+    } else {
+        // Check if set of active themes for THIS tab has changed
+        if (currentActiveThemeIds.size !== lastActiveThemeIds.size) {
+            needsTransition = true;
+        } else {
+            for (const id of currentActiveThemeIds) {
+                if (!lastActiveThemeIds.has(id)) {
+                    needsTransition = true;
+                    break;
+                }
+            }
+        }
+    }
+    lastActiveThemeIds = currentActiveThemeIds;
+
     // Batch all updates into a single frame
     requestAnimationFrame(() => {
-        console.log('TweakBench: Updating Styles (Batched & Filtered)', state);
-
-        // Only trigger transition if we actually have work to do (avoid noise)
-        if (hasMatch || hasInjections) {
+        // Only trigger transition if actually requested AND needed
+        if (needsTransition && (hasMatch || hasInjections)) {
             startTransition();
         }
 
