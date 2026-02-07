@@ -396,6 +396,7 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                             }}
                             searchQuery={searchQuery}
                             currentMatch={currentMatch}
+                            themeId={themeId}
                         />
                     </div>
                 )

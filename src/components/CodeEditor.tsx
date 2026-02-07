@@ -22,6 +22,7 @@ interface CodeEditorProps {
     onFocus?: () => void;
     searchQuery?: string;
     currentMatch?: { from: number; to: number } | null;
+    themeId?: string;
 }
 
 // Re-adding CodeEditorRef interface and forwardRef implementation
@@ -41,6 +42,7 @@ export const CodeEditor = React.memo(React.forwardRef<CodeEditorRef, CodeEditorP
         className,
         autoHeight = false,
         onFocus,
+        themeId,
     } = props;
     // Re-implemented detailed extensions and imperative handle
     const editorRef = React.useRef<any>(null);
@@ -131,10 +133,24 @@ export const CodeEditor = React.memo(React.forwardRef<CodeEditorRef, CodeEditorP
         if (word.from === word.to && !context.explicit) return null;
 
         const variables = new Map<string, string>();
-        const snippets = useStore.getState().snippets;
+        const state = useStore.getState();
+        const snippets = state.snippets;
+        const themes = state.themes;
+
+        // Find snippets relevant to the current theme
+        let relevantSnippetIds = new Set<string>();
+        if (themeId) {
+            const currentTheme = themes.find(t => t.id === themeId);
+            if (currentTheme) {
+                currentTheme.items.forEach(item => relevantSnippetIds.add(item.snippetId));
+            }
+        }
 
         snippets.forEach(snippet => {
             if (snippet.type !== 'css') return;
+            // Filter by theme if themeId is provided
+            if (themeId && !relevantSnippetIds.has(snippet.id)) return;
+
             const regex = /--([-\w]+):\s*([^;]+)/g;
             let match;
             while ((match = regex.exec(snippet.content)) !== null) {
@@ -152,7 +168,7 @@ export const CodeEditor = React.memo(React.forwardRef<CodeEditorRef, CodeEditorP
             from: word.from,
             options
         };
-    }, [mode]);
+    }, [mode, themeId]);
 
     // Search highlighting extension
     const searchHighlightExtension = React.useMemo(() => {

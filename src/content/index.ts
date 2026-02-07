@@ -63,6 +63,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         };
 
         try {
+            // 1. Scan via Stylesheets (if accessible)
             for (const sheet of Array.from(document.styleSheets)) {
                 try {
                     // Check for CORS or access issues
@@ -81,11 +82,31 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                         }
                     }
                 } catch (e) {
-                    console.warn('TweakBench: Cannot access stylesheet rules (likely CORS)', e);
+                    // This is common for external stylesheets (CDNs, etc.)
                 }
             }
+
+            // 2. Fallback/Supplement: Scan current computed root variables
+            // This bypasses CORS because it reads the computed values of the element
+            // Most CSS variables are defined on :root/html
+            const rootStyle = window.getComputedStyle(document.documentElement);
+            const bodyStyle = window.getComputedStyle(document.body);
+
+            const scanElement = (style: CSSStyleDeclaration, scope: string) => {
+                for (let i = 0; i < style.length; i++) {
+                    const propName = style[i];
+                    if (propName.startsWith('--')) {
+                        const value = style.getPropertyValue(propName).trim();
+                        addVar(scope, propName, value);
+                    }
+                }
+            };
+
+            scanElement(rootStyle, ':root');
+            scanElement(bodyStyle, 'body');
+
         } catch (e) {
-            console.error('TweakBench: Error scanning stylesheets', e);
+            console.error('TweakBench: Error scanning variables', e);
         }
 
         sendResponse({ variables });
