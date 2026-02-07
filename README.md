@@ -1,73 +1,70 @@
-# React + TypeScript + Vite
+# TweakBench
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+TweakBench is a powerful browser extension designed for power users, developers, and designers who need to quickly experiment with and customize the look and feel of web pages. It allows you to inject CSS and HTML snippets into any webpage, organized into reusable **Themes** and **Domain Groups**.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Thematic Organization**: Group your snippets into themes for different purposes (e.g., "Dark Mode Fixes", "UI Cleanups").
+- **Domain Groups**: Target specific websites or groups of domains with sets of themes.
+- **Library & Local Snippets**: Maintain a global library of reusable snippets or create theme-specific local overrides.
+- **Real-time Injection**: See your changes instantly without page reloads.
+- **Modern UI**: A sleek React-based side panel interface for managing your tweaks without leaving the page.
+- **State Management**: Robust state handling powered by Zustand.
 
-## React Compiler
+## Getting Started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Prerequisites
 
-## Expanding the ESLint configuration
+- Node.js (v18 or higher recommended)
+- npm
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Installation & Local Setup
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/your-username/TweakBench.git
+   cd TweakBench
+   ```
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+3. **Build the extension**:
+   ```bash
+   npm run build
+   ```
+   This command compiles the React UI and the background/content scripts into the `dist` directory.
+
+4. **Load into Chrome**:
+   - Open Chrome and navigate to `chrome://extensions/`.
+   - Enable **Developer mode** in the top right.
+   - Click **Load unpacked** and select the `dist` folder in the project directory.
+
+## Development
+
+To run the project in development mode with Hot Module Replacement (HMR) for the side panel UI:
+
+```bash
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+> [!NOTE]
+> Changes to the background script or content scripts usually require building the project and refreshing the extension in the `chrome://extensions/` page.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Contributing
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Contributions are welcome! If you'd like to improve TweakBench, please follow these steps:
+
+1. Fork the repository.
+2. Create a new branch for your feature or bugfix.
+3. Ensure your code follows the project's conventions (e.g., using TypeScript and sentence case for UI labels).
+4. Submit a Pull Request with a clear description of your changes.
+
+## Acknowledgments
+
+This project was mostly generated using **Gemini**, an advanced AI by Google. The core architecture, implementation details, and even this documentation were developed in collaboration with AI to demonstrate the potential of agentic coding workflows.
+
+---
+Built with ❤️ for the tweaking community.
