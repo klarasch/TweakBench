@@ -1,11 +1,14 @@
 # What needs to be done
 
+Note: [ASK] means that ALWAYS ask before doing it
+
 ## Big new things
 
 ### Add JS panels
 Actually, it's already possible to inject JS through injecting ```<script>``` tag, but it's not clean. We'd need to discuss the impact and implications across the UI first. 
 
 ## Improvements (1 – least priority, 5 — highest priority)
+[ ] 1 [ASK]: In theme detail and theme list, add "export merged CSS / JS"
 
 ## Bugs (1 – non-critical, 5 – critical)
 

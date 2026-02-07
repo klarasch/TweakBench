@@ -6,6 +6,8 @@ const STORAGE_KEY = 'tweakbench_data';
 const injectedStyles = new Map<string, HTMLStyleElement>();
 const injectedElements = new Map<string, HTMLElement>();
 
+let lastProcessedTimestamp: number = 0;
+
 let updateTimeout: any = null;
 let transitionTimeout: any = null;
 const TRANSITION_DURATION = 250; // ms
@@ -98,6 +100,21 @@ function debouncedUpdate(state: AppState) {
 }
 
 function updateStyles(state: AppState) {
+    // Deduplication check: if this state is older or same as what we just processed, skip.
+    // We use a timestamp (or could hash the entire state, but this is lighter).
+    // Note: AppState doesn't necessarily have a global updatedAt, but themes do.
+    // Let's use the max updatedAt across all themes + snippets.
+    const latestChange = Math.max(
+        ...state.themes.map(t => t.updatedAt || 0),
+        ...state.snippets.map(s => s.updatedAt || 0)
+    );
+
+    if (latestChange > 0 && latestChange <= lastProcessedTimestamp) {
+        console.log('TweakBench: Skipping redundant update (already processed or older)');
+        return;
+    }
+    lastProcessedTimestamp = latestChange;
+
     console.log('TweakBench: Updating Styles/HTML', state);
     startTransition();
     const activeSnippetIds = new Set<string>();
