@@ -36,9 +36,11 @@
     - Moved domain group selection checkboxes to the left in selection mode to align with individual theme checkboxes.
 
 ## Other instructions
+- Try to maintain clean and scalable code
 - Maintain this document
 – Always decide whether user guide needs to be updated and do it if needed
 – Maintain a changelog for new features and changes
 — Maintain a non-public changelog with one-liner summarizations of changes
 – Always suggest a new version number when appropriate
-– Always take a look at todo.md to check whether there are any tasks that can be done together with the current task (in controlled, relevant way — decide on reasonable chunks and don't do too unrelated things) and update todo.md accordingly
+– Always take a look at todo.md to check whether there are any tasks that can be done together with the current task (in controlled, relevant way — decide on reasonable chunks and don't do too unrelated things) and maintain todo.md accordingly
+— Ask for clarifications when needed
