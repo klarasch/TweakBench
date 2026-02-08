@@ -29,4 +29,5 @@
 - Fixed theme creation UX within groups (modal titles, hidden domains).
 - Styled "Replace" import mode as dangerous and added confirmation shield.
 - Corrected "Load starter kit" bug by fixing the fetch path and store integration.
-
+- Fixed regression in `addTheme` where a default "Main CSS" snippet was added to every new theme.
+- Bumped version to 0.1.8.

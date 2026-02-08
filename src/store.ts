@@ -131,7 +131,7 @@ export const useStore = create<Store>((set, get) => ({
         };
 
         set((state) => {
-            const shouldUseDefault = !themeData.items || themeData.items.length === 0;
+            const shouldUseDefault = themeData.items === undefined;
             const finalItems = shouldUseDefault ? [themeItem] : themeData.items!;
 
             const newTheme: Theme = {
