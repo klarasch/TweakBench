@@ -5,9 +5,10 @@ interface DomainListEditorProps {
     domainPatterns: string[];
     onUpdate: (newPatterns: string[]) => void;
     activeUrl: string | null;
+    autoFocus?: boolean;
 }
 
-export const DomainListEditor: React.FC<DomainListEditorProps> = ({ domainPatterns = [], onUpdate, activeUrl }) => {
+export const DomainListEditor: React.FC<DomainListEditorProps> = ({ domainPatterns = [], onUpdate, activeUrl, autoFocus = false }) => {
     const [newDomain, setNewDomain] = useState('');
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
     const [editValue, setEditValue] = useState('');
@@ -59,7 +60,7 @@ export const DomainListEditor: React.FC<DomainListEditorProps> = ({ domainPatter
                         onChange={e => setNewDomain(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleAdd()}
                         placeholder="example.com"
-                        autoFocus
+                        autoFocus={autoFocus}
                     />
                     <button
                         onClick={handleAdd}

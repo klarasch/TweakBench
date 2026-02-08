@@ -146,14 +146,14 @@ const SortableSnippetItem: React.FC<SortableSnippetItemProps> = ({
                             <Trash2 size={12} />
                         </button>
                         <button
-                            className="p-1 hover:bg-slate-700 rounded text-slate-500 hover:text-white"
+                            className="icon-button h-6 w-6"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 if (onSelect) onSelect(snippet);
                                 else if (onSelectSnippet) onSelectSnippet(snippet.id);
                             }}
                             onPointerDown={e => e.stopPropagation()}
-                            title="Add to Theme"
+                            title="Add to theme"
                         >
                             <Plus size={14} />
                         </button>
@@ -162,7 +162,7 @@ const SortableSnippetItem: React.FC<SortableSnippetItemProps> = ({
                     <button
                         onClick={(e) => handleKebabClick(e, snippet.id)}
                         onPointerDown={e => e.stopPropagation()}
-                        className="p-1 rounded text-slate-500 hover:text-white hover:bg-slate-700 opacity-50 group-hover:opacity-100"
+                        className="icon-button h-6 w-6 opacity-50 group-hover:opacity-100"
                     >
                         <MoreVertical size={14} />
                     </button>
@@ -271,7 +271,7 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
 
         return [
             {
-                label: 'Add to Theme',
+                label: 'Add to theme',
                 icon: <Plus size={14} />,
                 onClick: () => {
                     if (onSelect) onSelect(snippet);
@@ -288,7 +288,7 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
             },
             { separator: true },
             {
-                label: 'Delete Snippet',
+                label: 'Delete snippet',
                 icon: <Trash2 size={14} />,
                 danger: true,
                 onClick: () => setSnippetToDelete(snippetId)
@@ -371,7 +371,7 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
                     {onClose && (
                         <button
                             onClick={onClose}
-                            className="text-slate-400 hover:text-white transition-colors p-1.5 rounded-md hover:bg-slate-800"
+                            className="icon-button"
                             title="Close"
                         >
                             <X size={20} />
@@ -387,7 +387,7 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
                 onConfirm={() => {
                     if (snippetToDelete) deleteSnippet(snippetToDelete);
                 }}
-                title="Delete Snippet"
+                title="Delete snippet"
                 message={
                     <div className="flex flex-col gap-2">
                         <p>Are you sure you want to delete <strong>"{snippetToDeleteObj?.name}"</strong>?</p>
@@ -502,7 +502,7 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
                                     if (selectedIds.size > 0) setSelectedIds(new Set());
                                     else setSelectedIds(new Set(filteredSnippets.map(s => s.id)));
                                 }}
-                                className="text-slate-400 hover:text-white text-xs h-7"
+                                className="btn-ghost-muted text-xs h-7 px-2"
                             >
                                 {selectedIds.size > 0 ? 'Deselect all' : 'Select all'}
                             </Button>

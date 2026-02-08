@@ -2,8 +2,9 @@ import React from 'react';
 import { Globe } from 'lucide-react';
 import { Modal } from './ui/Modal';
 import { Button } from './ui/Button';
-import { DomainListEditor } from './DomainListEditor';
+import { DomainConfigSection } from './DomainConfigSection';
 import type { Theme } from '../types';
+import { getDomainFromUrl } from '../utils/domains';
 
 interface DomainConfigurationModalProps {
     isOpen: boolean;
@@ -31,9 +32,16 @@ export const DomainConfigurationModal: React.FC<DomainConfigurationModalProps> =
     // Initialize local patterns for create mode - MUST be before any conditional returns
     React.useEffect(() => {
         if (mode === 'create' && isOpen) {
-            setLocalPatterns([]);
+            let initialPatterns: string[] = [];
+            if (activeUrl) {
+                const domain = getDomainFromUrl(activeUrl);
+                if (domain) {
+                    initialPatterns = [domain];
+                }
+            }
+            setLocalPatterns(initialPatterns);
         }
-    }, [mode, isOpen]);
+    }, [mode, isOpen, activeUrl]);
 
     // Get themes to configure
     const themesToConfigure = groupId
@@ -102,35 +110,13 @@ export const DomainConfigurationModal: React.FC<DomainConfigurationModalProps> =
                 </Button>
             }
         >
-            {/* Run Everywhere Toggle */}
-            <div className="bg-slate-800/30 rounded-lg p-4 border border-slate-800 flex items-center justify-between mb-4">
-                <div className="flex flex-col gap-1">
-                    <span className="text-sm font-semibold text-slate-200">Run everywhere</span>
-                    <span className="text-xs text-slate-500">Inject code into all websites automatically</span>
-                </div>
-                <button
-                    onClick={() => {
-                        const isAll = patterns.includes('<all_urls>');
-                        if (isAll) updateDomains(patterns.filter(p => p !== '<all_urls>'));
-                        else updateDomains([...patterns, '<all_urls>']);
-                    }}
-                    className={`w-12 h-6 rounded-full relative transition-colors ${patterns.includes('<all_urls>') ? 'bg-green-500' : 'bg-slate-600'}`}
-                >
-                    <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-all ${patterns.includes('<all_urls>') ? 'left-7' : 'left-1'}`}></div>
-                </button>
-            </div>
-
-            {patterns.includes('<all_urls>') ? (
-                <div className="text-sm text-center py-8 text-slate-500 bg-slate-800/20 rounded-lg border border-dashed border-slate-800">
-                    {isGroup ? 'This group is' : 'This theme is'} currently active on <span className="font-semibold text-slate-300">all websites</span>.
-                </div>
-            ) : (
-                <DomainListEditor
-                    domainPatterns={patterns}
-                    onUpdate={updateDomains}
-                    activeUrl={activeUrl}
-                />
-            )}
+            <DomainConfigSection
+                domainPatterns={patterns}
+                onUpdate={updateDomains}
+                activeUrl={activeUrl}
+                isGroup={isGroup}
+                autoFocus={true}
+            />
         </Modal>
     );
 };

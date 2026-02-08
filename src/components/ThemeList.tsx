@@ -2,16 +2,15 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useStore } from '../store.ts';
 import { Plus, Trash2, Play, Pause, MoreVertical, Upload, Download, Globe, X, Copy, Link as LinkIcon, Ungroup } from 'lucide-react';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
-import { exportThemeToJS, exportThemeToCSS, parseThemeFromJS, exportAllData, importAllData } from '../utils/impexp.ts';
 import { getDomainFromUrl } from '../utils/domains.ts';
 import { Button } from './ui/Button';
-import { Modal } from './ui/Modal';
-import { ConfirmDialog } from './ui/Dialog';
 import { useToast } from './ui/Toast';
 import type { Theme } from '../types.ts';
-import { ThemeGroup } from './ThemeGroup'; // Import new component
-import { DomainConfigurationModal } from './DomainConfigurationModal'; // New import
-import { exportGroupToJSON } from '../utils/impexp.ts';
+import { ThemeGroup } from './ThemeGroup';
+import { DomainConfigurationModal } from './DomainConfigurationModal';
+import { useThemeListImportExport } from '../hooks/useThemeListImportExport.ts';
+import { ThemeListModals } from './ThemeList/ThemeListModals.tsx';
+
 import {
     DndContext,
     closestCenter,
@@ -39,42 +38,45 @@ import { SortableThemeItem } from './SortableThemeItem';
 export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }) => {
     // Selective selectors to minimize re-renders
     const themes = useStore(state => state.themes);
-    const snippets = useStore(state => state.snippets);
     const addTheme = useStore(state => state.addTheme);
     const deleteTheme = useStore(state => state.deleteTheme);
     const updateTheme = useStore(state => state.updateTheme);
-    const addSnippet = useStore(state => state.addSnippet);
-    const addSnippetToTheme = useStore(state => state.addSnippetToTheme);
     const globalEnabled = useStore(state => state.globalEnabled);
-    const activeThemeId = useStore(state => state.activeThemeId);
-    const importStoreData = useStore(state => state.importAllData);
     const reorderThemes = useStore(state => state.reorderThemes);
     const createThemeGroup = useStore(state => state.createThemeGroup);
     const ungroupThemes = useStore(state => state.ungroupThemes);
     const createEmptyGroup = useStore(state => state.createEmptyGroup);
+
 
     const { showToast } = useToast();
 
     // Creation Modal State
     const [isCreating, setIsCreating] = useState(false);
     const [newThemeName, setNewThemeName] = useState('');
-    const [scannedDomain, setScannedDomain] = useState<string | null>(null);
-    const [limitToDomain, setLimitToDomain] = useState(false);
+
+    const [newDomainPatterns, setNewDomainPatterns] = useState<string[]>([]);
     const [newThemeGroupId, setNewThemeGroupId] = useState<string | null>(null);
 
-    // Dialog States
+    const {
+        handleExport,
+        handleExportGroup,
+        handleExportAllData,
+        processImportContent,
+        executeThemeImport,
+        importStoreData: importStoreDataAction
+    } = useThemeListImportExport();
+
+    // Modals State
     const [themeToDelete, setThemeToDelete] = useState<string | null>(null);
     const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
     const [confirmBulkExport, setConfirmBulkExport] = useState<'js' | 'css' | null>(null);
     const [groupToDelete, setGroupToDelete] = useState<string | null>(null);
+    const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+    const [importMode, setImportMode] = useState<'merge' | 'replace' | 'skip-duplicates'>('merge');
+    const [pendingImportData, setPendingImportData] = useState<any>(null);
 
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const allDataFileInputRef = React.useRef<HTMLInputElement>(null);
-
-    // Import All Data State
-    const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
-    const [importMode, setImportMode] = useState<'merge' | 'replace' | 'skip-duplicates'>('merge');
-    const [pendingImportData, setPendingImportData] = useState<{ themes: any[], snippets: any[], globalEnabled: boolean, activeThemeId?: string | null } | null>(null);
 
     // Selection State
     const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -256,17 +258,18 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
     }, []);
 
     useEffect(() => {
-        if (isCreating && activeUrl) {
+        if ((isCreating || isCreatingGroup) && activeUrl) {
             try {
                 const domain = getDomainFromUrl(activeUrl);
-                setScannedDomain(domain);
-                // Default to unchecked as per UX requirement ("quick option")
-                setLimitToDomain(false);
+                // Automatically add detected domain to patterns but keep "Run everywhere" (empty patterns) off by default
+                if (domain && !newDomainPatterns.includes(domain)) {
+                    setNewDomainPatterns(prev => [...prev, domain]);
+                }
             } catch (e) {
-                setScannedDomain(null);
+                // Ignore parsing errors
             }
         }
-    }, [isCreating, activeUrl]);
+    }, [isCreating, isCreatingGroup, activeUrl]);
 
     // Clear selection when exiting selection mode
     useEffect(() => {
@@ -278,51 +281,25 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
     const handleCreate = () => {
         if (!newThemeName.trim()) return;
 
-        let domainPatterns: string[];
-        if (newThemeGroupId) {
-            // Inherit from group
-            const groupTheme = themes.find(t => t.groupId === newThemeGroupId);
-            domainPatterns = groupTheme ? [...groupTheme.domainPatterns] : ['<all_urls>'];
-        } else {
-            domainPatterns = limitToDomain && scannedDomain
-                ? [scannedDomain]
-                : ['<all_urls>'];
-        }
+        const domainPatterns = newDomainPatterns.length > 0 ? newDomainPatterns : ['<all_urls>'];
 
         const newId = addTheme({
             name: newThemeName.trim(),
             domainPatterns,
-            items: [],
             isActive: true,
             ...(newThemeGroupId && { groupId: newThemeGroupId })
         });
 
         setNewThemeName('');
         setIsCreating(false);
-        setLimitToDomain(false);
+        setNewDomainPatterns([]);
         setNewThemeGroupId(null);
 
         // Direct navigation to the new theme
         onSelectTheme(newId);
     };
 
-    const handleExportGroup = (groupId: string) => {
-        const groupThemes = themes.filter(t => t.groupId === groupId);
-        const groupName = groupThemes.length > 0 ? groupThemes[0].domainPatterns[0] || 'domain_group' : 'domain_group';
-        const content = exportGroupToJSON(groupId, themes, snippets);
-        const blob = new Blob([content], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `TweakBench_Group_${groupName.replace(/[*.]/g, '_')}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-        showToast('Group exported');
-    };
 
-    const handleImportClick = () => {
-        fileInputRef.current?.click();
-    };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -331,61 +308,25 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
         const reader = new FileReader();
         reader.onload = (event) => {
             const content = event.target?.result as string;
+            const result = processImportContent(content);
 
-            // 1. Try to parse as JSON (Full workspace or Group)
-            try {
-                const importedData = importAllData(content);
-                if (importedData) {
-                    if (themes.length === 0) {
-                        importStoreData(importedData, 'replace');
-                        showToast(`Imported ${importedData.themes.length} themes`);
-                    } else {
-                        setPendingImportData(importedData);
-                        setIsImportDialogOpen(true);
-                    }
-                    return;
+            if (result.type === 'full') {
+                if (themes.length === 0) {
+                    importStoreDataAction(result.data, 'replace');
+                    showToast(`Imported ${result.data.themes.length} themes`);
+                } else {
+                    setPendingImportData(result.data);
+                    setIsImportDialogOpen(true);
                 }
-            } catch (e) {
-                // Not JSON or parse error, try JS
-            }
-
-            // 2. Try to parse as JS (Single theme)
-            const importedTheme = parseThemeFromJS(content);
-            if (importedTheme) {
-                const newThemeId = addTheme({
-                    name: importedTheme.name,
-                    domainPatterns: importedTheme.domainPatterns,
-                    items: [],
-                    isActive: true
-                });
-                importedTheme.snippets.forEach(s => {
-                    const newSnippetId = addSnippet({
-                        name: s.name,
-                        type: s.type,
-                        content: s.content,
-                        relatedSnippetIds: [],
-                        isLibraryItem: false
-                    });
-                    addSnippetToTheme(newThemeId, newSnippetId);
-                });
-                showToast(`Imported theme: ${importedTheme.name}`);
+            } else if (result.type === 'theme') {
+                const newId = executeThemeImport(result.theme);
+                onSelectTheme(newId);
             } else {
                 showToast('Failed to parse file. Please ensure it\'s a valid TweakBench export.', 'error');
             }
         };
         reader.readAsText(file);
         e.target.value = '';
-    };
-
-    const handleExportAllData = () => {
-        const content = exportAllData(themes, snippets, globalEnabled, activeThemeId);
-        const blob = new Blob([content], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `TweakBench_Backup_${new Date().toISOString().split('T')[0]}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
     };
 
     const handleImportAllDataClick = () => {
@@ -399,14 +340,13 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
         const reader = new FileReader();
         reader.onload = (event) => {
             const content = event.target?.result as string;
-            const importedData = importAllData(content);
-            if (importedData) {
+            const result = processImportContent(content);
+            if (result.type === 'full') {
                 if (themes.length === 0) {
-                    // Skip dialog if no themes exist
-                    importStoreData(importedData, 'replace');
-                    showToast(`Imported ${importedData.themes.length} themes and ${importedData.snippets.length} snippets`);
+                    importStoreDataAction(result.data, 'replace');
+                    showToast(`Imported ${result.data.themes.length} themes and ${result.data.snippets.length} snippets`);
                 } else {
-                    setPendingImportData(importedData);
+                    setPendingImportData(result.data);
                     setIsImportDialogOpen(true);
                 }
             } else {
@@ -420,7 +360,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
     const handleConfirmImport = () => {
         if (!pendingImportData) return;
 
-        const result = importStoreData(pendingImportData, importMode);
+        const result = importStoreDataAction(pendingImportData, importMode);
         setIsImportDialogOpen(false);
         setPendingImportData(null);
 
@@ -435,26 +375,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
         showToast(message);
     };
 
-    const handleExport = (themeId: string, type: 'js' | 'css') => {
-        const theme = themes.find(t => t.id === themeId);
-        if (!theme) return;
-        let content = '';
-        let extension = '';
-        if (type === 'js') {
-            content = exportThemeToJS(theme, snippets);
-            extension = 'tb.js';
-        } else {
-            content = exportThemeToCSS(theme, snippets);
-            extension = 'css';
-        }
-        const blob = new Blob([content], { type: type === 'js' ? 'text/javascript' : 'text/css' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${theme.name.replace(/\s+/g, '_')}.${extension}`;
-        a.click();
-        URL.revokeObjectURL(url);
-    };
+
 
     const handleToggleSelection = (id: string) => {
         setSelectedThemeIds(prev => {
@@ -516,7 +437,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
             const groupThemes = themes.filter(t => t.groupId === groupId);
             if (groupThemes.length > 0) {
                 const domainPatterns = groupThemes[0].domainPatterns;
-                setScannedDomain(domainPatterns[0] || null);
+                setNewDomainPatterns([...domainPatterns]);
                 setNewThemeGroupId(groupId);
                 setIsCreating(true);
             }
@@ -546,7 +467,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                         if (groupThemes.length > 0) {
                             // Set the group ID and domain patterns, then open creation dialog
                             const domainPatterns = groupThemes[0].domainPatterns;
-                            setScannedDomain(domainPatterns[0] || null);
+                            setNewDomainPatterns([...domainPatterns]);
                             setNewThemeGroupId(groupId);
                             setIsCreating(true);
                         }
@@ -681,13 +602,12 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
         ];
     };
 
-    const themeToDeleteDetails = themeToDelete ? themes.find(t => t.id === themeToDelete) : null;
 
     const getMenuItemsForHeader = (): ContextMenuItem[] => [
         {
             label: 'Import theme or group',
             icon: <Upload size={14} className="text-green-400" />,
-            onClick: handleImportClick
+            onClick: () => fileInputRef.current?.click()
         },
         { separator: true },
         {
@@ -728,7 +648,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                         variant="ghost"
                                         size="sm"
                                         onClick={toggleAllGroups}
-                                        className="text-slate-400 hover:text-white px-2"
+                                        className="btn-ghost-muted px-2"
                                         title={allGroupsCollapsed ? 'Expand all groups' : 'Collapse all groups'}
                                     >
                                         {allGroupsCollapsed ? 'Expand all' : 'Collapse all'}
@@ -743,7 +663,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                     Select
                                 </Button>
 
-                                <div className="w-px h-4 bg-slate-800 mx-1" />
+                                <div className="divider-v" />
 
                                 {/* Compact view for narrow screens */}
                                 <div className="md:hidden">
@@ -784,7 +704,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                         const rect = e.currentTarget.getBoundingClientRect();
                                         setMenuState({ x: rect.left, y: rect.bottom, themeId: 'HEADER_MENU' });
                                     }}
-                                    className="p-1.5 rounded hover:bg-slate-700 text-slate-300"
+                                    className="icon-button"
                                     title="More options"
                                 >
                                     <MoreVertical size={16} />
@@ -797,7 +717,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                         variant="ghost"
                                         size="sm"
                                         onClick={toggleAllGroups}
-                                        className="text-slate-400 hover:text-white px-2"
+                                        className="btn-ghost-muted px-2"
                                         title={allGroupsCollapsed ? 'Expand all groups' : 'Collapse all groups'}
                                     >
                                         {allGroupsCollapsed ? 'Expand all' : 'Collapse all'}
@@ -848,99 +768,35 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                 </div>
 
                 {/* Create Theme Modal */}
-                <Modal
-                    isOpen={isCreating}
-                    onClose={() => setIsCreating(false)}
-                    title={newThemeGroupId ? "Add theme to group" : "Create new theme"}
-                    size="sm"
-                    footer={
-                        <>
-                            <Button variant="ghost" size="sm" onClick={() => setIsCreating(false)}>
-                                Cancel
-                            </Button>
-                            <Button
-                                variant="filled"
-                                size="sm"
-                                onClick={handleCreate}
-                                disabled={!newThemeName.trim()}
-                            >
-                                {newThemeGroupId ? "Add to group" : "Create theme"}
-                            </Button>
-                        </>
-                    }
-                >
-                    <div className="flex flex-col gap-4">
-                        <div className="flex flex-col gap-1.5">
-                            <label className="text-xs font-semibold text-slate-400 uppercase">Theme name</label>
-                            <input
-                                type="text"
-                                value={newThemeName}
-                                onChange={(e) => setNewThemeName(e.target.value)}
-                                placeholder="My Awesome Theme"
-                                className="w-full bg-slate-950 border border-slate-800 rounded p-2 text-sm text-white focus:border-blue-500 focus:outline-none transition-colors"
-                                autoFocus
-                                onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-                            />
-                        </div>
-
-                        {!newThemeGroupId && scannedDomain && (
-                            <div className="flex items-start gap-3 p-3 bg-slate-800/50 rounded border border-slate-800/50">
-                                <div className="mt-0.5">
-                                    <input
-                                        type="checkbox"
-                                        id="limitDomain"
-                                        checked={limitToDomain}
-                                        onChange={(e) => setLimitToDomain(e.target.checked)}
-                                        className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-blue-500 focus:ring-offset-slate-900"
-                                    />
-                                </div>
-                                <label htmlFor="limitDomain" className="flex flex-col cursor-pointer select-none">
-                                    <span className="text-sm font-medium text-slate-200 flex items-center gap-1.5">
-                                        Limit to {scannedDomain}
-                                        <Globe size={12} className="text-slate-500" />
-                                    </span>
-                                    <span className="text-xs text-slate-500 mt-0.5">
-                                        This theme will only activate on this domain. You can change this later.
-                                    </span>
-                                </label>
-                            </div>
-                        )}
-                    </div>
-                </Modal>
-
-                {/* Delete Confirmation */}
-                <ConfirmDialog
-                    isOpen={!!themeToDelete}
-                    onClose={() => setThemeToDelete(null)}
-                    onConfirm={() => {
-                        if (themeToDelete) deleteTheme(themeToDelete);
-                    }}
-                    title="Delete theme"
-                    message={
-                        <span>
-                            Are you sure you want to delete theme <strong>"{themeToDeleteDetails?.name}"</strong>? This action cannot be undone.
-                        </span>
-                    }
-                    confirmLabel="Delete"
-                    isDangerous
-                />
-
-                {/* Bulk Delete Confirmation */}
-                <ConfirmDialog
-                    isOpen={confirmBulkDelete}
-                    onClose={() => setConfirmBulkDelete(false)}
-                    onConfirm={confirmBulkDeleteAction}
-                    title="Delete themes"
-                    message={`Remove ${selectedThemeIds.size} theme${selectedThemeIds.size === 1 ? '' : 's'}? This action cannot be undone.`}
-                    confirmLabel="Delete"
-                    isDangerous
-                />
-
-                {/* Group Delete Confirmation */}
-                <ConfirmDialog
-                    isOpen={!!groupToDelete}
-                    onClose={() => setGroupToDelete(null)}
-                    onConfirm={() => {
+                <ThemeListModals
+                    isCreating={isCreating}
+                    setIsCreating={setIsCreating}
+                    newThemeName={newThemeName}
+                    setNewThemeName={setNewThemeName}
+                    newDomainPatterns={newDomainPatterns}
+                    setNewDomainPatterns={setNewDomainPatterns}
+                    activeUrl={activeUrl}
+                    handleCreate={handleCreate}
+                    isImportDialogOpen={isImportDialogOpen}
+                    setIsImportDialogOpen={setIsImportDialogOpen}
+                    importMode={importMode}
+                    setImportMode={setImportMode}
+                    pendingImportData={pendingImportData}
+                    handleConfirmImport={handleConfirmImport}
+                    themeToDelete={themeToDelete}
+                    setThemeToDelete={setThemeToDelete}
+                    themeToDeleteName={themes.find(t => t.id === themeToDelete)?.name}
+                    confirmDelete={() => { if (themeToDelete) deleteTheme(themeToDelete); setThemeToDelete(null); }}
+                    confirmBulkDelete={confirmBulkDelete}
+                    setConfirmBulkDelete={setConfirmBulkDelete}
+                    selectedCount={selectedThemeIds.size}
+                    confirmBulkDeleteAction={confirmBulkDeleteAction}
+                    confirmBulkExport={confirmBulkExport}
+                    setConfirmBulkExport={setConfirmBulkExport}
+                    executeBulkExport={executeBulkExport}
+                    groupToDelete={groupToDelete}
+                    setGroupToDelete={setGroupToDelete}
+                    confirmGroupDelete={() => {
                         if (groupToDelete) {
                             const groupThemes = themes.filter(t => t.groupId === groupToDelete);
                             groupThemes.forEach(t => deleteTheme(t.id));
@@ -948,111 +804,19 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                             setGroupToDelete(null);
                         }
                     }}
-                    title="Delete group"
-                    message={(() => {
-                        if (!groupToDelete) return '';
-                        const groupThemes = themes.filter(t => t.groupId === groupToDelete);
-                        return `Delete this domain group and all ${groupThemes.length} theme${groupThemes.length === 1 ? '' : 's'} in it? This action cannot be undone.`;
-                    })()}
-                    confirmLabel="Delete"
-                    isDangerous
+                    isCreatingGroup={isCreatingGroup}
+                    setIsCreatingGroup={setIsCreatingGroup}
+                    newGroupName={newThemeName}
+                    handleCreateGroup={() => {
+                        const domainPatterns = newDomainPatterns.length > 0 ? newDomainPatterns : ['<all_urls>'];
+                        createEmptyGroup(domainPatterns);
+                        setIsCreatingGroup(false);
+                        setNewThemeName('');
+                        setNewDomainPatterns([]);
+                        showToast('Domain group created');
+                    }}
                 />
 
-                {/* Bulk Export Confirmation */}
-                <ConfirmDialog
-                    isOpen={!!confirmBulkExport}
-                    onClose={() => setConfirmBulkExport(null)}
-                    onConfirm={() => {
-                        if (confirmBulkExport) {
-                            executeBulkExport(confirmBulkExport);
-                            setConfirmBulkExport(null);
-                        }
-                    }}
-                    title="Export themes"
-                    message={`Export ${selectedThemeIds.size} theme files? This will download multiple files.`}
-                    confirmLabel="Export"
-                />
-
-                {/* Import Mode Selection Dialog */}
-                <Modal
-                    isOpen={isImportDialogOpen}
-                    onClose={() => {
-                        setIsImportDialogOpen(false);
-                        setPendingImportData(null);
-                    }}
-                    title="Import all data"
-                    size="sm"
-                    footer={
-                        <>
-                            <Button variant="ghost" size="sm" onClick={() => {
-                                setIsImportDialogOpen(false);
-                                setPendingImportData(null);
-                            }}>
-                                Cancel
-                            </Button>
-                            <Button
-                                variant="filled"
-                                size="sm"
-                                onClick={handleConfirmImport}
-                            >
-                                Import
-                            </Button>
-                        </>
-                    }
-                >
-                    <div className="flex flex-col gap-4">
-                        <p className="text-sm text-slate-300">
-                            Choose how to import the data:
-                        </p>
-
-                        <div className="flex flex-col gap-2">
-                            <label className="flex items-start gap-3 p-3 bg-slate-800/50 rounded border border-slate-700 cursor-pointer hover:border-blue-500/50 transition-colors">
-                                <input
-                                    type="radio"
-                                    name="importMode"
-                                    value="merge"
-                                    checked={importMode === 'merge'}
-                                    onChange={(e) => setImportMode(e.target.value as 'merge')}
-                                    className="mt-0.5"
-                                />
-                                <div className="flex flex-col">
-                                    <span className="text-sm font-semibold text-slate-200">Merge (recommended)</span>
-                                    <span className="text-xs text-slate-400">Add imported items alongside existing ones</span>
-                                </div>
-                            </label>
-
-                            <label className="flex items-start gap-3 p-3 bg-slate-800/50 rounded border border-slate-700 cursor-pointer hover:border-blue-500/50 transition-colors">
-                                <input
-                                    type="radio"
-                                    name="importMode"
-                                    value="skip-duplicates"
-                                    checked={importMode === 'skip-duplicates'}
-                                    onChange={(e) => setImportMode(e.target.value as 'skip-duplicates')}
-                                    className="mt-0.5"
-                                />
-                                <div className="flex flex-col">
-                                    <span className="text-sm font-semibold text-slate-200">Skip duplicates</span>
-                                    <span className="text-xs text-slate-400">Only import items with unique names</span>
-                                </div>
-                            </label>
-
-                            <label className="flex items-start gap-3 p-3 bg-slate-800/50 rounded border border-red-900/50 cursor-pointer hover:border-red-500/50 transition-colors">
-                                <input
-                                    type="radio"
-                                    name="importMode"
-                                    value="replace"
-                                    checked={importMode === 'replace'}
-                                    onChange={(e) => setImportMode(e.target.value as 'replace')}
-                                    className="mt-0.5"
-                                />
-                                <div className="flex flex-col">
-                                    <span className="text-sm font-semibold text-red-400">Replace all</span>
-                                    <span className="text-xs text-slate-400">⚠️ Delete all existing data and replace with import</span>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-                </Modal>
 
                 <div className="flex flex-col gap-2">
                     {themes.length === 0 && !isCreating && (

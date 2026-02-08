@@ -81,7 +81,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
                         size="sm"
                         onClick={onPrevious}
                         disabled={totalMatches === 0}
-                        className="h-7 w-7 p-0 text-slate-400 hover:text-white disabled:opacity-30"
+                        className="h-7 w-7 p-0 btn-ghost-muted disabled:opacity-30"
                         title="Previous match (Shift+Enter)"
                     >
                         <ChevronUp size={16} />
@@ -91,7 +91,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
                         size="sm"
                         onClick={onNext}
                         disabled={totalMatches === 0}
-                        className="h-7 w-7 p-0 text-slate-400 hover:text-white disabled:opacity-30"
+                        className="h-7 w-7 p-0 btn-ghost-muted disabled:opacity-30"
                         title="Next match (Enter)"
                     >
                         <ChevronDown size={16} />
@@ -104,7 +104,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
                     variant="ghost"
                     size="sm"
                     onClick={onClose}
-                    className="h-7 w-7 p-0 text-slate-400 hover:text-white"
+                    className="h-7 w-7 p-0 btn-ghost-muted"
                     title="Close search (Esc)"
                 >
                     <X size={16} />

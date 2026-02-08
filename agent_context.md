@@ -27,3 +27,11 @@ TweakBench is a browser extension tool (built with Vite, React, TypeScript) for 
 - Preserve sentence case in UI.
 - Use subtle animations for transitions.
 - Prefer small, targeted diffs.
+
+## Other instructions (DO NOT EDIT THIS SECTION)
+- Maintain other sections of this document
+– Always decide whether user guide needs to be updated and do it if needed
+– Maintain CHANGELOG.md for new features and changes
+— Maintain INTERNAL_CHANGELOG.md with short timestamped summarizations of changes and decisions
+– Always suggest a new version number when appropriate
+– Always take a look at todo.md to check whether there are any tasks that can be done together with the current task (in controlled, relevant way — decide on reasonable chunks and don't do too unrelated things) and update todo.md accordingly

@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **UI Refinement**: Fixed misleading "Group active" badge logic in theme headers and items when no other themes are active.
 - **Bug Fix**: Duplicated themes in groups are now correctly created as inactive.
 
+### Refactored
+- **Tailwind Shorthands**: Introduced `@apply` classes in `index.css` for consistent styling across buttons, cards, and icons.
+- **ThemeList Component**: Decomposed the massive `ThemeList.tsx` by extracting import/export logic into `useThemeListImportExport` hook and modal UI into `ThemeListModals.tsx`.
+- **ThemeDetail Component**: Simplified `ThemeDetail.tsx` by extracting search and selection logic into custom hooks and consolidating modals.
+- **Improved Creation Dialogues**: Replaced "Detected domain" quick-add with a full domain configuration section in Theme and Group creation modals, ensuring consistency with the main configuration UI. "Run everywhere" now defaults to **OFF**.
+
+
 ## [0.1.6] - 2026-02-07
 
 ## [0.1.5] - 2026-02-07

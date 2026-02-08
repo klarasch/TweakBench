@@ -153,7 +153,7 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                     </div>
                 )}
 
-                <button className="text-slate-500 hover:text-white transition-colors" onClick={(e) => {
+                <button className="btn-ghost-muted" onClick={(e) => {
                     e.stopPropagation(); // prevent triggering selection if just collapsing
                     onToggleCollapse(item.id);
                 }}>
@@ -222,7 +222,7 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
 
                                 {/* Override Badge */}
                                 {item.overrides?.content !== undefined && (
-                                    <span className="text-[9px] font-bold text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded uppercase tracking-wider flex-none">
+                                    <span className="badge text-purple-400 bg-purple-500/10 flex-none">
                                         Override
                                     </span>
                                 )}
@@ -305,7 +305,7 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                         </div>
                     )}
 
-                    <div className="h-4 w-px bg-slate-800"></div>
+                    <div className="divider-v"></div>
 
                     {/* Toggle Switch */}
                     <Toggle
@@ -344,7 +344,7 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                             <span className="text-[10px] text-slate-500 font-mono uppercase">Target</span>
                             <input
                                 className="bg-transparent text-slate-300 text-sm font-mono w-full outline-none placeholder:text-slate-700"
-                                placeholder="CSS Selector (e.g. .container)"
+                                placeholder="CSS selector (e.g. .container)"
                                 value={item.overrides?.selector ?? s.selector ?? ''}
                                 onChange={(e) => useStore.getState().updateThemeItem(themeId, item.id, {
                                     overrides: { ...item.overrides, selector: e.target.value }

@@ -157,11 +157,11 @@ export const StructureSidebar: React.FC<StructureSidebarProps> = ({
                                                         )}
                                                         {s.isLibraryItem !== false && (
                                                             <div className="relative flex items-center justify-center">
-                                                                <span className="text-purple-400" title="Library Snippet">
+                                                                <span className="text-purple-400" title="Library snippet">
                                                                     <BookOpen size={12} />
                                                                 </span>
                                                                 {item.overrides?.content !== undefined && (
-                                                                    <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-yellow-500 rounded-full border border-slate-900" title="Has Overrides" />
+                                                                    <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-yellow-500 rounded-full border border-slate-900" title="Has overrides" />
                                                                 )}
                                                             </div>
                                                         )}
@@ -175,7 +175,7 @@ export const StructureSidebar: React.FC<StructureSidebarProps> = ({
                                                 checked={item.isEnabled}
                                                 disabled={!theme.isActive}
                                                 onChange={() => toggleThemeItem(theme.id, item.id)}
-                                                title={!theme.isActive ? "Enable theme to toggle snippets" : "Toggle Snippet"}
+                                                title={!theme.isActive ? "Enable theme to toggle snippets" : "Toggle snippet"}
                                                 size="sm"
                                             />
                                             <button

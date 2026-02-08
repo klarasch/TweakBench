@@ -154,7 +154,7 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
 
                     <div
                         className="p-1 rounded bg-blue-500/10 text-blue-400"
-                        title="Switch Group: Only one theme active at a time"
+                        title="Domain group: only one theme active at a time"
                     >
                         <LinkIcon size={12} />
                     </div>

@@ -2,6 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  .btn-ghost-muted {
+    @apply text-slate-400 hover:text-white transition-colors duration-200;
+  }
+
+  .icon-button {
+    @apply p-1.5 rounded hover:bg-slate-700 text-slate-300 transition-colors duration-200;
+  }
+
+  .card-border {
+    @apply border border-slate-700 rounded-lg;
+  }
+
+  .text-muted {
+    @apply text-sm text-slate-400;
+  }
+
+  .sidebar-container {
+    @apply bg-slate-900/50 border-r border-slate-800 flex flex-col;
+  }
+
+  .divider-v {
+    @apply w-px h-4 bg-slate-800 mx-1 shrink-0;
+  }
+
+  .badge {
+    @apply text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider;
+  }
+}
+
+
+
 html,
 body {
   width: 100%;

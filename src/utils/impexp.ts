@@ -228,20 +228,37 @@ export const importAllData = (jsonContent: string): ExportedData['data'] | null 
         const isGroupExport = (parsed as any).type === 'group';
         const data = isGroupExport ? (parsed as any).data : (parsed as any).data || parsed;
 
-        // Validate structure
-        if (!data.themes || !Array.isArray(data.themes)) {
-            return null;
-        }
+        console.log('impexp.ts: Parsed data', {
+            hasThemes: !!data.themes,
+            themesType: typeof data.themes,
+            themesCount: data.themes?.length,
+            hasSnippets: !!data.snippets,
+            snippetsCount: data.snippets?.length
+        });
 
         // Basic validation of required fields
+        const invalidThemes = data.themes.filter((t: any) =>
+            !(t.id && t.name && Array.isArray(t.domainPatterns) && Array.isArray(t.items))
+        );
+
+        if (invalidThemes.length > 0) {
+            console.warn('impexp.ts: Some themes are invalid', invalidThemes.map((t: any) => ({ name: t.name, hasItems: !!t.items, isArray: Array.isArray(t.items) })));
+        }
+
         const hasValidThemes = data.themes.every((t: any) =>
             t.id && t.name && Array.isArray(t.domainPatterns) && Array.isArray(t.items)
         );
 
-        if (!hasValidThemes) return null;
+        if (!hasValidThemes) {
+            console.error('impexp.ts: Validation failed for one or more themes');
+            return null;
+        }
 
         // If it's a full backup, it should have snippets too
-        if (data.snippets && !Array.isArray(data.snippets)) return null;
+        if (data.snippets && !Array.isArray(data.snippets)) {
+            console.error('impexp.ts: Snippets field is present but not an array');
+            return null;
+        }
 
         return {
             themes: data.themes,

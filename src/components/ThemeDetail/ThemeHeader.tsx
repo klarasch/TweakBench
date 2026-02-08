@@ -51,7 +51,7 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
 
     return (
         <div className="flex-none flex items-start gap-2 p-2 sm:p-4 border-b border-slate-800 bg-slate-900 z-10 relative">
-            <button onClick={onBack} className="p-1 mt-0.5 hover:bg-slate-800 rounded text-slate-400 hover:text-white">
+            <button onClick={onBack} className="p-1 mt-0.5 rounded hover:bg-slate-800 btn-ghost-muted">
                 <ArrowLeft size={18} />
             </button>
             <div className="flex-1 min-w-0">
@@ -153,7 +153,7 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                     <MoreVertical size={18} />
                 </Button>
 
-                <div className="w-px h-6 bg-slate-800 mx-1"></div>
+                <div className="divider-v h-6 mx-1"></div>
 
                 <Button
                     variant={showLibrary ? "filled" : "outline"}
@@ -240,6 +240,7 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                             domainPatterns={theme.domainPatterns}
                             onUpdate={(newPatterns) => updateTheme(theme.id, { domainPatterns: newPatterns })}
                             activeUrl={activeUrl}
+                            autoFocus={true}
                         />
                     </div>
                 )}
