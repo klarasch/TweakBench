@@ -152,7 +152,6 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
 
     // DnD Drag State
     const [activeDragId, setActiveDragId] = useState<string | null>(null);
-    const [overDragId, setOverDragId] = useState<string | null>(null);
 
     // Responsive State
     const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
@@ -194,14 +193,9 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
         }
     };
 
-    const handleDragOver = (event: any) => {
-        const { over } = event;
-        setOverDragId(over?.id as string || null);
-    };
 
     const handleDragEnd = useCallback((event: DragEndEvent) => {
         setActiveDragId(null);
-        setOverDragId(null);
 
         if (expansionTimerRef.current) {
             window.clearTimeout(expansionTimerRef.current);
@@ -886,7 +880,6 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                         sensors={sensors}
                         collisionDetection={closestCenter}
                         onDragStart={handleDragStart}
-                        onDragOver={handleDragOver}
                         onDragEnd={handleDragEnd}
                         modifiers={[restrictToVerticalAxis]}
                     >
