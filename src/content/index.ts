@@ -12,7 +12,7 @@ let lastActiveThemeIds = new Set<string>();
 
 let updateTimeout: any = null;
 let transitionTimeout: any = null;
-const TRANSITION_DURATION = 150; // ms
+const TRANSITION_DURATION = 120; // ms
 const TRANSITION_STYLE_ID = 'tb-transition-manager';
 
 function setupTransition() {
@@ -20,11 +20,11 @@ function setupTransition() {
     const style = document.createElement('style');
     style.id = TRANSITION_STYLE_ID;
     style.textContent = `
-        .tb-transitioning, .tb-transitioning * {
-            transition: background-color ${TRANSITION_DURATION}ms cubic-bezier(0.4, 0, 0.2, 1), 
-                        color ${TRANSITION_DURATION}ms cubic-bezier(0.4, 0, 0.2, 1), 
-                        border-color ${TRANSITION_DURATION}ms cubic-bezier(0.4, 0, 0.2, 1), 
-                        opacity ${TRANSITION_DURATION}ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+        html.tb-transition-active {
+            transition: opacity ${TRANSITION_DURATION}ms ease !important;
+        }
+        html.tb-switching {
+            opacity: 0.92 !important;
         }
     `;
     document.head.appendChild(style);
@@ -32,11 +32,24 @@ function setupTransition() {
 
 function startTransition() {
     setupTransition();
-    document.documentElement.classList.add('tb-transitioning');
+    const html = document.documentElement;
+
+    // Add both classes to start the fade out
+    html.classList.add('tb-transition-active');
+    html.classList.add('tb-switching');
+
     if (transitionTimeout) clearTimeout(transitionTimeout);
+
+    // We remove the switching class quickly to trigger the fade back in
+    // This creates a subtle "dip" in opacity that masks the content change
     transitionTimeout = setTimeout(() => {
-        document.documentElement.classList.remove('tb-transitioning');
-    }, TRANSITION_DURATION + 20); // Faster cleanup
+        html.classList.remove('tb-switching');
+
+        // Remove the transition property after the fade-in is complete
+        setTimeout(() => {
+            html.classList.remove('tb-transition-active');
+        }, TRANSITION_DURATION);
+    }, TRANSITION_DURATION / 2);
 }
 
 // Message Listener for State Updates
@@ -155,11 +168,16 @@ function updateStyles(state: AppState) {
     lastProcessedGlobalEnabled = globalEnabled;
 
     // Determine if we need a transition (structural change vs content update)
+    // We only transition if there's an effective change in what's being applied to this tab.
+    const wasEffectivelyActive = lastProcessedGlobalEnabled && lastActiveThemeIds.size > 0;
+    const isEffectivelyActive = globalEnabled && currentActiveThemeIds.size > 0;
+
     let needsTransition = false;
-    if (isDifferentGlobal) {
+    if (lastProcessedGlobalEnabled !== null && wasEffectivelyActive !== isEffectivelyActive) {
         needsTransition = true;
-    } else {
-        // Check if set of active themes for THIS tab has changed
+    } else if (isEffectivelyActive) {
+        // Check if the set of active themes changed while remaining effectively active
+        // This covers group switching or adding/removing individual themes.
         if (currentActiveThemeIds.size !== lastActiveThemeIds.size) {
             needsTransition = true;
         } else {
