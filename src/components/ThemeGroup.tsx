@@ -24,7 +24,6 @@ interface ThemeGroupProps {
     onDomainClick: (e: React.MouseEvent) => void;
     isCollapsed: boolean;
     onToggleCollapse: () => void;
-    isDraggingOver?: boolean;
 }
 
 export const ThemeGroup: React.FC<ThemeGroupProps> = ({
@@ -43,8 +42,7 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
     onDeleteTheme,
     onDomainClick,
     isCollapsed,
-    onToggleCollapse,
-    isDraggingOver: isDragTarget
+    onToggleCollapse
 }) => {
     // Sortable logic for the GROUP container
     const {
@@ -57,10 +55,10 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
     } = useSortable({ id: id, disabled: isSelectionMode });
 
     const style = {
-        transform: CSS.Transform.toString(transform),
-        transition: isDragging ? undefined : transition, // Remove transition when dragging for snappy feel
-        opacity: isDragging ? 0.8 : 1, // Match SnippetStackItem
-        zIndex: isDragging ? 20 : 'auto',
+        transform: CSS.Translate.toString(transform),
+        transition: isDragging ? 'none' : transition,
+        opacity: isDragging ? 0.5 : 1,
+        zIndex: isDragging ? 50 : 'auto',
         position: 'relative' as 'relative',
     };
 
@@ -105,16 +103,15 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
             ref={setNodeRef}
             style={style}
             className={`
-                rounded-lg border overflow-hidden transition-all
+                rounded-lg border overflow-hidden transition-all duration-200
                 ${isActiveOnTab
                     ? effectivelyCollapsed
-                        ? 'border-green-500/50 bg-slate-800 shadow-[0_0_10px_-2px_rgba(34,197,94,0.15)]'
+                        ? 'border-green-500/50 bg-slate-800 shadow-[0_0_12px_-3px_rgba(34,197,94,0.2)]'
                         : 'border-green-500/25 bg-slate-900/50'
                     : 'border-slate-800 bg-slate-900/50'
                 }
-                ${effectivelyCollapsed ? 'bg-slate-800/50' : ''}
-                ${isDragging ? 'shadow-xl ring-2 ring-blue-500/50 z-10 border-blue-500/50' : ''}
-                ${isDragTarget ? 'ring-2 ring-blue-400/50 border-blue-400/50 bg-blue-500/[0.08]' : ''}
+                ${effectivelyCollapsed ? 'bg-slate-800/40' : ''}
+                ${isDragging ? 'opacity-50 ring-2 ring-blue-500/50 z-50 border-blue-500/50 shadow-2xl scale-[1.02]' : ''}
             `}
         >
             {/* Group Header - Drag handle is now here only */}

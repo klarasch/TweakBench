@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
 import { useStore } from '../store.ts';
 import { Plus, Trash2, Play, Pause, MoreVertical, Upload, Download, Globe, X, Copy, Link as LinkIcon, Ungroup } from 'lucide-react';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
@@ -22,6 +22,7 @@ import {
     useSensors,
     type DragEndEvent,
     type DragStartEvent,
+    DragOverlay,
 } from '@dnd-kit/core';
 
 
@@ -39,6 +40,7 @@ interface ThemeListProps {
 }
 
 import { SortableThemeItem } from './SortableThemeItem';
+import { ThemeItem } from './ThemeItem';
 
 export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }) => {
     // Selective selectors to minimize re-renders
@@ -89,6 +91,8 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
 
     // Collapse State for Groups
     const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+    const preDragCollapsedGroupsRef = useRef<Set<string>>(new Set());
+    const expansionTimerRef = useRef<number | null>(null);
 
     // Display Items Logic
     type DisplayItem =
@@ -152,7 +156,14 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
 
     // Responsive State
     const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
+    const [listWidth, setListWidth] = useState<number>(0);
+    const listRef = useRef<HTMLDivElement>(null);
 
+    useLayoutEffect(() => {
+        if (listRef.current) {
+            setListWidth(listRef.current.offsetWidth);
+        }
+    }, [viewportWidth]);
     // DnD Sensors
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -166,16 +177,43 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
     );
 
     const handleDragStart = (event: DragStartEvent) => {
-        setActiveDragId(event.active.id as string);
+        const activeId = event.active.id as string;
+        setActiveDragId(activeId);
+
+        // Save current collapse state
+        preDragCollapsedGroupsRef.current = new Set(collapsedGroups);
+
+        // Collapse all groups for root-level reordering stability
+        // (Only if it's a group header or a root-level theme)
+        const activeTheme = themes.find(t => t.id === activeId);
+        if (!activeTheme || !activeTheme.groupId) {
+            const allGroupIds = displayItems
+                .filter(i => i.type === 'group')
+                .map(g => g.id);
+            setCollapsedGroups(new Set(allGroupIds));
+        }
     };
 
     const handleDragOver = (event: any) => {
-        setOverDragId(event.over?.id as string || null);
+        const { over } = event;
+        setOverDragId(over?.id as string || null);
     };
 
     const handleDragEnd = useCallback((event: DragEndEvent) => {
         setActiveDragId(null);
         setOverDragId(null);
+
+        if (expansionTimerRef.current) {
+            window.clearTimeout(expansionTimerRef.current);
+            expansionTimerRef.current = null;
+        }
+
+        // Restore collapse state
+        const preDragState = preDragCollapsedGroupsRef.current;
+        if (preDragState) {
+            setCollapsedGroups(new Set(preDragState));
+            preDragState.clear();
+        }
 
         const { active, over } = event;
         if (!over || active.id === over.id) return;
@@ -185,71 +223,52 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
 
         const activeTheme = themes.find(t => t.id === activeId);
         const overTheme = themes.find(t => t.id === overId);
-        const activeGroup = displayItems.find(i => i.id === activeId && i.type === 'group');
-        const overGroup = displayItems.find(i => i.id === overId && i.type === 'group');
+        const activeGroupItem = displayItems.find(i => i.id === activeId && i.type === 'group');
 
-        let newThemes = [...themes];
-
-        if (activeTheme) {
-            // CASE: DRAGGING A THEME
-            const oldIndex = themes.findIndex(t => t.id === activeId);
-            let newIndex = themes.findIndex(t => t.id === overId);
-
-            // 1. Determine the target group
-            const targetGroupId = overTheme ? overTheme.groupId : (overGroup ? overId : undefined);
-
-            // 2. Perform Group Join/Leave logic
-            if (activeTheme.groupId !== targetGroupId) {
-                let shouldBeActive = activeTheme.isActive;
-                if (targetGroupId && activeTheme.isActive) {
-                    const hasActiveInTargetGroup = themes.some(t => t.groupId === targetGroupId && t.isActive && t.id !== activeId);
-                    if (hasActiveInTargetGroup) shouldBeActive = false;
-                }
-
-                const targetGroupData = targetGroupId ? displayItems.find(i => i.id === targetGroupId && i.type === 'group') : null;
-                const targetDomainPatterns = (targetGroupData && targetGroupData.type === 'group') ? targetGroupData.domainPatterns : activeTheme.domainPatterns;
-
-                newThemes[oldIndex] = {
-                    ...activeTheme,
-                    groupId: targetGroupId,
-                    domainPatterns: targetDomainPatterns,
-                    isActive: shouldBeActive,
-                    updatedAt: Date.now()
-                };
+        // CASE 1: Reordering themes INSIDE the same group
+        if (activeTheme?.groupId && overTheme?.groupId === activeTheme.groupId) {
+            const groupThemes = themes.filter(t => t.groupId === activeTheme.groupId);
+            const oldIdx = groupThemes.findIndex(t => t.id === activeId);
+            const newIdx = groupThemes.findIndex(t => t.id === overId);
+            if (oldIdx !== -1 && newIdx !== -1) {
+                const moved = arrayMove(groupThemes, oldIdx, newIdx);
+                const updatedThemes = themes.map(t => {
+                    if (t.groupId === activeTheme.groupId) {
+                        const newPos = moved.findIndex(mt => mt.id === t.id);
+                        return moved[newPos];
+                    }
+                    return t;
+                });
+                // We need to maintain the relative order in the main list
+                // For simplicity, let's assume reorderThemes handles the internal order correctly
+                // and we just need to pass the IDs in the new order.
+                reorderThemes(updatedThemes);
             }
+            return;
+        }
 
-            // 3. Reorder themes array
-            if (newIndex === -1 && targetGroupId) {
-                // If over a group header, move to start of that group
-                const groupThemes = newThemes.filter(t => t.groupId === targetGroupId);
-                if (groupThemes.length > 0) {
-                    newIndex = newThemes.findIndex(t => t.id === groupThemes[0].id);
-                }
-            }
+        // CASE 2: Reordering root-level items (standalone themes and groups)
+        const activeIsRoot = !activeTheme || !activeTheme.groupId || activeGroupItem;
+        const overItem = displayItems.find(i => i.id === overId);
+        const overIsRoot = overItem && (overItem.type === 'group' || !themes.find(t => t.id === overId)?.groupId);
 
-            if (oldIndex !== -1 && newIndex !== -1) {
-                newThemes = arrayMove(newThemes, oldIndex, newIndex);
-            }
-        } else if (activeGroup) {
-            // CASE: DRAGGING A GROUP HEADER
-            const oldDisplayIndex = displayItems.findIndex(i => i.id === activeId);
-            const newDisplayIndex = displayItems.findIndex(i => i.id === overId);
+        if (activeIsRoot && overIsRoot) {
+            const oldIdx = displayItems.findIndex(i => i.id === activeId);
+            const newIdx = displayItems.findIndex(i => i.id === overId);
 
-            if (oldDisplayIndex !== -1 && newDisplayIndex !== -1) {
-                const movedDisplayItems = arrayMove(displayItems, oldDisplayIndex, newDisplayIndex);
+            if (oldIdx !== -1 && newIdx !== -1) {
+                const movedItems = arrayMove(displayItems, oldIdx, newIdx);
                 const finalThemes: Theme[] = [];
-                movedDisplayItems.forEach(item => {
+                movedItems.forEach(item => {
                     if (item.type === 'theme') {
                         finalThemes.push(item.data);
                     } else {
                         finalThemes.push(...themes.filter(t => t.groupId === item.id));
                     }
                 });
-                newThemes = finalThemes;
+                reorderThemes(finalThemes);
             }
         }
-
-        reorderThemes(newThemes);
     }, [themes, displayItems, reorderThemes]);
 
     useEffect(() => {
@@ -643,7 +662,10 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
     ];
 
     return (
-        <div>
+        <div
+            ref={listRef}
+            style={{ '--list-width': listWidth > 0 ? `${listWidth}px` : '100%' } as React.CSSProperties}
+        >
             <div className="p-4 flex flex-col gap-4 relative pb-20">
                 <div className="flex justify-between items-center px-1">
                     <h2 className="text-lg font-bold text-slate-100 tracking-tight">Tweaks</h2>
@@ -874,67 +896,68 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                 strategy={verticalListSortingStrategy}
                             >
                                 {displayItems.map((item) => {
-                                    const isDraggingOverThis = overDragId === item.id;
                                     const isGroup = item.type === 'group';
 
                                     return (
-                                        <div key={item.id} className={`${!isGroup ? 'my-1' : 'my-2'}`}>
-                                            {item.type === 'group' ? (
-                                                <ThemeGroup
-                                                    id={item.id}
-                                                    themes={item.themes}
-                                                    domainPatterns={item.domainPatterns}
-                                                    activeUrl={activeUrl}
-                                                    isSelectionMode={isSelectionMode}
-                                                    selectedThemeIds={selectedThemeIds}
-                                                    globalEnabled={globalEnabled}
-                                                    onSelectTheme={onSelectTheme}
-                                                    onToggleSelection={handleToggleSelection}
-                                                    onContextMenu={handleContextMenu}
-                                                    onGroupContextMenu={handleGroupContextMenu}
-                                                    onUpdateTheme={updateTheme}
-                                                    onDeleteTheme={(e: React.MouseEvent, id: string) => { e.stopPropagation(); setThemeToDelete(id); }}
-                                                    onDomainClick={(e: React.MouseEvent) => {
-                                                        e.stopPropagation();
-                                                        setEditingDomainGroup(item.id);
-                                                    }}
-                                                    isCollapsed={collapsedGroups.has(item.id)}
-                                                    onToggleCollapse={() => {
-                                                        setCollapsedGroups(prev => {
-                                                            const next = new Set(prev);
-                                                            if (next.has(item.id)) {
-                                                                next.delete(item.id);
-                                                            } else {
-                                                                next.add(item.id);
-                                                            }
-                                                            return next;
-                                                        });
-                                                    }}
-                                                    isDraggingOver={isDraggingOverThis && activeDragId !== item.id}
-                                                />
-                                            ) : (
-                                                <SortableThemeItem
-                                                    theme={item.data}
-                                                    isOtherInGroupActive={false}
-                                                    activeUrl={activeUrl}
-                                                    isSelectionMode={isSelectionMode}
-                                                    isSelected={selectedThemeIds.has(item.id)}
-                                                    globalEnabled={globalEnabled}
-                                                    onSelect={() => onSelectTheme(item.id)}
-                                                    onToggleSelection={() => handleToggleSelection(item.id)}
-                                                    onContextMenu={(e: React.MouseEvent) => handleContextMenu(e, item.id)}
-                                                    onKebabClick={(e: React.MouseEvent) => handleKebabClick(e, item.id)}
-                                                    onUpdateTheme={(updates: Partial<Theme>) => updateTheme(item.id, updates)}
-                                                    onDeleteClick={(e: React.MouseEvent) => {
-                                                        e.stopPropagation();
-                                                        setThemeToDelete(item.id);
-                                                    }}
-                                                    onDomainClick={(e: React.MouseEvent) => {
-                                                        e.stopPropagation();
-                                                        setEditingDomainTheme(item.id);
-                                                    }}
-                                                />
-                                            )}
+                                        <div key={item.id} className="relative">
+                                            <div className={`${!isGroup ? 'my-1' : 'my-2'}`}>
+                                                {item.type === 'group' ? (
+                                                    <ThemeGroup
+                                                        id={item.id}
+                                                        themes={item.themes}
+                                                        domainPatterns={item.domainPatterns}
+                                                        activeUrl={activeUrl}
+                                                        isSelectionMode={isSelectionMode}
+                                                        selectedThemeIds={selectedThemeIds}
+                                                        globalEnabled={globalEnabled}
+                                                        onSelectTheme={onSelectTheme}
+                                                        onToggleSelection={handleToggleSelection}
+                                                        onContextMenu={handleContextMenu}
+                                                        onGroupContextMenu={handleGroupContextMenu}
+                                                        onUpdateTheme={updateTheme}
+                                                        onDeleteTheme={(e: React.MouseEvent, id: string) => { e.stopPropagation(); setThemeToDelete(id); }}
+                                                        onDomainClick={(e: React.MouseEvent) => {
+                                                            e.stopPropagation();
+                                                            setEditingDomainGroup(item.id);
+                                                        }}
+                                                        isCollapsed={collapsedGroups.has(item.id)}
+                                                        onToggleCollapse={() => {
+                                                            setCollapsedGroups(prev => {
+                                                                const next = new Set(prev);
+                                                                if (next.has(item.id)) {
+                                                                    next.delete(item.id);
+                                                                } else {
+                                                                    next.add(item.id);
+                                                                }
+                                                                return next;
+                                                            });
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <SortableThemeItem
+                                                        theme={item.data}
+                                                        isOtherInGroupActive={false}
+                                                        activeUrl={activeUrl}
+                                                        isSelectionMode={isSelectionMode}
+                                                        isSelected={selectedThemeIds.has(item.id)}
+                                                        globalEnabled={globalEnabled}
+                                                        onSelect={() => onSelectTheme(item.id)}
+                                                        onToggleSelection={() => handleToggleSelection(item.id)}
+                                                        onContextMenu={(e: React.MouseEvent) => handleContextMenu(e, item.id)}
+                                                        onKebabClick={(e: React.MouseEvent) => handleKebabClick(e, item.id)}
+                                                        onUpdateTheme={(updates: Partial<Theme>) => updateTheme(item.id, updates)}
+                                                        onDeleteClick={(e: React.MouseEvent) => {
+                                                            e.stopPropagation();
+                                                            setThemeToDelete(item.id);
+                                                        }}
+                                                        onDomainClick={(e: React.MouseEvent) => {
+                                                            e.stopPropagation();
+                                                            setEditingDomainTheme(item.id);
+                                                        }}
+                                                    />
+                                                )}
+                                            </div>
+
                                         </div>
                                     );
                                 })}
@@ -1000,6 +1023,60 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                         </div>
                     </div>
                 )}
+
+                <DragOverlay dropAnimation={null}>
+                    {activeDragId ? (() => {
+                        const activeTheme = themes.find(t => t.id === activeDragId);
+                        const activeGroup = displayItems.find(i => i.id === activeDragId && i.type === 'group');
+
+                        if (activeTheme) {
+                            return (
+                                <div style={{ width: listWidth > 0 ? `${listWidth}px` : '300px' }} className="opacity-90 scale-[1.02] pointer-events-none transition-all duration-200">
+                                    <ThemeItem
+                                        theme={activeTheme}
+                                        activeUrl={activeUrl}
+                                        isSelectionMode={false}
+                                        isSelected={false}
+                                        globalEnabled={globalEnabled}
+                                        onSelect={() => { }}
+                                        onToggleSelection={() => { }}
+                                        onContextMenu={() => { }}
+                                        onKebabClick={() => { }}
+                                        onUpdateTheme={() => { }}
+                                        onDeleteClick={() => { }}
+                                        isDragging={true}
+                                    />
+                                </div>
+                            );
+                        }
+
+                        if (activeGroup && activeGroup.type === 'group') {
+                            return (
+                                <div style={{ width: listWidth > 0 ? `${listWidth}px` : '300px' }} className="opacity-80 scale-[1.02] pointer-events-none shadow-2xl">
+                                    <ThemeGroup
+                                        id={activeGroup.id}
+                                        themes={activeGroup.themes}
+                                        domainPatterns={activeGroup.domainPatterns}
+                                        activeUrl={activeUrl}
+                                        isSelectionMode={false}
+                                        selectedThemeIds={new Set()}
+                                        globalEnabled={globalEnabled}
+                                        onSelectTheme={() => { }}
+                                        onToggleSelection={() => { }}
+                                        onContextMenu={() => { }}
+                                        onGroupContextMenu={() => { }}
+                                        onUpdateTheme={() => { }}
+                                        onDeleteTheme={() => { }}
+                                        onDomainClick={() => { }}
+                                        isCollapsed={true}
+                                        onToggleCollapse={() => { }}
+                                    />
+                                </div>
+                            );
+                        }
+                        return null;
+                    })() : null}
+                </DragOverlay>
 
                 {menuState.themeId && (
                     <ContextMenu

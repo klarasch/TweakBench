@@ -20,11 +20,11 @@ export const SortableThemeItem: React.FC<SortableThemeItemProps> = (props) => {
     } = useSortable({ id: props.theme.id, disabled: props.isSelectionMode });
 
     const style = {
-        transform: CSS.Transform.toString(transform),
-        transition: isDragging ? undefined : transition, // Remove transition when dragging for snappy feel
-        zIndex: isDragging ? 20 : 'auto',
+        transform: CSS.Translate.toString(transform),
+        transition: isDragging ? 'none' : transition,
+        zIndex: isDragging ? 50 : 'auto',
         position: 'relative' as 'relative',
-        opacity: isDragging ? 0.8 : 1, // Match SnippetStackItem
+        opacity: isDragging ? 0.5 : 1,
     };
 
     return (

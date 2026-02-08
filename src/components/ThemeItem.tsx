@@ -64,7 +64,7 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
                             : 'bg-slate-800 border-slate-700 hover:border-slate-500'
                 }
                 ${!theme.isActive && !isNested && !isSelected && 'opacity-75'}
-                ${isDragging ? 'shadow-xl ring-2 ring-blue-500/50 z-10' : ''}
+                ${isDragging ? 'shadow-2xl ring-2 ring-blue-500/50 z-50 border-blue-500/50 scale-[1.02] bg-slate-800' : ''}
             `}
             onClick={() => {
                 if (isSelectionMode) {
