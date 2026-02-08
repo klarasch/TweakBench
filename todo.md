@@ -9,7 +9,9 @@ Actually, it's already possible to inject JS through injecting ```<script>``` ta
 
 ## Improvements (1 – least priority, 5 — highest priority)
 [ ] 1 [ASK]: In theme detail and theme list, add "export merged CSS / JS"
-[ ] 4: Replace "Quick add" to "Add from Library"
+[x] 3: Replace "Quick add" copy with "Add from Library"
+[x] 4: Add ability to delete snippets in Library select mode
+[x] 3: in the detail, unify the domain badge on theme detail with the one on theme list (so that when only 1 domain is configured, it's directly displayed - current: 1 domain, desired: example.com)
 
 ## Bugs (1 – non-critical, 5 – critical)
 

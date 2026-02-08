@@ -10,6 +10,7 @@ interface Store extends AppState {
     addSnippet: (snippet: Omit<Snippet, 'id' | 'createdAt' | 'updatedAt'>) => string;
     updateSnippet: (id: string, updates: Partial<Snippet>) => void;
     deleteSnippet: (id: string) => void;
+    deleteSnippets: (ids: string[]) => void;
 
     addTheme: (themeData: Omit<Theme, 'id' | 'createdAt' | 'updatedAt'>) => string; // Update to return string
     updateTheme: (id: string, updates: Partial<Theme>) => void;
@@ -92,6 +93,18 @@ export const useStore = create<Store>((set, get) => ({
             const newState = {
                 ...state,
                 snippets: state.snippets.filter((s) => s.id !== id),
+            };
+            storageService.save(newState);
+            return newState;
+        });
+    },
+
+    deleteSnippets: (ids: string[]) => {
+        const idSet = new Set(ids);
+        set((state: Store) => {
+            const newState = {
+                ...state,
+                snippets: state.snippets.filter((s) => !idSet.has(s.id)),
             };
             storageService.save(newState);
             return newState;

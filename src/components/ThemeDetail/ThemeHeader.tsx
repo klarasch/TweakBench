@@ -81,9 +81,11 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                         <Globe size={11} />
                         {theme.domainPatterns && theme.domainPatterns.includes('<all_urls>')
                             ? "Runs everywhere"
-                            : theme.domainPatterns && theme.domainPatterns.length > 0
-                                ? `${theme.domainPatterns.length} Domain${theme.domainPatterns.length > 1 ? 's' : ''}`
-                                : "No domains"
+                            : theme.domainPatterns && theme.domainPatterns.length === 1
+                                ? theme.domainPatterns[0]
+                                : theme.domainPatterns && theme.domainPatterns.length > 1
+                                    ? `${theme.domainPatterns.length} Domains`
+                                    : "No domains"
                         }
                     </button>
 

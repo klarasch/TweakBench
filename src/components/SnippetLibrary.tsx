@@ -181,7 +181,7 @@ interface SnippetLibraryProps {
 }
 
 export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet, onSelect, filterType, onClose, onBulkAdd }) => {
-    const { snippets, themes, deleteSnippet, updateSnippet, reorderSnippets } = useStore();
+    const { snippets, themes, deleteSnippet, deleteSnippets, updateSnippet, reorderSnippets } = useStore();
     const [filter, setFilter] = useState('');
     const [typeFilter, setTypeFilter] = useState<'all' | 'css' | 'html'>('all');
 
@@ -191,6 +191,7 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
 
     // Dialog State
     const [snippetToDelete, setSnippetToDelete] = useState<string | null>(null);
+    const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
     // Context Menu State
     const [menuState, setMenuState] = useState<{ x: number; y: number; snippetId: string | null }>({ x: 0, y: 0, snippetId: null });
@@ -347,6 +348,18 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
         setIsSelectionMode(false);
     };
 
+    const handleBulkDelete = () => {
+        if (selectedIds.size === 0) return;
+        setIsBulkDeleting(true);
+    };
+
+    const confirmBulkDeleteAction = () => {
+        deleteSnippets(Array.from(selectedIds));
+        setSelectedIds(new Set());
+        setIsBulkDeleting(false);
+        setIsSelectionMode(false);
+    };
+
     const snippetToDeleteObj = snippetToDelete ? snippets.find(s => s.id === snippetToDelete) : null;
     const usageCountToDelete = snippetToDelete ? themes.filter(t => t.items.some(i => i.snippetId === snippetToDelete)).length : 0;
 
@@ -386,6 +399,23 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
                     </div>
                 }
                 confirmLabel="Delete"
+                isDangerous
+            />
+
+            <ConfirmDialog
+                isOpen={isBulkDeleting}
+                onClose={() => setIsBulkDeleting(false)}
+                onConfirm={confirmBulkDeleteAction}
+                title="Delete multiple snippets"
+                message={
+                    <div className="flex flex-col gap-2">
+                        <p>Are you sure you want to delete <strong>{selectedIds.size} selected snippets</strong>?</p>
+                        <div className="bg-amber-500/10 border border-amber-500/20 text-amber-200 p-2 rounded text-xs">
+                            Warning: This will permanentely remove these snippets and potentially affect themes using them.
+                        </div>
+                    </div>
+                }
+                confirmLabel={`Delete ${selectedIds.size} snippets`}
                 isDangerous
             />
 
@@ -486,14 +516,25 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
                             </Button>
                         </div>
                         {selectedIds.size > 0 && (
-                            <Button
-                                variant="filled"
-                                size="sm"
-                                onClick={handleBulkAdd}
-                                className="h-7 text-xs bg-blue-600 hover:bg-blue-500 text-white"
-                            >
-                                Add {selectedIds.size}
-                            </Button>
+                            <div className="flex gap-2">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={handleBulkDelete}
+                                    className="text-red-400 hover:text-red-300 hover:bg-red-500/10 text-xs h-7"
+                                    icon={<Trash2 size={12} />}
+                                >
+                                    Delete
+                                </Button>
+                                <Button
+                                    variant="filled"
+                                    size="sm"
+                                    onClick={handleBulkAdd}
+                                    className="h-7 text-xs bg-blue-600 hover:bg-blue-500 text-white"
+                                >
+                                    Add {selectedIds.size}
+                                </Button>
+                            </div>
                         )}
                     </div>
                 )}

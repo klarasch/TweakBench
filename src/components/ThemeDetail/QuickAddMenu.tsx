@@ -88,7 +88,7 @@ export const QuickAddMenu: React.FC<QuickAddMenuProps> = ({ x, y, type, onClose,
             >
                 <div className="p-2 border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm">
                     <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-2 py-1">
-                        Quick add {type.toUpperCase()}
+                        Add {type.toUpperCase()} from library
                     </h4>
                 </div>
 

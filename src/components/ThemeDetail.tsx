@@ -869,7 +869,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
                     onClick: handleImportVariables
                 }] : []),
                 {
-                    label: 'Quick add from library',
+                    label: 'Add from library',
                     icon: <Plus size={14} />,
                     onClick: () => {
                         // We can't easily get the rect here without the event, 
@@ -1455,9 +1455,9 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
                                             setQuickAddState({ x: rect.left, y: rect.bottom, type: activeTab });
                                         }}
                                         icon={<Plus size={14} />}
-                                        title="Quick add from library"
+                                        title="Add from library"
                                     >
-                                        Quick add
+                                        Add from library
                                     </Button>
                                 )}
 
