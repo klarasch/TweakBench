@@ -41,7 +41,7 @@ interface Store extends AppState {
     loadExampleData: () => Promise<void>;
 }
 
-export const useStore = create<Store>((set, get) => ({
+export const useStore = create<Store>((set) => ({
     themes: [],
     snippets: [],
     activeThemeId: null,

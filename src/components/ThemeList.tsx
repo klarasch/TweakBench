@@ -287,6 +287,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
             name: newThemeName.trim(),
             domainPatterns,
             isActive: true,
+            items: [],
             ...(newThemeGroupId && { groupId: newThemeGroupId })
         });
 
