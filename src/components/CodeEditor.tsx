@@ -10,6 +10,8 @@ import * as parserPostcss from "prettier/plugins/postcss";
 import * as parserHtml from "prettier/plugins/html";
 
 import { autocompletion } from '@codemirror/autocomplete';
+import { indentUnit } from '@codemirror/language';
+import { EditorState } from '@codemirror/state';
 import { useStore } from '../store';
 
 interface CodeEditorProps {
@@ -257,7 +259,9 @@ export const CodeEditor = React.memo(React.forwardRef<CodeEditorRef, CodeEditorP
                 outline: "1px solid #f97316" /* orange-500 */
             }
         }, { dark: true }),
-        autocompletion({ override: [cssVariableCompletions] }), // Add our custom completion
+        autocompletion(), // Standard autocompletion setup
+        EditorState.languageData.of(() => [{ autocomplete: cssVariableCompletions }]), // Add our custom variables as an additional source
+        indentUnit.of("    "), // Match Prettier's 4-space indentation
         ...(searchHighlightExtension ? [searchHighlightExtension] : [])
     ], [mode, autoHeight, cssVariableCompletions, searchHighlightExtension]);
 
