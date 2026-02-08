@@ -16,6 +16,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Import Flow**: Optimized "Import All" to skip the conflict handling dialogue when the target workspace is empty.
 - **UI Refinement**: Fixed misleading "Group active" badge logic in theme headers and items when no other themes are active.
 - **Bug Fix**: Duplicated themes in groups are now correctly created as inactive.
+- **Reordering Precision**: Fixed issues with drag and drop sensitivity, specifically making it easier to target the first list position and distinguishing between root and group drops.
+
+### Refined
+- **Improved Reordering Mechanics**: Overhauled theme and group reordering to use standard sortable behavior (closestCenter) for a more native and predictable feel.
+- **Natural Shifting**: Themes and groups now shift smoothly using built-in transitions, eliminating manual drop spacers.
+- **Robust Nested Reordering**: Hardened reordering logic to correctly handle themes within and between domain groups.
+- **Visual Feedback**: Added subtle background tint and border highlighting exclusively for **Domain Groups** when accepting a theme. Removed redundant highlights from individual themes.
+- **Group Detachment**: Added "Detach from group" option to theme context menus.
+- **Import Safety**: Added confirmation dialogue and danger styling for "Replace" import mode.
+- **Theme Creation**: Hidden domain configuration and updated modal titles when adding themes directly to a domain group.
 
 ### Refactored
 - **Tailwind Shorthands**: Introduced `@apply` classes in `index.css` for consistent styling across buttons, cards, and icons.

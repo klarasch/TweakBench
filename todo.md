@@ -11,6 +11,7 @@ Note: [ASK] means that ALWAYS ask before doing it
 [x] 3: in the detail, unify the domain badge on theme detail with the one on theme list (so that when only 1 domain is configured, it's directly displayed - current: 1 domain, desired: example.com)
 
 ## Bugs (1 – non-critical, 5 – critical)
+[ ] 3: fix reordering in theme list; currently a theme gets added to a group too easily - there should be visual feedback when it's getting dropped to a group and when it stays on root level of the list + it's hard to place an item to first position in the list
 
 ---
 

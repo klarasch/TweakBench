@@ -18,4 +18,15 @@
 - Fixed focus issue in creation modals by making `autoFocus` in `DomainListEditor` optional and disabled by default.
 - Fixed critical "Import all data" bug by reverting `Theme.items` to required and fixing validation logic.
 - Robustly handled theme item remapping and duplicate skipping in `importAllData` action.
+- Overhauled reordering mechanics in `ThemeList` to match `ThemeDetail` (removed manual spacers, switched to `closestCenter`).
+- Hardened `handleDragEnd` for nested reordering scenarios (theme in group, theme to group, etc).
+- Applied snappy `transform` and `transition` styles to `SortableThemeItem` and `ThemeGroup`.
+- Cleaned up unused `ROOT_TOP` logic and associated states/styles.
+- Simplified `RootTopZone` to match the standard animated spacer look.
+- Restricted `isDragTarget` feedback to `ThemeGroup` (tint/border) to avoid visual noise on individual themes.
+- Fixed TS6133 build error and missing `storageService` references in `ThemeList.tsx`.
+- Refined `handleDragEnd` logic for more predictable theme/group movement, including `ROOT_TOP` target handling.
+- Fixed theme creation UX within groups (modal titles, hidden domains).
+- Styled "Replace" import mode as dangerous and added confirmation shield.
+- Corrected "Load starter kit" bug by fixing the fetch path and store integration.
 

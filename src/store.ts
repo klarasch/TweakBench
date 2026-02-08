@@ -34,6 +34,7 @@ interface Store extends AppState {
     duplicateTheme: (themeId: string) => string;
     duplicateThemeItem: (themeId: string, itemId: string) => void;
     duplicateThemeGroup: (groupId: string) => void;
+    detachThemeFromGroup: (themeId: string) => void;
 
     createThemeGroup: (themeIds: string[]) => void;
     ungroupThemes: (themeIds: string[]) => void;
@@ -41,7 +42,7 @@ interface Store extends AppState {
     loadExampleData: () => Promise<void>;
 }
 
-export const useStore = create<Store>((set) => ({
+export const useStore = create<Store>((set, get) => ({
     themes: [],
     snippets: [],
     activeThemeId: null,
@@ -783,7 +784,27 @@ export const useStore = create<Store>((set) => ({
         return groupId;
     },
 
+    detachThemeFromGroup: (themeId: string) => {
+        set((state: Store) => {
+            const updatedThemes = state.themes.map(t => {
+                if (t.id !== themeId) return t;
+                const { groupId, ...rest } = t;
+                return { ...rest, updatedAt: Date.now() };
+            });
+
+            const newState = { ...state, themes: updatedThemes };
+            storageService.save(newState);
+            return newState;
+        });
+    },
+
     loadExampleData: async () => {
-        // Implementation of loadExampleData
+        try {
+            const response = await fetch('/starter_kit.json');
+            const data = await response.json();
+            get().importAllData(data.data, 'replace');
+        } catch (e) {
+            console.error('Failed to load starter kit:', e);
+        }
     },
 }));

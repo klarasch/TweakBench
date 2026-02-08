@@ -51,6 +51,8 @@ interface ThemeListModalsProps {
     setIsCreatingGroup: (value: boolean) => void;
     newGroupName: string;
     handleCreateGroup: () => void;
+
+    newThemeGroupId?: string | null;
 }
 
 export const ThemeListModals: React.FC<ThemeListModalsProps> = ({
@@ -92,15 +94,25 @@ export const ThemeListModals: React.FC<ThemeListModalsProps> = ({
     isCreatingGroup,
     setIsCreatingGroup,
     newGroupName,
-    handleCreateGroup
+    handleCreateGroup,
+    newThemeGroupId
 }) => {
+    const [confirmReplaceImport, setConfirmReplaceImport] = React.useState(false);
+
+    const onImportClick = () => {
+        if (importMode === 'replace') {
+            setConfirmReplaceImport(true);
+        } else {
+            handleConfirmImport();
+        }
+    };
     return (
         <>
             {/* Create Theme Modal */}
             <Modal
                 isOpen={isCreating}
                 onClose={() => setIsCreating(false)}
-                title="Create new theme"
+                title={newThemeGroupId ? "Add theme to a group" : "Create new theme"}
                 footer={
                     <div className="flex gap-2 justify-end w-full">
                         <Button variant="ghost" onClick={() => setIsCreating(false)}>Cancel</Button>
@@ -127,11 +139,13 @@ export const ThemeListModals: React.FC<ThemeListModalsProps> = ({
                         />
                     </div>
 
-                    <DomainConfigSection
-                        domainPatterns={newDomainPatterns}
-                        onUpdate={setNewDomainPatterns}
-                        activeUrl={activeUrl}
-                    />
+                    {!newThemeGroupId && (
+                        <DomainConfigSection
+                            domainPatterns={newDomainPatterns}
+                            onUpdate={setNewDomainPatterns}
+                            activeUrl={activeUrl}
+                        />
+                    )}
                 </div>
             </Modal>
 
@@ -188,7 +202,7 @@ export const ThemeListModals: React.FC<ThemeListModalsProps> = ({
                 footer={
                     <div className="flex gap-2 justify-end w-full">
                         <Button variant="ghost" onClick={() => setIsImportDialogOpen(false)}>Cancel</Button>
-                        <Button variant="filled" onClick={handleConfirmImport}>Import</Button>
+                        <Button variant="filled" onClick={onImportClick}>Import</Button>
                     </div>
                 }
             >
@@ -207,6 +221,8 @@ export const ThemeListModals: React.FC<ThemeListModalsProps> = ({
                                 containerClass = isReplace
                                     ? "bg-red-500/10 border-red-500"
                                     : "bg-blue-500/10 border-blue-500";
+                            } else if (isReplace) {
+                                containerClass = "bg-red-500/5 border-red-500/20 hover:border-red-500/40";
                             }
 
                             const dotBorderClass = isSelected
@@ -246,6 +262,20 @@ export const ThemeListModals: React.FC<ThemeListModalsProps> = ({
                     </div>
                 </div>
             </Modal>
+
+            {/* Import Replace Confirmation */}
+            <ConfirmDialog
+                isOpen={confirmReplaceImport}
+                onClose={() => setConfirmReplaceImport(false)}
+                onConfirm={() => {
+                    handleConfirmImport();
+                    setConfirmReplaceImport(false);
+                }}
+                title="Replace all data?"
+                message="Are you sure you want to replace ALL your themes and snippets with the imported data? This action cannot be undone."
+                confirmLabel="Replace all"
+                isDangerous
+            />
 
             {/* Delete Confirmation */}
             <ConfirmDialog

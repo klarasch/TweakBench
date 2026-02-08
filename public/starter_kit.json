@@ -1,281 +1,784 @@
 {
     "version": "1.0",
-    "exportedAt": 1738928565000,
+    "exportedAt": 1770559455913,
     "data": {
         "themes": [
             {
-                "id": "e8a9d1b6-0b3b-4b1a-9c1a-1a2b3c4d5e6f",
-                "name": "Wikipedia: Serif Reading",
-                "domainPatterns": [
-                    "wikipedia.org"
-                ],
-                "isActive": true,
-                "groupId": "3d1c9c81-fc74-4d57-8ae8-863677685069",
-                "createdAt": 1738928565000,
-                "updatedAt": 1738928565000,
-                "items": [
-                    {
-                        "id": "f81d4fae-7dec-11d0-a765-00a0c91e6bf6",
-                        "snippetId": "lib-font-serif",
-                        "isEnabled": true
-                    }
-                ]
-            },
-            {
-                "id": "b4c9e2c7-1c4c-5c2b-ac2b-2b3c4d5e6f7a",
-                "name": "Wikipedia: Sans Modern",
-                "domainPatterns": [
-                    "wikipedia.org"
-                ],
-                "isActive": false,
-                "groupId": "3d1c9c81-fc74-4d57-8ae8-863677685069",
-                "createdAt": 1738928565000,
-                "updatedAt": 1738928565000,
-                "items": [
-                    {
-                        "id": "2b30193e-83b3-c392-1192-9cad0e1f2031",
-                        "snippetId": "lib-font-sans",
-                        "isEnabled": true
-                    }
-                ]
-            },
-            {
-                "id": "c92ab9c9-e26b-4dc6-b517-d518a4ece613",
-                "name": "Wikipedia: Sepia Mode",
-                "domainPatterns": [
-                    "wikipedia.org"
-                ],
-                "isActive": true,
-                "groupId": "6bb3642a-4bdc-43e1-bfec-e2331045b8c6",
-                "createdAt": 1738928565000,
-                "updatedAt": 1738928565000,
-                "items": [
-                    {
-                        "id": "50da8b0e-e7c8-4143-9f60-4be2d1506d0a",
-                        "snippetId": "wiki-sepia-css",
-                        "isEnabled": true
-                    }
-                ]
-            },
-            {
-                "id": "fda16305-c208-4fe5-bf88-e39f77567cf5",
-                "name": "Wikipedia: Dark Mode",
-                "domainPatterns": [
-                    "wikipedia.org"
-                ],
-                "isActive": false,
-                "groupId": "6bb3642a-4bdc-43e1-bfec-e2331045b8c6",
-                "createdAt": 1738928565000,
-                "updatedAt": 1738928565000,
-                "items": [
-                    {
-                        "id": "6ef2cf38-b1f9-46e5-8739-a56726abf122",
-                        "snippetId": "wiki-dark-css",
-                        "isEnabled": true
-                    }
-                ]
-            },
-            {
-                "id": "f5a815d3-5650-4e5e-b3e0-fcbeec5511e7",
-                "name": "Global: Tools & Utils",
-                "domainPatterns": [
-                    "<all_urls>"
-                ],
-                "isActive": true,
-                "createdAt": 1738928565000,
-                "updatedAt": 1738928565000,
-                "items": [
-                    {
-                        "id": "item-scroll-top",
-                        "snippetId": "lib-scroll-top-html",
-                        "isEnabled": true
-                    },
-                    {
-                        "id": "item-smooth-scroll",
-                        "snippetId": "lib-smooth-scroll",
-                        "isEnabled": true
-                    }
-                ]
-            },
-            {
-                "id": "44ab9a7b-d135-44a7-9b6b-4365e3a59df9",
-                "name": "ChatGPT: Zen Reader",
+                "createdAt": 1770496421722,
                 "domainPatterns": [
                     "chatgpt.com"
                 ],
-                "isActive": true,
-                "createdAt": 1738928565000,
-                "updatedAt": 1738928565000,
+                "groupId": "945013ec-5e24-42b2-8233-99108710ddb1",
+                "id": "f95a1d7b-12c6-4afd-92fa-dc0e65496654",
+                "isActive": false,
+                "isGroupExclusive": true,
                 "items": [
                     {
-                        "id": "682ab70f-f7a1-40ed-83fa-4f12bb71660a",
-                        "snippetId": "gpt-typography-css",
-                        "isEnabled": true
+                        "id": "c61948b1-25b6-4e8f-a9f9-5d5d6c192ea2",
+                        "isEnabled": true,
+                        "snippetId": "fd31fc7f-f249-4bae-bc74-a4ec5350d825"
                     },
                     {
-                        "id": "4437d3fd-8ad0-443e-be96-740cc82d82b1",
-                        "snippetId": "gpt-zen-badge-html",
-                        "isEnabled": true
+                        "id": "a7245c06-91a8-4f48-99c5-465c110bd585",
+                        "isEnabled": true,
+                        "snippetId": "b91ab5ac-e8e8-4c86-bbec-267baa293e17"
                     }
-                ]
+                ],
+                "name": "Softer light theme",
+                "updatedAt": 1770559350439
             },
             {
-                "id": "github-dev-theme",
-                "name": "GitHub: Developer Pro",
+                "createdAt": 1770496932494,
                 "domainPatterns": [
-                    "github.com"
+                    "chatgpt.com"
                 ],
+                "groupId": "945013ec-5e24-42b2-8233-99108710ddb1",
+                "id": "56e874c2-ac25-4172-900a-5bc1a23a1a2d",
                 "isActive": true,
-                "createdAt": 1738928565000,
-                "updatedAt": 1738928565000,
+                "isGroupExclusive": true,
                 "items": [
                     {
-                        "id": "item-fira-code",
-                        "snippetId": "lib-font-mono",
-                        "isEnabled": true
+                        "id": "ed3a728d-c3d1-49a0-a992-aca56ecec928",
+                        "isEnabled": true,
+                        "overrides": {},
+                        "snippetId": "b91ab5ac-e8e8-4c86-bbec-267baa293e17"
                     },
                     {
-                        "id": "item-github-wide",
-                        "snippetId": "gh-wide-layout",
-                        "isEnabled": true
+                        "id": "5bfb5dd1-f31c-4aa4-8083-8098638f97f9",
+                        "isEnabled": true,
+                        "snippetId": "cba3a5d7-723f-41a4-bbbb-b310685a6c51"
                     }
-                ]
+                ],
+                "name": "Darker dark theme",
+                "updatedAt": 1770559350439
+            },
+            {
+                "createdAt": 1770500234784,
+                "domainPatterns": [
+                    "wikipedia.org"
+                ],
+                "id": "c9c747f0-95b2-4fd1-ac3b-4356e76cd737",
+                "isActive": true,
+                "items": [
+                    {
+                        "id": "0aa895ac-14a3-476e-94d1-dbf1bd421c11",
+                        "isEnabled": true,
+                        "snippetId": "c6a0d757-c871-488d-acaa-04024c1c8b7a"
+                    },
+                    {
+                        "id": "86c58aea-719b-4244-9c25-e3c648066089",
+                        "isEnabled": true,
+                        "snippetId": "34efa4c9-f11d-4d57-9a07-6a414e9f5b13"
+                    },
+                    {
+                        "id": "9da1dca6-664a-442d-a20d-972ba9129503",
+                        "isEnabled": true,
+                        "snippetId": "87f9f97e-0c9c-4a3d-be12-a595ee7f39c3"
+                    },
+                    {
+                        "id": "72d61aac-834f-46c5-8193-1fd4b24be664",
+                        "isEnabled": true,
+                        "snippetId": "b5bd7b82-82ea-4d39-8ae0-f2d146850c5f"
+                    },
+                    {
+                        "id": "c35d7630-2479-47d8-a863-94d7cf5c764a",
+                        "isEnabled": true,
+                        "overrides": {},
+                        "snippetId": "09a32484-a241-4988-b92c-ffedfdb13a25"
+                    },
+                    {
+                        "id": "a5e787cf-bafd-4efd-b37d-f01b47e5567b",
+                        "isEnabled": true,
+                        "snippetId": "99c96d1d-06fc-4886-bd18-670741540013"
+                    },
+                    {
+                        "id": "ef83af59-b988-418a-8210-3b6a990cd027",
+                        "isEnabled": true,
+                        "snippetId": "9ecbd2e7-053a-4d32-a6e4-8bcefa261a7a"
+                    },
+                    {
+                        "id": "d9e525e0-3645-4e8f-b774-7bc8ff2cfc1c",
+                        "isEnabled": true,
+                        "snippetId": "29d942c5-41fd-4fa0-8af6-7af3a959e0b1"
+                    },
+                    {
+                        "id": "fd33db4c-c6fa-4659-a769-af1dd1ecc1d6",
+                        "isEnabled": true,
+                        "snippetId": "b8fb1f90-1e52-473d-af8a-9939abfb6286"
+                    },
+                    {
+                        "id": "87406cac-ef69-4ec9-b826-367c683f60fb",
+                        "isEnabled": true,
+                        "snippetId": "7a28718a-c847-4108-b192-4c6ee16ba927"
+                    },
+                    {
+                        "id": "afc8bf6f-8454-4b43-98db-d0012421c219",
+                        "isEnabled": false,
+                        "snippetId": "898b6ff6-cc98-4de3-ac0b-2b61cdc3283c"
+                    },
+                    {
+                        "id": "7bbb8f65-30e4-4fe6-b32d-6584ab45eed8",
+                        "isEnabled": true,
+                        "snippetId": "03211ac9-2c1d-45c5-a8eb-548430c4891c"
+                    },
+                    {
+                        "id": "1fc2d4ba-0fdd-46c7-b92d-f5a1a081e474",
+                        "isEnabled": true,
+                        "snippetId": "791bf66f-69ad-4ce5-8737-e9f5fc00449f"
+                    }
+                ],
+                "name": "Cleaner Wiki",
+                "updatedAt": 1770559399555
+            },
+            {
+                "createdAt": 1770490283889,
+                "domainPatterns": [
+                    "chatgpt.com"
+                ],
+                "id": "c980d6ed-ed20-4192-96a3-21e369d1f36d",
+                "isActive": true,
+                "isGroupExclusive": false,
+                "items": [
+                    {
+                        "id": "3af7ea15-49d5-4517-9636-6796ce01cda9",
+                        "isEnabled": true,
+                        "snippetId": "87f9f97e-0c9c-4a3d-be12-a595ee7f39c3"
+                    },
+                    {
+                        "id": "b1599f68-3c11-4270-b9c3-017e0f7f426b",
+                        "isEnabled": true,
+                        "snippetId": "53a5a664-8a8b-4977-8021-beb1abe1935e"
+                    },
+                    {
+                        "id": "55fec379-e125-46e9-bf6a-8ba3dc242444",
+                        "isEnabled": true,
+                        "snippetId": "2d67999d-9bf9-46a3-b649-060a27788399"
+                    }
+                ],
+                "name": "ChatGPT serif",
+                "updatedAt": 1770559343021
+            },
+            {
+                "createdAt": 1770512352087,
+                "domainPatterns": [
+                    "<all_urls>"
+                ],
+                "id": "c167ed19-f826-444c-af1b-3d30279288b0",
+                "isActive": true,
+                "items": [
+                    {
+                        "id": "97b4e7d4-8efc-495a-9e61-738324c59670",
+                        "isEnabled": true,
+                        "snippetId": "ea4393a5-46ab-4230-ae65-89377da3074e"
+                    },
+                    {
+                        "id": "1ebfa2a1-734e-43c7-92d2-84558fa67613",
+                        "isEnabled": true,
+                        "snippetId": "40441d72-2dce-4817-bef3-af14313af3e7"
+                    }
+                ],
+                "name": "Back to top button",
+                "updatedAt": 1770559343021
             }
         ],
         "snippets": [
             {
-                "id": "lib-font-serif",
-                "name": "Library: Typography - Serif Reading",
-                "type": "css",
                 "content": "/* Premium serif typography for focus */\nhtml, body, .mw-body, article {\n  font-family: 'Charter', 'Georgia', serif !important;\n  line-height: 1.62 !important;\n  -webkit-font-smoothing: antialiased;\n}",
-                "isLibraryItem": true,
-                "relatedSnippetIds": [],
                 "createdAt": 1738928565000,
-                "updatedAt": 1738928565000
+                "id": "lib-font-serif",
+                "isLibraryItem": true,
+                "name": "Library: Typography - Serif Reading",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770490219132
             },
             {
-                "id": "lib-font-sans",
-                "name": "Library: Typography - Modern Sans",
-                "type": "css",
                 "content": "/* Clean sans-serif UI stack (Inter) */\nhtml, body, .mw-body, article {\n  font-family: 'Inter', system-ui, -apple-system, sans-serif !important;\n  letter-spacing: -0.011em !important;\n  line-height: 1.5 !important;\n}",
-                "isLibraryItem": true,
-                "relatedSnippetIds": [],
                 "createdAt": 1738928565000,
-                "updatedAt": 1738928565000
+                "id": "lib-font-sans",
+                "isLibraryItem": true,
+                "name": "Library: Typography - Modern Sans",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770490219132
             },
             {
-                "id": "lib-font-mono",
-                "name": "Library: Typography - Fira Code Mono",
-                "type": "css",
                 "content": "/* Modern coding font with ligatures */\npre, code, .blob-code, .blob-num, .react-code-text {\n  font-family: 'Fira Code', 'Cascadia Code', monospace !important;\n  font-variant-ligatures: contextual;\n}",
-                "isLibraryItem": true,
-                "relatedSnippetIds": [],
                 "createdAt": 1738928565000,
-                "updatedAt": 1738928565000
+                "id": "lib-font-mono",
+                "isLibraryItem": true,
+                "name": "Library: Typography - Fira Code Mono",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770490219132
             },
             {
-                "id": "lib-font-robot",
-                "name": "Library: Typography - Roboto Sans",
-                "type": "css",
                 "content": "/* Google's signature sans-serif */\nbody {\n  font-family: 'Roboto', sans-serif !important;\n}",
-                "isLibraryItem": true,
-                "relatedSnippetIds": [],
                 "createdAt": 1738928565000,
-                "updatedAt": 1738928565000
+                "id": "lib-font-robot",
+                "isLibraryItem": true,
+                "name": "Library: Typography - Roboto Sans",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770490219132
             },
             {
-                "id": "lib-font-montserrat",
-                "name": "Library: Typography - Montserrat",
-                "type": "css",
                 "content": "/* Bold geometric sans-serif */\nbody {\n  font-family: 'Montserrat', sans-serif !important;\n  text-rendering: optimizeLegibility;\n}",
-                "isLibraryItem": true,
-                "relatedSnippetIds": [],
                 "createdAt": 1738928565000,
-                "updatedAt": 1738928565000
+                "id": "lib-font-montserrat",
+                "isLibraryItem": true,
+                "name": "Library: Typography - Montserrat",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770490219132
             },
             {
-                "id": "lib-font-playfair",
-                "name": "Library: Typography - Playfair Display",
-                "type": "css",
                 "content": "/* Elegant high-contrast serif */\nh1, h2, h3, .title {\n  font-family: 'Playfair Display', serif !important;\n  font-weight: 900 !important;\n}",
-                "isLibraryItem": true,
-                "relatedSnippetIds": [],
                 "createdAt": 1738928565000,
-                "updatedAt": 1738928565000
+                "id": "lib-font-playfair",
+                "isLibraryItem": true,
+                "name": "Library: Typography - Playfair Display",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770490219132
             },
             {
-                "id": "lib-smooth-scroll",
-                "name": "Library: UI - Smooth Scrolling",
-                "type": "css",
                 "content": "html { scroll-behavior: smooth !important; }",
-                "isLibraryItem": true,
-                "relatedSnippetIds": [],
                 "createdAt": 1738928565000,
-                "updatedAt": 1738928565000
+                "id": "lib-smooth-scroll",
+                "isLibraryItem": true,
+                "name": "Library: UI - Smooth Scrolling",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770490219132
             },
             {
-                "id": "lib-scroll-top-html",
-                "name": "Library: UI - Scroll to Top Button",
-                "type": "html",
-                "selector": "body",
-                "position": "append",
                 "content": "<button id=\"tb-scroll-top\" style=\"position: fixed; bottom: 30px; right: 30px; z-index: 9999; background: #3b82f6; color: white; border: none; width: 44px; height: 44px; rounded: 50%; border-radius: 50%; box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; display: flex; items-center; justify-content: center; font-size: 20px; transition: transform 0.2s;\" onclick=\"window.scrollTo({top: 0, behavior: 'smooth'})\">↑</button>\n<style>\n#tb-scroll-top:hover { transform: translateY(-4px); background: #2563eb; }\n#tb-scroll-top:active { transform: scale(0.9); }\n</style>",
+                "createdAt": 1738928565000,
+                "id": "lib-scroll-top-html",
                 "isLibraryItem": true,
+                "name": "Library: UI - Scroll to Top Button",
+                "position": "append",
                 "relatedSnippetIds": [],
-                "createdAt": 1738928565000,
-                "updatedAt": 1738928565000
-            },
-            {
-                "id": "wiki-sepia-css",
-                "name": "Wiki: Sepia Palette",
-                "type": "css",
-                "content": "body {\n  background-color: #f4ecd8 !important;\n  color: #5b4636 !important;\n}\n.mw-body, #content {\n  background: transparent !important;\n  border: none !important;\n}\na { color: #a05a2c !important; }",
-                "isLibraryItem": false,
-                "relatedSnippetIds": [],
-                "createdAt": 1738928565000,
-                "updatedAt": 1738928565000
-            },
-            {
-                "id": "wiki-dark-css",
-                "name": "Wiki: Midnight Dark",
-                "type": "css",
-                "content": "body {\n  background-color: #0d1117 !important;\n  color: #c9d1d9 !important;\n}\n.mw-body, #content {\n  background: #161b22 !important;\n  color: #c9d1d9 !important;\n  border-color: #30363d !important;\n}\na { color: #58a6ff !important; }\nimg { filter: brightness(0.8) contrast(1.2); }",
-                "isLibraryItem": false,
-                "relatedSnippetIds": [],
-                "createdAt": 1738928565000,
-                "updatedAt": 1738928565000
-            },
-            {
-                "id": "gpt-typography-css",
-                "name": "GPT: Readability Polish",
-                "type": "css",
-                "content": "main .prose {\n  max-width: 800px !important;\n  margin: 0 auto !important;\n  line-height: 1.75 !important;\n  font-size: 1.1rem !important;\n}\n.dark main .prose { color: #e5e7eb !important; }",
-                "isLibraryItem": false,
-                "relatedSnippetIds": [],
-                "createdAt": 1738928565000,
-                "updatedAt": 1738928565000
-            },
-            {
-                "id": "gpt-zen-badge-html",
-                "name": "GPT: Zen Status Badge",
-                "type": "html",
                 "selector": "body",
-                "position": "prepend",
-                "content": "<div style=\"position: fixed; top: 12px; right: 80px; z-index: 50; padding: 4px 10px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); border-radius: 20px; color: #10b981; font-size: 10px; font-weight: bold; letter-spacing: 0.05em; pointer-events: none;\">ZEN MODE</div>",
-                "isLibraryItem": false,
-                "relatedSnippetIds": [],
-                "createdAt": 1738928565000,
-                "updatedAt": 1738928565000
+                "type": "html",
+                "updatedAt": 1770490219132
             },
             {
-                "id": "gh-wide-layout",
-                "name": "GitHub: Ultra Wide Layout",
-                "type": "css",
-                "content": ".container-xl, .container-lg {\n  max-width: none !important;\n  padding-left: 32px !important;\n  padding-right: 32px !important;\n}\n.repository-content { width: 100% !important; }",
-                "isLibraryItem": false,
-                "relatedSnippetIds": [],
+                "content": "body {\n  background-color: #f4ecd8 !important;\n  color: #5b4636 !important;\n}\n.mw-body, #content {\n  background: transparent !important;\n  border: none !important;\n}\na { color: #a05a2c !important; }",
                 "createdAt": 1738928565000,
-                "updatedAt": 1738928565000
+                "id": "wiki-sepia-css",
+                "isLibraryItem": false,
+                "name": "Wiki: Sepia Palette",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770490219132
+            },
+            {
+                "content": "body {\n  background-color: #0d1117 !important;\n  color: #c9d1d9 !important;\n}\n.mw-body, #content {\n  background: #161b22 !important;\n  color: #c9d1d9 !important;\n  border-color: #30363d !important;\n}\na { color: #58a6ff !important; }\nimg { filter: brightness(0.8) contrast(1.2); }",
+                "createdAt": 1738928565000,
+                "id": "wiki-dark-css",
+                "isLibraryItem": false,
+                "name": "Wiki: Midnight Dark",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770490219132
+            },
+            {
+                "content": "main .prose {\n  max-width: 800px !important;\n  margin: 0 auto !important;\n  line-height: 1.75 !important;\n  font-size: 1.1rem !important;\n}\n.dark main .prose { color: #e5e7eb !important; }",
+                "createdAt": 1738928565000,
+                "id": "gpt-typography-css",
+                "isLibraryItem": false,
+                "name": "GPT: Readability Polish",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770490219132
+            },
+            {
+                "content": "<div style=\"position: fixed; top: 12px; right: 80px; z-index: 50; padding: 4px 10px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); border-radius: 20px; color: #10b981; font-size: 10px; font-weight: bold; letter-spacing: 0.05em; pointer-events: none;\">ZEN MODE</div>",
+                "createdAt": 1738928565000,
+                "id": "gpt-zen-badge-html",
+                "isLibraryItem": false,
+                "name": "GPT: Zen Status Badge",
+                "position": "prepend",
+                "relatedSnippetIds": [],
+                "selector": "body",
+                "type": "html",
+                "updatedAt": 1770490219132
+            },
+            {
+                "content": ".container-xl, .container-lg {\n  max-width: none !important;\n  padding-left: 32px !important;\n  padding-right: 32px !important;\n}\n.repository-content { width: 100% !important; }",
+                "createdAt": 1738928565000,
+                "id": "gh-wide-layout",
+                "isLibraryItem": false,
+                "name": "GitHub: Ultra Wide Layout",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770490219132
+            },
+            {
+                "content": "/* CSS */\n",
+                "createdAt": 1770490292222,
+                "id": "76c542af-a30a-4946-acf1-cc1432d73a1b",
+                "isLibraryItem": false,
+                "name": "Local CSS",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770490292222
+            },
+            {
+                "content": "/* Imported from chatgpt.com */\n.dark {\n    --bg-primary: red;\n    --bg-primary-inverted: #fff;\n    --bg-secondary: #303030;\n    --bg-tertiary: #414141;\n    --bg-scrim: #0d0d0d80;\n    --bg-elevated-primary: #303030;\n    --bg-elevated-secondary: #181818;\n    --bg-accent-static: var(--blue-400);\n    --bg-status-warning: var(--orange-900);\n    --bg-status-error: var(--red-900);\n    --border-default: #ffffff26;\n    --border-heavy: #fff3;\n    --border-light: #ffffff0d;\n    --border-status-warning: var(--orange-900);\n    --border-status-error: var(--red-900);\n    --text-primary: #fff;\n    --text-secondary: #f3f3f3;\n    --text-tertiary: #afafaf;\n    --text-inverted: #0d0d0d;\n    --text-inverted-static: #fff;\n    --text-accent: var(--blue-200);\n    --text-status-warning: var(--orange-200);\n    --text-status-error: var(--red-200);\n    --icon-primary: #e8e8e8;\n    --icon-secondary: #cdcdcd;\n    --icon-tertiary: #afafaf;\n    --icon-inverted: #0d0d0d;\n    --icon-inverted-static: #fff;\n    --icon-accent: var(--blue-200);\n    --icon-status-warning: var(--orange-200);\n    --icon-status-error: var(--red-200);\n    --interactive-bg-primary-default: #fff;\n    --interactive-bg-primary-hover: #fffc;\n    --interactive-bg-primary-press: #ffffffe5;\n    --interactive-bg-primary-inactive: #fff;\n    --interactive-bg-primary-selected: #fff;\n    --interactive-bg-secondary-default: #fff0;\n    --interactive-bg-secondary-hover: #ffffff1a;\n    --interactive-bg-secondary-press: #ffffff0d;\n    --interactive-bg-secondary-inactive: #fff0;\n    --interactive-bg-secondary-selected: #ffffff1a;\n    --interactive-bg-tertiary-default: #212121;\n    --interactive-bg-tertiary-hover: #181818;\n    --interactive-bg-tertiary-press: #0d0d0d;\n    --interactive-bg-tertiary-inactive: #212121;\n    --interactive-bg-tertiary-selected: #212121;\n    --interactive-bg-accent-default: var(--blue-800);\n    --interactive-bg-accent-hover: var(--blue-700);\n    --interactive-bg-accent-muted-hover: #394a5b;\n    --interactive-bg-accent-muted-context: #394a5b80;\n    --interactive-bg-accent-press: var(--blue-600);\n    --interactive-bg-accent-muted-press: #40484f;\n    --interactive-bg-accent-inactive: var(--blue-800);\n    --interactive-bg-danger-primary-default: var(--red-500);\n    --interactive-bg-danger-primary-hover: var(--red-400);\n    --interactive-bg-danger-primary-press: var(--red-600);\n    --interactive-bg-danger-primary-inactive: var(--red-500);\n    --interactive-bg-danger-secondary-default: #fff0;\n    --interactive-bg-danger-secondary-hover: #fff0;\n    --interactive-bg-danger-secondary-press: #fff0;\n    --interactive-bg-danger-secondary-inactive: #fff0;\n    --interactive-border-focus: #fff;\n    --interactive-border-secondary-default: #ffffff26;\n    --interactive-border-secondary-hover: #ffffff26;\n    --interactive-border-secondary-press: #fff3;\n    --interactive-border-secondary-inactive: #ffffff1a;\n    --interactive-border-tertiary-default: #ffffff1a;\n    --interactive-border-tertiary-hover: #ffffff26;\n    --interactive-border-tertiary-press: #ffffff1a;\n    --interactive-border-tertiary-inactive: #ffffff1a;\n    --interactive-border-danger-secondary-default: var(--red-400);\n    --interactive-border-danger-secondary-hover: var(--red-300);\n    --interactive-border-danger-secondary-press: var(--red-500);\n    --interactive-border-danger-secondary-inactive: var(--red-400);\n    --interactive-label-primary-default: #0d0d0d;\n    --interactive-label-primary-hover: #0d0d0d;\n    --interactive-label-primary-press: #0d0d0d;\n    --interactive-label-primary-inactive: #0d0d0d;\n    --interactive-label-primary-selected: #0d0d0d;\n    --interactive-label-secondary-default: #f3f3f3;\n    --interactive-label-secondary-hover: #ffffffe5;\n    --interactive-label-secondary-press: #fffc;\n    --interactive-label-secondary-inactive: #f3f3f3;\n    --interactive-label-secondary-selected: #f3f3f3;\n    --interactive-label-tertiary-default: #cdcdcd;\n    --interactive-label-tertiary-hover: #cdcdcd;\n    --interactive-label-tertiary-press: #cdcdcd;\n    --interactive-label-tertiary-inactive: #cdcdcd;\n    --interactive-label-tertiary-selected: #cdcdcd;\n    --interactive-label-accent-default: var(--blue-100);\n    --interactive-label-accent-hover: var(--blue-100);\n    --interactive-label-accent-press: var(--blue-100);\n    --interactive-label-accent-inactive: var(--blue-100);\n    --interactive-label-accent-selected: var(--blue-100);\n    --interactive-label-danger-primary-default: #fff;\n    --interactive-label-danger-primary-hover: #fff;\n    --interactive-label-danger-primary-press: #fff;\n    --interactive-label-danger-primary-inactive: #fff;\n    --interactive-label-danger-secondary-default: var(--red-400);\n    --interactive-label-danger-secondary-hover: var(--red-300);\n    --interactive-label-danger-secondary-press: var(--red-500);\n    --interactive-label-danger-secondary-inactive: var(--red-400);\n    --interactive-icon-primary-default: #0d0d0d;\n    --interactive-icon-primary-hover: #0d0d0d;\n    --interactive-icon-primary-press: #0d0d0d;\n    --interactive-icon-primary-selected: #0d0d0d;\n    --interactive-icon-primary-inactive: #0d0d0d;\n    --interactive-icon-secondary-default: #f3f3f3;\n    --interactive-icon-secondary-hover: #ffffffe5;\n    --interactive-icon-secondary-press: #fffc;\n    --interactive-icon-secondary-selected: #f3f3f3;\n    --interactive-icon-secondary-inactive: #f3f3f3;\n    --interactive-icon-tertiary-default: #cdcdcd;\n    --interactive-icon-tertiary-hover: #cdcdcd;\n    --interactive-icon-tertiary-press: #cdcdcd;\n    --interactive-icon-tertiary-selected: #cdcdcd;\n    --interactive-icon-tertiary-inactive: #cdcdcd;\n    --interactive-icon-accent-default: var(--blue-100);\n    --interactive-icon-accent-hover: var(--blue-100);\n    --interactive-icon-accent-press: var(--blue-100);\n    --interactive-icon-accent-selected: var(--blue-100);\n    --interactive-icon-accent-inactive: var(--blue-100);\n    --interactive-icon-danger-primary-default: #fff;\n    --interactive-icon-danger-primary-hover: #fff;\n    --interactive-icon-danger-primary-press: #fff;\n    --interactive-icon-danger-primary-inactive: #fff;\n    --interactive-icon-danger-secondary-default: var(--red-400);\n    --interactive-icon-danger-secondary-hover: var(--red-300);\n    --interactive-icon-danger-secondary-press: var(--red-500);\n    --interactive-icon-danger-secondary-inactive: var(--red-400);\n    --utility-scrollbar: #fff3;\n}",
+                "createdAt": 1770490537806,
+                "id": "c97a5132-70ea-439c-8fc4-e640948f8780",
+                "isLibraryItem": false,
+                "name": "chatgpt.com .dark",
+                "originalContent": "/* Imported from chatgpt.com */\n.dark {\n    --bg-primary: #212121;\n    --bg-primary-inverted: #fff;\n    --bg-secondary: #303030;\n    --bg-tertiary: #414141;\n    --bg-scrim: #0d0d0d80;\n    --bg-elevated-primary: #303030;\n    --bg-elevated-secondary: #181818;\n    --bg-accent-static: var(--blue-400);\n    --bg-status-warning: var(--orange-900);\n    --bg-status-error: var(--red-900);\n    --border-default: #ffffff26;\n    --border-heavy: #fff3;\n    --border-light: #ffffff0d;\n    --border-status-warning: var(--orange-900);\n    --border-status-error: var(--red-900);\n    --text-primary: #fff;\n    --text-secondary: #f3f3f3;\n    --text-tertiary: #afafaf;\n    --text-inverted: #0d0d0d;\n    --text-inverted-static: #fff;\n    --text-accent: var(--blue-200);\n    --text-status-warning: var(--orange-200);\n    --text-status-error: var(--red-200);\n    --icon-primary: #e8e8e8;\n    --icon-secondary: #cdcdcd;\n    --icon-tertiary: #afafaf;\n    --icon-inverted: #0d0d0d;\n    --icon-inverted-static: #fff;\n    --icon-accent: var(--blue-200);\n    --icon-status-warning: var(--orange-200);\n    --icon-status-error: var(--red-200);\n    --interactive-bg-primary-default: #fff;\n    --interactive-bg-primary-hover: #fffc;\n    --interactive-bg-primary-press: #ffffffe5;\n    --interactive-bg-primary-inactive: #fff;\n    --interactive-bg-primary-selected: #fff;\n    --interactive-bg-secondary-default: #fff0;\n    --interactive-bg-secondary-hover: #ffffff1a;\n    --interactive-bg-secondary-press: #ffffff0d;\n    --interactive-bg-secondary-inactive: #fff0;\n    --interactive-bg-secondary-selected: #ffffff1a;\n    --interactive-bg-tertiary-default: #212121;\n    --interactive-bg-tertiary-hover: #181818;\n    --interactive-bg-tertiary-press: #0d0d0d;\n    --interactive-bg-tertiary-inactive: #212121;\n    --interactive-bg-tertiary-selected: #212121;\n    --interactive-bg-accent-default: var(--blue-800);\n    --interactive-bg-accent-hover: var(--blue-700);\n    --interactive-bg-accent-muted-hover: #394a5b;\n    --interactive-bg-accent-muted-context: #394a5b80;\n    --interactive-bg-accent-press: var(--blue-600);\n    --interactive-bg-accent-muted-press: #40484f;\n    --interactive-bg-accent-inactive: var(--blue-800);\n    --interactive-bg-danger-primary-default: var(--red-500);\n    --interactive-bg-danger-primary-hover: var(--red-400);\n    --interactive-bg-danger-primary-press: var(--red-600);\n    --interactive-bg-danger-primary-inactive: var(--red-500);\n    --interactive-bg-danger-secondary-default: #fff0;\n    --interactive-bg-danger-secondary-hover: #fff0;\n    --interactive-bg-danger-secondary-press: #fff0;\n    --interactive-bg-danger-secondary-inactive: #fff0;\n    --interactive-border-focus: #fff;\n    --interactive-border-secondary-default: #ffffff26;\n    --interactive-border-secondary-hover: #ffffff26;\n    --interactive-border-secondary-press: #fff3;\n    --interactive-border-secondary-inactive: #ffffff1a;\n    --interactive-border-tertiary-default: #ffffff1a;\n    --interactive-border-tertiary-hover: #ffffff26;\n    --interactive-border-tertiary-press: #ffffff1a;\n    --interactive-border-tertiary-inactive: #ffffff1a;\n    --interactive-border-danger-secondary-default: var(--red-400);\n    --interactive-border-danger-secondary-hover: var(--red-300);\n    --interactive-border-danger-secondary-press: var(--red-500);\n    --interactive-border-danger-secondary-inactive: var(--red-400);\n    --interactive-label-primary-default: #0d0d0d;\n    --interactive-label-primary-hover: #0d0d0d;\n    --interactive-label-primary-press: #0d0d0d;\n    --interactive-label-primary-inactive: #0d0d0d;\n    --interactive-label-primary-selected: #0d0d0d;\n    --interactive-label-secondary-default: #f3f3f3;\n    --interactive-label-secondary-hover: #ffffffe5;\n    --interactive-label-secondary-press: #fffc;\n    --interactive-label-secondary-inactive: #f3f3f3;\n    --interactive-label-secondary-selected: #f3f3f3;\n    --interactive-label-tertiary-default: #cdcdcd;\n    --interactive-label-tertiary-hover: #cdcdcd;\n    --interactive-label-tertiary-press: #cdcdcd;\n    --interactive-label-tertiary-inactive: #cdcdcd;\n    --interactive-label-tertiary-selected: #cdcdcd;\n    --interactive-label-accent-default: var(--blue-100);\n    --interactive-label-accent-hover: var(--blue-100);\n    --interactive-label-accent-press: var(--blue-100);\n    --interactive-label-accent-inactive: var(--blue-100);\n    --interactive-label-accent-selected: var(--blue-100);\n    --interactive-label-danger-primary-default: #fff;\n    --interactive-label-danger-primary-hover: #fff;\n    --interactive-label-danger-primary-press: #fff;\n    --interactive-label-danger-primary-inactive: #fff;\n    --interactive-label-danger-secondary-default: var(--red-400);\n    --interactive-label-danger-secondary-hover: var(--red-300);\n    --interactive-label-danger-secondary-press: var(--red-500);\n    --interactive-label-danger-secondary-inactive: var(--red-400);\n    --interactive-icon-primary-default: #0d0d0d;\n    --interactive-icon-primary-hover: #0d0d0d;\n    --interactive-icon-primary-press: #0d0d0d;\n    --interactive-icon-primary-selected: #0d0d0d;\n    --interactive-icon-primary-inactive: #0d0d0d;\n    --interactive-icon-secondary-default: #f3f3f3;\n    --interactive-icon-secondary-hover: #ffffffe5;\n    --interactive-icon-secondary-press: #fffc;\n    --interactive-icon-secondary-selected: #f3f3f3;\n    --interactive-icon-secondary-inactive: #f3f3f3;\n    --interactive-icon-tertiary-default: #cdcdcd;\n    --interactive-icon-tertiary-hover: #cdcdcd;\n    --interactive-icon-tertiary-press: #cdcdcd;\n    --interactive-icon-tertiary-selected: #cdcdcd;\n    --interactive-icon-tertiary-inactive: #cdcdcd;\n    --interactive-icon-accent-default: var(--blue-100);\n    --interactive-icon-accent-hover: var(--blue-100);\n    --interactive-icon-accent-press: var(--blue-100);\n    --interactive-icon-accent-selected: var(--blue-100);\n    --interactive-icon-accent-inactive: var(--blue-100);\n    --interactive-icon-danger-primary-default: #fff;\n    --interactive-icon-danger-primary-hover: #fff;\n    --interactive-icon-danger-primary-press: #fff;\n    --interactive-icon-danger-primary-inactive: #fff;\n    --interactive-icon-danger-secondary-default: var(--red-400);\n    --interactive-icon-danger-secondary-hover: var(--red-300);\n    --interactive-icon-danger-secondary-press: var(--red-500);\n    --interactive-icon-danger-secondary-inactive: var(--red-400);\n    --utility-scrollbar: #fff3;\n}",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770491158935
+            },
+            {
+                "content": "/* Imported from chatgpt.com */\nhtml.mini-root.dark, html.mini-root.dark .markdown.prose.dark {\n    --mini-link-color: #56aaff;\n    --bento-border-color: #ffffff0f;\n    --bg-quaternary: #3a3a3a;\n    --default-theme-interactive-label-accent: var(--blue-100);\n    --default-theme-interactive-bg-accent-default: var(--blue-800);\n    --default-theme-interactive-bg-accent-hover: var(--blue-700);\n    --default-theme-interactive-bg-accent-muted-hover: #394a5b;\n    --default-theme-interactive-bg-accent-muted-context: #394a5b80;\n    --default-theme-interactive-bg-accent-press: var(--blue-600);\n    --default-theme-interactive-bg-accent-muted-press: #40484f;\n    --default-theme-interactive-bg-accent-inactive: var(--blue-800);\n \n}",
+                "createdAt": 1770490537806,
+                "id": "be19fb3a-c93d-4166-8413-1a296afbdbdb",
+                "isLibraryItem": false,
+                "name": "chatgpt.com html.mini-root.dark, html.mini-root.dark .markdown.prose.dark",
+                "originalContent": "/* Imported from chatgpt.com */\nhtml.mini-root.dark, html.mini-root.dark .markdown.prose.dark {\n    --mini-link-color: #56aaff;\n    --bento-border-color: #ffffff0f;\n    --bg-quaternary: #3a3a3a;\n    --default-theme-interactive-label-accent: var(--blue-100);\n    --default-theme-interactive-bg-accent-default: var(--blue-800);\n    --default-theme-interactive-bg-accent-hover: var(--blue-700);\n    --default-theme-interactive-bg-accent-muted-hover: #394a5b;\n    --default-theme-interactive-bg-accent-muted-context: #394a5b80;\n    --default-theme-interactive-bg-accent-press: var(--blue-600);\n    --default-theme-interactive-bg-accent-muted-press: #40484f;\n    --default-theme-interactive-bg-accent-inactive: var(--blue-800);\n    --blue-theme-interactive-label-accent: var(--blue-100);\n    --blue-theme-interactive-bg-accent-default: var(--blue-800);\n    --blue-theme-interactive-bg-accent-hover: var(--blue-700);\n    --blue-theme-interactive-bg-accent-muted-hover: #394a5b;\n    --blue-theme-interactive-bg-accent-muted-context: #394a5b80;\n    --blue-theme-interactive-bg-accent-press: var(--blue-600);\n    --blue-theme-interactive-bg-accent-muted-press: #40484f;\n    --blue-theme-interactive-bg-accent-inactive: var(--blue-800);\n    --green-theme-interactive-label-accent: var(--green-100);\n    --green-theme-interactive-bg-accent-default: var(--green-800);\n    --green-theme-interactive-bg-accent-hover: var(--green-700);\n    --green-theme-interactive-bg-accent-muted-hover: #004f1f;\n    --green-theme-interactive-bg-accent-muted-context: #004f1f80;\n    --green-theme-interactive-bg-accent-press: var(--green-600);\n    --green-theme-interactive-bg-accent-muted-press: #00692a;\n    --green-theme-interactive-bg-accent-inactive: var(--green-800);\n    --yellow-theme-interactive-label-accent: var(--yellow-100);\n    --yellow-theme-interactive-bg-accent-default: var(--yellow-800);\n    --yellow-theme-interactive-bg-accent-hover: var(--yellow-700);\n    --yellow-theme-interactive-bg-accent-muted-hover: #6e5400;\n    --yellow-theme-interactive-bg-accent-muted-context: #6e540080;\n    --yellow-theme-interactive-bg-accent-press: var(--yellow-600);\n    --yellow-theme-interactive-bg-accent-muted-press: #916f00;\n    --yellow-theme-interactive-bg-accent-inactive: var(--yellow-800);\n    --purple-theme-interactive-label-accent: var(--purple-100);\n    --purple-theme-interactive-bg-accent-default: var(--purple-800);\n    --purple-theme-interactive-bg-accent-hover: var(--purple-700);\n    --purple-theme-interactive-bg-accent-muted-hover: #3f226a;\n    --purple-theme-interactive-bg-accent-muted-context: #3f226a80;\n    --purple-theme-interactive-bg-accent-press: var(--purple-600);\n    --purple-theme-interactive-bg-accent-muted-press: #532d8d;\n    --purple-theme-interactive-bg-accent-inactive: var(--purple-800);\n    --pink-theme-interactive-label-accent: var(--pink-100);\n    --pink-theme-interactive-bg-accent-default: var(--pink-800);\n    --pink-theme-interactive-bg-accent-hover: var(--pink-700);\n    --pink-theme-interactive-bg-accent-muted-hover: #6e2c4a;\n    --pink-theme-interactive-bg-accent-muted-context: #6e2c4a80;\n    --pink-theme-interactive-bg-accent-press: var(--pink-600);\n    --pink-theme-interactive-bg-accent-muted-press: #963c67;\n    --pink-theme-interactive-bg-accent-inactive: var(--pink-800);\n    --orange-theme-interactive-label-accent: var(--orange-100);\n    --orange-theme-interactive-bg-accent-default: var(--orange-800);\n    --orange-theme-interactive-bg-accent-hover: var(--orange-700);\n    --orange-theme-interactive-bg-accent-muted-hover: #6d2e0f;\n    --orange-theme-interactive-bg-accent-muted-context: #6d2e0f80;\n    --orange-theme-interactive-bg-accent-press: var(--orange-600);\n    --orange-theme-interactive-bg-accent-muted-press: #923b0f;\n    --orange-theme-interactive-bg-accent-inactive: var(--orange-800);\n    --black-theme-interactive-label-accent: #e8e8e8;\n    --black-theme-interactive-bg-accent-default: #212121;\n    --black-theme-interactive-bg-accent-hover: #303030;\n    --black-theme-interactive-bg-accent-muted-hover: #222;\n    --black-theme-interactive-bg-accent-muted-context: #22222280;\n    --black-theme-interactive-bg-accent-press: #414141;\n    --black-theme-interactive-bg-accent-muted-press: #292929;\n    --black-theme-interactive-bg-accent-inactive: #212121;\n}",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770490589870
+            },
+            {
+                "content": "/* Imported from chatgpt.com */\nhtml.mini-root.light, html.mini-root.light .markdown.prose.light {\n    --mini-link-color: #007afd;\n    --bento-border-color: #0d0d0d0f;\n    --bg-quaternary: #f8f8f8;\n    --default-theme-interactive-label-accent: var(--blue-400);\n    --default-theme-interactive-bg-accent-default: var(--blue-50);\n    --default-theme-interactive-bg-accent-hover: var(--blue-75);\n    --default-theme-interactive-bg-accent-muted-hover: #ebf4ff;\n    --default-theme-interactive-bg-accent-muted-context: #ebf4ff80;\n    --default-theme-interactive-bg-accent-press: var(--blue-100);\n    --default-theme-interactive-bg-accent-muted-press: #e0efff;\n    --default-theme-interactive-bg-accent-inactive: var(--blue-50);\n    --blue-theme-interactive-label-accent: var(--blue-400);\n    --blue-theme-interactive-bg-accent-default: var(--blue-50);\n    --blue-theme-interactive-bg-accent-hover: var(--blue-75);\n    --blue-theme-interactive-bg-accent-muted-hover: #ebf4ff;\n    --blue-theme-interactive-bg-accent-muted-context: #ebf4ff80;\n    --blue-theme-interactive-bg-accent-press: var(--blue-100);\n    --blue-theme-interactive-bg-accent-muted-press: #e0efff;\n    --blue-theme-interactive-bg-accent-inactive: var(--blue-50);\n    --green-theme-interactive-label-accent: var(--green-400);\n    --green-theme-interactive-bg-accent-default: var(--green-50);\n    --green-theme-interactive-bg-accent-hover: var(--green-75);\n    --green-theme-interactive-bg-accent-muted-hover: #d9f4e4;\n    --green-theme-interactive-bg-accent-muted-context: #d9f4e480;\n    --green-theme-interactive-bg-accent-press: var(--green-100);\n    --green-theme-interactive-bg-accent-muted-press: #b8ebcc;\n    --green-theme-interactive-bg-accent-inactive: var(--green-50);\n    --yellow-theme-interactive-label-accent: var(--yellow-400);\n    --yellow-theme-interactive-bg-accent-default: var(--yellow-50);\n    --yellow-theme-interactive-bg-accent-hover: var(--yellow-75);\n    --yellow-theme-interactive-bg-accent-muted-hover: #fff6d9;\n    --yellow-theme-interactive-bg-accent-muted-context: #fff6d980;\n    --yellow-theme-interactive-bg-accent-press: var(--yellow-100);\n    --yellow-theme-interactive-bg-accent-muted-press: #ffeeb8;\n    --yellow-theme-interactive-bg-accent-inactive: var(--yellow-50);\n    --purple-theme-interactive-label-accent: var(--purple-400);\n    --purple-theme-interactive-bg-accent-default: var(--purple-50);\n    --purple-theme-interactive-bg-accent-hover: var(--purple-75);\n    --purple-theme-interactive-bg-accent-muted-hover: #efe5fe;\n    --purple-theme-interactive-bg-accent-muted-context: #efe5fe80;\n    --purple-theme-interactive-bg-accent-press: var(--purple-100);\n    --purple-theme-interactive-bg-accent-muted-press: #e0cefd;\n    --purple-theme-interactive-bg-accent-inactive: var(--purple-50);\n    --pink-theme-interactive-label-accent: var(--pink-400);\n    --pink-theme-interactive-bg-accent-default: var(--pink-50);\n    --pink-theme-interactive-bg-accent-hover: var(--pink-75);\n    --pink-theme-interactive-bg-accent-muted-hover: #ffe8f3;\n    --pink-theme-interactive-bg-accent-muted-context: #ffe8f380;\n    --pink-theme-interactive-bg-accent-press: var(--pink-100);\n    --pink-theme-interactive-bg-accent-muted-press: #ffd4e8;\n    --pink-theme-interactive-bg-accent-inactive: var(--pink-50);\n    --orange-theme-interactive-label-accent: var(--orange-400);\n    --orange-theme-interactive-bg-accent-default: var(--orange-50);\n    --orange-theme-interactive-bg-accent-hover: var(--orange-75);\n    --orange-theme-interactive-bg-accent-muted-hover: #ffe7d9;\n    --orange-theme-interactive-bg-accent-muted-context: #ffe7d980;\n    --orange-theme-interactive-bg-accent-press: var(--orange-100);\n    --orange-theme-interactive-bg-accent-muted-press: #ffcfb4;\n    --orange-theme-interactive-bg-accent-inactive: var(--orange-50);\n    --black-theme-interactive-label-accent: #8f8f8f;\n    --black-theme-interactive-bg-accent-default: #f9f9f9;\n    --black-theme-interactive-bg-accent-hover: #f3f3f3;\n    --black-theme-interactive-bg-accent-muted-hover: #f2f2f2;\n    --black-theme-interactive-bg-accent-muted-context: #f2f2f280;\n    --black-theme-interactive-bg-accent-press: #e8e8e8;\n    --black-theme-interactive-bg-accent-muted-press: #e0e0e0;\n    --black-theme-interactive-bg-accent-inactive: #f9f9f9;\n}",
+                "createdAt": 1770490537806,
+                "id": "933312bb-acb9-4dd3-a12a-6be3d0a8d55f",
+                "isLibraryItem": false,
+                "name": "chatgpt.com html.mini-root.light, html.mini-root.light .markdown.prose.light",
+                "originalContent": "/* Imported from chatgpt.com */\nhtml.mini-root.light, html.mini-root.light .markdown.prose.light {\n    --mini-link-color: #007afd;\n    --bento-border-color: #0d0d0d0f;\n    --bg-quaternary: #f8f8f8;\n    --default-theme-interactive-label-accent: var(--blue-400);\n    --default-theme-interactive-bg-accent-default: var(--blue-50);\n    --default-theme-interactive-bg-accent-hover: var(--blue-75);\n    --default-theme-interactive-bg-accent-muted-hover: #ebf4ff;\n    --default-theme-interactive-bg-accent-muted-context: #ebf4ff80;\n    --default-theme-interactive-bg-accent-press: var(--blue-100);\n    --default-theme-interactive-bg-accent-muted-press: #e0efff;\n    --default-theme-interactive-bg-accent-inactive: var(--blue-50);\n    --blue-theme-interactive-label-accent: var(--blue-400);\n    --blue-theme-interactive-bg-accent-default: var(--blue-50);\n    --blue-theme-interactive-bg-accent-hover: var(--blue-75);\n    --blue-theme-interactive-bg-accent-muted-hover: #ebf4ff;\n    --blue-theme-interactive-bg-accent-muted-context: #ebf4ff80;\n    --blue-theme-interactive-bg-accent-press: var(--blue-100);\n    --blue-theme-interactive-bg-accent-muted-press: #e0efff;\n    --blue-theme-interactive-bg-accent-inactive: var(--blue-50);\n    --green-theme-interactive-label-accent: var(--green-400);\n    --green-theme-interactive-bg-accent-default: var(--green-50);\n    --green-theme-interactive-bg-accent-hover: var(--green-75);\n    --green-theme-interactive-bg-accent-muted-hover: #d9f4e4;\n    --green-theme-interactive-bg-accent-muted-context: #d9f4e480;\n    --green-theme-interactive-bg-accent-press: var(--green-100);\n    --green-theme-interactive-bg-accent-muted-press: #b8ebcc;\n    --green-theme-interactive-bg-accent-inactive: var(--green-50);\n    --yellow-theme-interactive-label-accent: var(--yellow-400);\n    --yellow-theme-interactive-bg-accent-default: var(--yellow-50);\n    --yellow-theme-interactive-bg-accent-hover: var(--yellow-75);\n    --yellow-theme-interactive-bg-accent-muted-hover: #fff6d9;\n    --yellow-theme-interactive-bg-accent-muted-context: #fff6d980;\n    --yellow-theme-interactive-bg-accent-press: var(--yellow-100);\n    --yellow-theme-interactive-bg-accent-muted-press: #ffeeb8;\n    --yellow-theme-interactive-bg-accent-inactive: var(--yellow-50);\n    --purple-theme-interactive-label-accent: var(--purple-400);\n    --purple-theme-interactive-bg-accent-default: var(--purple-50);\n    --purple-theme-interactive-bg-accent-hover: var(--purple-75);\n    --purple-theme-interactive-bg-accent-muted-hover: #efe5fe;\n    --purple-theme-interactive-bg-accent-muted-context: #efe5fe80;\n    --purple-theme-interactive-bg-accent-press: var(--purple-100);\n    --purple-theme-interactive-bg-accent-muted-press: #e0cefd;\n    --purple-theme-interactive-bg-accent-inactive: var(--purple-50);\n    --pink-theme-interactive-label-accent: var(--pink-400);\n    --pink-theme-interactive-bg-accent-default: var(--pink-50);\n    --pink-theme-interactive-bg-accent-hover: var(--pink-75);\n    --pink-theme-interactive-bg-accent-muted-hover: #ffe8f3;\n    --pink-theme-interactive-bg-accent-muted-context: #ffe8f380;\n    --pink-theme-interactive-bg-accent-press: var(--pink-100);\n    --pink-theme-interactive-bg-accent-muted-press: #ffd4e8;\n    --pink-theme-interactive-bg-accent-inactive: var(--pink-50);\n    --orange-theme-interactive-label-accent: var(--orange-400);\n    --orange-theme-interactive-bg-accent-default: var(--orange-50);\n    --orange-theme-interactive-bg-accent-hover: var(--orange-75);\n    --orange-theme-interactive-bg-accent-muted-hover: #ffe7d9;\n    --orange-theme-interactive-bg-accent-muted-context: #ffe7d980;\n    --orange-theme-interactive-bg-accent-press: var(--orange-100);\n    --orange-theme-interactive-bg-accent-muted-press: #ffcfb4;\n    --orange-theme-interactive-bg-accent-inactive: var(--orange-50);\n    --black-theme-interactive-label-accent: #8f8f8f;\n    --black-theme-interactive-bg-accent-default: #f9f9f9;\n    --black-theme-interactive-bg-accent-hover: #f3f3f3;\n    --black-theme-interactive-bg-accent-muted-hover: #f2f2f2;\n    --black-theme-interactive-bg-accent-muted-context: #f2f2f280;\n    --black-theme-interactive-bg-accent-press: #e8e8e8;\n    --black-theme-interactive-bg-accent-muted-press: #e0e0e0;\n    --black-theme-interactive-bg-accent-inactive: #f9f9f9;\n}",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770491124940
+            },
+            {
+                "content": "@import url('https://fonts.googleapis.com/css2?family=Mona+Sans:ital,wght@0,200..900;1,200..900&display=swap');\n\nbody {\n  font-family: 'Mona Sans', sans-serif;\n}",
+                "createdAt": 1770491472608,
+                "id": "1734d048-2db8-4d01-afa1-5b0cd9608093",
+                "isLibraryItem": false,
+                "name": "Local CSS",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770492139064
+            },
+            {
+                "content": "p {\n    line-height: 2;\n}\n",
+                "createdAt": 1770492337040,
+                "id": "5498fc82-cc85-4391-9b4a-df9823005a5c",
+                "isLibraryItem": false,
+                "name": "Local CSS",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770492460878
+            },
+            {
+                "content": "/* CSS */\n",
+                "createdAt": 1770492589123,
+                "id": "8c7adcc0-5017-41ba-9968-82148aaffb6d",
+                "isLibraryItem": false,
+                "name": "Local CSS",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770492589123
+            },
+            {
+                "content": "/* Decrease contrast of body text for better scannability */\np {\n    opacity: 0.8;\n}",
+                "createdAt": 1770492629589,
+                "id": "215cf8a7-2fcb-43c8-9b3b-15f774fb014b",
+                "isLibraryItem": true,
+                "name": "[typo] p opacity decrease",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770494248326
+            },
+            {
+                "content": "@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,200..900;1,200..900&display=swap');",
+                "createdAt": 1770493619684,
+                "id": "87f9f97e-0c9c-4a3d-be12-a595ee7f39c3",
+                "isLibraryItem": true,
+                "name": "[font import] Crimson Pro",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770494547737
+            },
+            {
+                "content": "/* Decrease contrast of body text for better scannability */\np {\n    opacity: 0.8;\n    font-family: \"Crimson Pro\", serif;\n    font-size: 1.2rem;\n    letter-spacing: -0.02rem;\n}\n",
+                "createdAt": 1770494663981,
+                "id": "2d67999d-9bf9-46a3-b649-060a27788399",
+                "isLibraryItem": false,
+                "name": "[typo] p opacity decrease",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770495481561
+            },
+            {
+                "content": "/* CSS */\n",
+                "createdAt": 1770494839514,
+                "id": "97fa57b4-2703-41be-acd9-b0d73c127895",
+                "isLibraryItem": false,
+                "name": "Local CSS",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770494839514
+            },
+            {
+                "content": "@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,200..900;1,200..900&display=swap');",
+                "createdAt": 1770494887481,
+                "id": "327e0e98-1484-4085-a187-4a63953cab22",
+                "isLibraryItem": false,
+                "name": "[font import] Libre Baskerville",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770494905440
+            },
+            {
+                "content": ".\\[--thread-content-max-width\\:40rem\\] {\n    --thread-content-max-width: 38rem;\n}",
+                "createdAt": 1770496016901,
+                "id": "53a5a664-8a8b-4977-8021-beb1abe1935e",
+                "isLibraryItem": false,
+                "name": "Local CSS",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770496150115
+            },
+            {
+                "content": ".\\[--thread-content-max-width\\:40rem\\] {\n    --thread-content-max-width: 38rem;\n}",
+                "createdAt": 1770496421722,
+                "id": "faa0424b-bd2d-4ba0-9959-8c189f89c9f3",
+                "isLibraryItem": false,
+                "name": "Local CSS",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770496421722
+            },
+            {
+                "content": "/* Decrease contrast of body text for better scannability */\np {\n    opacity: 0.8;\n    font-family: \"Crimson Pro\", serif;\n    font-size: 1.2rem;\n    letter-spacing: -0.02rem;\n}\n",
+                "createdAt": 1770496421722,
+                "id": "9ffb1023-4ddf-44c3-8049-6c944ce0f99c",
+                "isLibraryItem": false,
+                "name": "[typo] p opacity decrease",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770496421722
+            },
+            {
+                "content": ".light {\n    --bg-primary: #eee;\n}\n\nheader {\n    background: transparent;\n}\n",
+                "createdAt": 1770496526669,
+                "id": "fd31fc7f-f249-4bae-bc74-a4ec5350d825",
+                "isLibraryItem": false,
+                "name": "Local CSS",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770497784673
+            },
+            {
+                "content": "html,\n.light,\n.dark .light {\n    --bg-primary: #eee;\n}\n\nheader {\n    background: transparent;\n}\n",
+                "createdAt": 1770496837415,
+                "id": "1864a3dc-0def-41e6-bf90-bb1b97975bb6",
+                "isLibraryItem": false,
+                "name": "Local CSS",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770496837415
+            },
+            {
+                "content": ".dark {\n    --bg-primary: #111;\n}",
+                "createdAt": 1770496932494,
+                "id": "cba3a5d7-723f-41a4-bbbb-b310685a6c51",
+                "isLibraryItem": false,
+                "name": "Local CSS",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770497699028
+            },
+            {
+                "content": "header {\n    background: var(--bg-primary);\n    background: oklch(from var(--bg-primary) l c h / 0.5);\n    backdrop-filter: blur(12px);\n}",
+                "createdAt": 1770497700875,
+                "id": "b91ab5ac-e8e8-4c86-bbec-267baa293e17",
+                "isLibraryItem": true,
+                "name": "[ChatGPT] Glass header",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770497813148
+            },
+            {
+                "content": "/* CSS */\n",
+                "createdAt": 1770497789463,
+                "id": "eb79815c-2238-4749-b2af-38a437b8abe1",
+                "isLibraryItem": false,
+                "name": "Local CSS",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770497789463
+            },
+            {
+                "content": "/* CSS */\n",
+                "createdAt": 1770497801646,
+                "id": "fb034c90-cd2e-438a-9e98-7690f67cfb04",
+                "isLibraryItem": false,
+                "name": "Local CSS",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770497801646
+            },
+            {
+                "content": "/* CSS */\n",
+                "createdAt": 1770499548699,
+                "id": "20ca174a-a91b-42a9-a362-3b7fdd80881c",
+                "isLibraryItem": false,
+                "name": "Local CSS",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770499548699
+            },
+            {
+                "content": ".mw-content-ltr.mw-parser-output p,\n.mw-content-ltr.mw-parser-output ul {\n    font-family: \"Crimson Pro\";\n    font-size: 1.3rem;\n    font-weight: 290;\n}\n",
+                "createdAt": 1770500586476,
+                "id": "29d942c5-41fd-4fa0-8af6-7af3a959e0b1",
+                "isLibraryItem": false,
+                "name": "Serif text",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770506263953
+            },
+            {
+                "content": "/* CSS */\n",
+                "createdAt": 1770500614811,
+                "id": "2f6b3d0b-45b6-4aca-82da-c550bb8af423",
+                "isLibraryItem": false,
+                "name": "Local CSS",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770500614811
+            },
+            {
+                "content": "body {\n  font-family: system-ui, sans-serif; \n}",
+                "createdAt": 1770500965287,
+                "id": "09a32484-a241-4988-b92c-ffedfdb13a25",
+                "isLibraryItem": true,
+                "name": "Body to system-ui",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770509857564
+            },
+            {
+                "content": ".vector-page-titlebar::after {\n    display: none;\n}\n\n.mw-heading1, h1, .mw-heading2, h2 {\n  border-bottom: none;\n}\n\n .mw-html-heading {\n  border: 0 !important;\n}",
+                "createdAt": 1770501444678,
+                "id": "99c96d1d-06fc-4886-bd18-670741540013",
+                "isLibraryItem": false,
+                "name": "Cleaner or no lines",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770508934871
+            },
+            {
+                "content": "#vector-toc-pinned-container {\n    margin-top: 9px;\n}\n#vector-appearance-pinned-container {\n    margin-top: 9px;\n}\n\n.vector-page-titlebar {\n    margin-bottom: 8px;\n}\n\n.mw-content-ltr.mw-parser-output p,\n.mw-content-ltr.mw-parser-output ul {\n    line-height: 1.6;\n}\n\n.vector-user-links .mw-list-item, .vector-user-links .vector-dropdown-label {\n    margin: 0 12px;\n}",
+                "createdAt": 1770502186640,
+                "id": "9ecbd2e7-053a-4d32-a6e4-8bcefa261a7a",
+                "isLibraryItem": false,
+                "name": "Adjust whitespace",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770510222083
+            },
+            {
+                "content": ".mw-content-ltr.mw-parser-output p,\n.mw-content-ltr.mw-parser-output ul {\n    color: oklch(from var(--color-base) 0.45 c h);\n}",
+                "createdAt": 1770502883375,
+                "id": "94fd511c-a003-44d5-8abf-305a8990e1a4",
+                "isLibraryItem": false,
+                "name": "subtler text",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770505939396
+            },
+            {
+                "content": ".mwe-popups {line-height: 1.3;}",
+                "createdAt": 1770503327611,
+                "id": "b5bd7b82-82ea-4d39-8ae0-f2d146850c5f",
+                "isLibraryItem": false,
+                "name": "Term definition line height",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770504068408
+            },
+            {
+                "content": "a { color: oklch(from var(--color-progressive)) 0.4 c h}",
+                "createdAt": 1770505627951,
+                "id": "f5880ce9-0ba7-4d3c-87b0-dd28ca695751",
+                "isLibraryItem": false,
+                "name": "Darker links",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770505951433
+            },
+            {
+                "content": ".mw-content-ltr.mw-parser-output {\n    opacity: 0.9;\n}",
+                "createdAt": 1770506048789,
+                "id": "b8fb1f90-1e52-473d-af8a-9939abfb6286",
+                "isLibraryItem": false,
+                "name": "Subtler text",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770559419180
+            },
+            {
+                "content": "#firstHeading {\n    font-family: system-ui, sans-serif;\n    font-weight: 200;\n    /* letter-spacing: -0.02rem; */\n}\n\n.mw-body .mw-heading2,\n.mw-body h2 {\n    font-family: system-ui, sans-serif;\n    font-weight: 600;\n    letter-spacing: -0.02rem;\n}\n\n.mw-body .mw-heading3,\n.mw-body h3,\n.mw-body .mw-heading4,\n.mw-body h4,\n.mw-body .mw-heading5,\n.mw-body h5,\n.mw-body .mw-heading6,\n.mw-body h6 {\n    font-family: system-ui, sans-serif;\n    font-weight: 700;\n    letter-spacing: 0;\n}\n",
+                "createdAt": 1770506251074,
+                "id": "7a28718a-c847-4108-b192-4c6ee16ba927",
+                "isLibraryItem": false,
+                "name": "Sans serif headings",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770507954001
+            },
+            {
+                "content": "/* Imported from en.wikipedia.org */\n:root {\n    --border-color-input-binary--active: #233566;\n    --border-color-progressive--active: #233566;\n    --border-color-subtle: #c8ccd1;\n    --background-color-progressive-subtle: #e8eeff;\n    --opacity-icon-base: 0.87;\n    --color-destructive--visited--active: #512e2e;\n    --border-color-interactive--active: #202122;\n    --opacity-icon-placeholder: 0.51;\n    --background-color-interactive-subtle: #f8f9fa;\n    --background-color-base: #fff;\n    --color-base--subtle: #54595d;\n    --border-color-warning--hover: #735421;\n    --color-visited: #6a60b0;\n    --color-progressive--active: #233566;\n    --background-color-destructive--active: #612419;\n    --background-color-progressive--hover: #3056a9;\n    --border-color-emphasized: #202122;\n    --background-color-error: #f54739;\n    --background-color-target-text: #ffead4;\n    --color-emphasized: #101418;\n    --border-color-divider: #a2a9b1;\n    --color-placeholder: #72777d;\n    --background-color-notice-subtle: #eaecf0;\n    --border-color-destructive: #f54739;\n    --background-color-warning-subtle: #fdf2d5;\n    --background-color-interactive: #eaecf0;\n    --border-color-error--active: #612419;\n    --opacity-icon-base--disabled: 0.51;\n    --color-icon-warning: #ab7f2a;\n    --color-link--hover: #3056a9;\n    --background-color-interactive--active: #c8ccd1;\n    --border-color-inverted: #fff;\n    --color-base--hover: #404244;\n    --accent-color-base: #36c;\n    --background-color-interactive-subtle--active: #dadde3;\n    --color-progressive--hover: #3056a9;\n    --background-color-tab-list-item-framed--hover: rgba(255,255,255,0.3);\n    --line-height-medium: 1.6;\n    --color-error--active: #612419;\n    --color-disabled: #a2a9b1;\n    --color-destructive--active: #612419;\n    --color-progressive: #36c;\n    --background-color-error-subtle: #ffe9e5;\n    --color-base-fixed: #202122;\n    --box-shadow-color-progressive-selected--active: #233566;\n    --background-color-destructive-subtle: #ffe9e5;\n    --border-color-interactive--hover: #27292d;\n    --color-link--visited--hover: #534fa3;\n    --border-color-content-added: #a3d3ff;\n    --color-link-red--focus: #36c;\n    --color-error--hover: #9f3526;\n    --line-height-content: 1.625;\n    --border-color-input--hover: #72777d;\n    --color-destructive--hover: #9f3526;\n    --box-shadow-color-progressive--focus: #36c;\n    --background-color-button-quiet--active: rgba(0,24,73,0.082);\n    --border-color-base: #a2a9b1;\n    --box-shadow-color-progressive--active: #233566;\n    --box-shadow-color-inverted: #fff;\n    --border-color-success: #099979;\n    --opacity-icon-base--selected: 1;\n    --outline-color-progressive--focus: #36c;\n    --background-color-interactive--hover: #dadde3;\n    --box-shadow-color-transparent: transparent;\n    --box-shadow-color-destructive--focus: #36c;\n    --border-color-error--hover: #9f3526;\n    --color-link-red--hover: #9f3526;\n    --background-color-destructive-subtle--hover: #ffdad3;\n    --background-color-tab-list-item-framed--active: rgba(255,255,255,0.65);\n    --color-link-red--visited--hover: #854848;\n    --mix-blend-mode-base: normal;\n    --border-color-input-binary--checked: #6485d1;\n    --filter-invert-icon: 0;\n    --background-color-disabled: #dadde3;\n    --color-link-red--active: #612419;\n    --border-color-input-binary: #72777d;\n    --box-shadow-color-base: #a2a9b1;\n    --border-color-destructive--hover: #9f3526;\n    --background-color-base-fixed: #fff;\n    --color-link--visited: #6a60b0;\n    --opacity-icon-base--hover: 0.74;\n    --border-color-content-removed: #ffe49c;\n    --background-color-neutral: #eaecf0;\n    --background-color-progressive-subtle--active: #b6d4fb;\n    --background-color-disabled-subtle: #eaecf0;\n    --border-color-input-binary--hover: #3056a9;\n    --color-destructive: #bf3c2c;\n    --color-link-red--visited: #9f5555;\n    --color-visited--active: #353262;\n    --border-color-input-binary--focus: #36c;\n    --background-color-destructive: #bf3c2c;\n    --background-color-progressive: #36c;\n    --color-link--focus: #36c;\n    --background-color-transparent: transparent;\n    --border-color-progressive: #6485d1;\n    --color-content-removed: #8b0000;\n    --background-color-content-added: #a3d3ff;\n    --background-color-destructive--focus: #36c;\n    --background-color-progressive--active: #233566;\n    --color-content-added: #006400;\n    --color-warning: #886425;\n    --background-color-progressive-subtle--hover: #d9e2ff;\n    --color-icon-error: #f54739;\n    --background-color-progressive--focus: #36c;\n    --color-destructive--visited--hover: #854848;\n    --color-link--active: #233566;\n    --color-inverted-fixed: #fff;\n    --border-color-progressive--focus: #36c;\n    --color-success: #177860;\n    --border-color-muted: #dadde3;\n    --color-visited--hover: #534fa3;\n    --background-color-content-removed: #ffe49c;\n    --color-link--visited--active: #353262;\n    --box-shadow-color-alpha-base: rgba(0,0,0,0.06);\n    --border-color-error: #f54739;\n    --background-color-destructive--hover: #9f3526;\n    --filter-invert-primary-button-icon: 1;\n    --opacity-icon-subtle: 0.67;\n    --background-color-input-binary--checked: #36c;\n    --border-color-destructive--focus: #36c;\n    --box-shadow-color-progressive-selected--hover: #3056a9;\n    --background-color-neutral-subtle: #f8f9fa;\n    --color-link-red: #bf3c2c;\n    --background-color-error-subtle--active: #ffc8bd;\n    --background-color-backdrop-dark: rgba(0,0,0,0.65);\n    --color-progressive--focus: #36c;\n    --color-inverted: #fff;\n    --color-notice: #404244;\n    --background-color-success-subtle: #dff2eb;\n    --color-error: #bf3c2c;\n    --color-disabled-emphasized: #a2a9b1;\n    --background-color-error--hover: #d74032;\n    --background-color-destructive-subtle--active: #ffc8bd;\n    --border-color-notice: #72777d;\n    --color-destructive--focus: #36c;\n    --background-color-interactive-subtle--hover: #eaecf0;\n    --border-color-inverted-fixed: #fff;\n    --border-color-warning: #ab7f2a;\n    --background-color-button-quiet--hover: rgba(0,24,73,0.027);\n    --border-color-interactive: #72777d;\n    --border-color-progressive--hover: #3056a9;\n    --border-color-transparent: transparent;\n    --color-subtle: #54595d;\n    --background-color-inverted: #101418;\n    --color-icon-notice: #72777d;\n    --font-size-medium: ;\n    --color-link-red--visited--active: #512e2e;\n    --background-color-error--active: #bf3c2c;\n    --border-color-disabled: #c8ccd1;\n    --mix-blend-mode-blend: multiply;\n    --border-color-warning--active: #453217;\n    --border-color-destructive--active: #612419;\n    --color-base: #202122;\n    --background-color-error-subtle--hover: #ffdad3;\n    --color-icon-success: #099979;\n    --color-link: #36c;\n    --color-destructive--visited: #9f5555;\n    --box-shadow-color-progressive-selected: #36c;\n    --background-color-backdrop-light: rgba(255,255,255,0.65);\n}",
+                "createdAt": 1770506654450,
+                "id": "c6a0d757-c871-488d-acaa-04024c1c8b7a",
+                "isLibraryItem": false,
+                "name": "en.wikipedia.org :root",
+                "originalContent": "/* Imported from en.wikipedia.org */\n:root {\n    --border-color-input-binary--active: #233566;\n    --border-color-progressive--active: #233566;\n    --border-color-subtle: #c8ccd1;\n    --background-color-progressive-subtle: #e8eeff;\n    --opacity-icon-base: 0.87;\n    --color-destructive--visited--active: #512e2e;\n    --border-color-interactive--active: #202122;\n    --opacity-icon-placeholder: 0.51;\n    --background-color-interactive-subtle: #f8f9fa;\n    --background-color-base: #fff;\n    --color-base--subtle: #54595d;\n    --border-color-warning--hover: #735421;\n    --color-visited: #6a60b0;\n    --color-progressive--active: #233566;\n    --background-color-destructive--active: #612419;\n    --background-color-progressive--hover: #3056a9;\n    --border-color-emphasized: #202122;\n    --background-color-error: #f54739;\n    --background-color-target-text: #ffead4;\n    --color-emphasized: #101418;\n    --border-color-divider: #a2a9b1;\n    --color-placeholder: #72777d;\n    --background-color-notice-subtle: #eaecf0;\n    --border-color-destructive: #f54739;\n    --background-color-warning-subtle: #fdf2d5;\n    --background-color-interactive: #eaecf0;\n    --border-color-error--active: #612419;\n    --opacity-icon-base--disabled: 0.51;\n    --color-icon-warning: #ab7f2a;\n    --color-link--hover: #3056a9;\n    --background-color-interactive--active: #c8ccd1;\n    --border-color-inverted: #fff;\n    --color-base--hover: #404244;\n    --accent-color-base: #36c;\n    --background-color-interactive-subtle--active: #dadde3;\n    --color-progressive--hover: #3056a9;\n    --background-color-tab-list-item-framed--hover: rgba(255,255,255,0.3);\n    --line-height-medium: 1.6;\n    --color-error--active: #612419;\n    --color-disabled: #a2a9b1;\n    --color-destructive--active: #612419;\n    --color-progressive: #36c;\n    --background-color-error-subtle: #ffe9e5;\n    --color-base-fixed: #202122;\n    --box-shadow-color-progressive-selected--active: #233566;\n    --background-color-destructive-subtle: #ffe9e5;\n    --border-color-interactive--hover: #27292d;\n    --color-link--visited--hover: #534fa3;\n    --border-color-content-added: #a3d3ff;\n    --color-link-red--focus: #36c;\n    --color-error--hover: #9f3526;\n    --line-height-content: 1.625;\n    --border-color-input--hover: #72777d;\n    --color-destructive--hover: #9f3526;\n    --box-shadow-color-progressive--focus: #36c;\n    --background-color-button-quiet--active: rgba(0,24,73,0.082);\n    --border-color-base: #a2a9b1;\n    --box-shadow-color-progressive--active: #233566;\n    --box-shadow-color-inverted: #fff;\n    --border-color-success: #099979;\n    --opacity-icon-base--selected: 1;\n    --outline-color-progressive--focus: #36c;\n    --background-color-interactive--hover: #dadde3;\n    --box-shadow-color-transparent: transparent;\n    --box-shadow-color-destructive--focus: #36c;\n    --border-color-error--hover: #9f3526;\n    --color-link-red--hover: #9f3526;\n    --background-color-destructive-subtle--hover: #ffdad3;\n    --background-color-tab-list-item-framed--active: rgba(255,255,255,0.65);\n    --color-link-red--visited--hover: #854848;\n    --mix-blend-mode-base: normal;\n    --border-color-input-binary--checked: #6485d1;\n    --filter-invert-icon: 0;\n    --background-color-disabled: #dadde3;\n    --color-link-red--active: #612419;\n    --border-color-input-binary: #72777d;\n    --box-shadow-color-base: #a2a9b1;\n    --border-color-destructive--hover: #9f3526;\n    --background-color-base-fixed: #fff;\n    --color-link--visited: #6a60b0;\n    --opacity-icon-base--hover: 0.74;\n    --border-color-content-removed: #ffe49c;\n    --background-color-neutral: #eaecf0;\n    --background-color-progressive-subtle--active: #b6d4fb;\n    --background-color-disabled-subtle: #eaecf0;\n    --border-color-input-binary--hover: #3056a9;\n    --color-destructive: #bf3c2c;\n    --color-link-red--visited: #9f5555;\n    --color-visited--active: #353262;\n    --border-color-input-binary--focus: #36c;\n    --background-color-destructive: #bf3c2c;\n    --background-color-progressive: #36c;\n    --color-link--focus: #36c;\n    --background-color-transparent: transparent;\n    --border-color-progressive: #6485d1;\n    --color-content-removed: #8b0000;\n    --background-color-content-added: #a3d3ff;\n    --background-color-destructive--focus: #36c;\n    --background-color-progressive--active: #233566;\n    --color-content-added: #006400;\n    --color-warning: #886425;\n    --background-color-progressive-subtle--hover: #d9e2ff;\n    --color-icon-error: #f54739;\n    --background-color-progressive--focus: #36c;\n    --color-destructive--visited--hover: #854848;\n    --color-link--active: #233566;\n    --color-inverted-fixed: #fff;\n    --border-color-progressive--focus: #36c;\n    --color-success: #177860;\n    --border-color-muted: #dadde3;\n    --color-visited--hover: #534fa3;\n    --background-color-content-removed: #ffe49c;\n    --color-link--visited--active: #353262;\n    --box-shadow-color-alpha-base: rgba(0,0,0,0.06);\n    --border-color-error: #f54739;\n    --background-color-destructive--hover: #9f3526;\n    --filter-invert-primary-button-icon: 1;\n    --opacity-icon-subtle: 0.67;\n    --background-color-input-binary--checked: #36c;\n    --border-color-destructive--focus: #36c;\n    --box-shadow-color-progressive-selected--hover: #3056a9;\n    --background-color-neutral-subtle: #f8f9fa;\n    --color-link-red: #bf3c2c;\n    --background-color-error-subtle--active: #ffc8bd;\n    --background-color-backdrop-dark: rgba(0,0,0,0.65);\n    --color-progressive--focus: #36c;\n    --color-inverted: #fff;\n    --color-notice: #404244;\n    --background-color-success-subtle: #dff2eb;\n    --color-error: #bf3c2c;\n    --color-disabled-emphasized: #a2a9b1;\n    --background-color-error--hover: #d74032;\n    --background-color-destructive-subtle--active: #ffc8bd;\n    --border-color-notice: #72777d;\n    --color-destructive--focus: #36c;\n    --background-color-interactive-subtle--hover: #eaecf0;\n    --border-color-inverted-fixed: #fff;\n    --border-color-warning: #ab7f2a;\n    --background-color-button-quiet--hover: rgba(0,24,73,0.027);\n    --border-color-interactive: #72777d;\n    --border-color-progressive--hover: #3056a9;\n    --border-color-transparent: transparent;\n    --color-subtle: #54595d;\n    --background-color-inverted: #101418;\n    --color-icon-notice: #72777d;\n    --font-size-medium: ;\n    --color-link-red--visited--active: #512e2e;\n    --background-color-error--active: #bf3c2c;\n    --border-color-disabled: #c8ccd1;\n    --mix-blend-mode-blend: multiply;\n    --border-color-warning--active: #453217;\n    --border-color-destructive--active: #612419;\n    --color-base: #202122;\n    --background-color-error-subtle--hover: #ffdad3;\n    --color-icon-success: #099979;\n    --color-link: #36c;\n    --color-destructive--visited: #9f5555;\n    --box-shadow-color-progressive-selected: #36c;\n    --background-color-backdrop-light: rgba(255,255,255,0.65);\n}",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770506654450
+            },
+            {
+                "content": "a {\n    color: color-mix(in oklch, var(--color-progressive), canvasText 10%);\n    font-weight: 430;\n    letter-spacing: -0.025rem;\n}\n",
+                "createdAt": 1770506987202,
+                "id": "03211ac9-2c1d-45c5-a8eb-548430c4891c",
+                "isLibraryItem": false,
+                "name": "Darker links",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770509189931
+            },
+            {
+                "content": ".vector-search-box {\n  display: flex;\n  justify-content: center;\n}\n\n.vector-search-box .cdx-typeahead-search--show-thumbnail.cdx-typeahead-search--auto-expand-width:not(.cdx-typeahead-search--expanded) {\n    margin-left: calc((12px + 40px));\n}\n\n.cdx-search-input--has-end-button {\n  border: none;\n  border-radius: 16px;\n}\n\n.cdx-text-input {min-width: 300px;}",
+                "createdAt": 1770507889886,
+                "id": "898b6ff6-cc98-4de3-ac0b-2b61cdc3283c",
+                "isLibraryItem": false,
+                "name": "Nicer search",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770508376498
+            },
+            {
+                "content": "/* CSS */\n",
+                "createdAt": 1770507893787,
+                "id": "e100cb62-d7eb-4f06-a404-67b59223c740",
+                "isLibraryItem": false,
+                "name": "Local CSS",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770507893787
+            },
+            {
+                "content": "/* CSS */\n",
+                "createdAt": 1770509168625,
+                "id": "bd0f6184-6de0-4b9d-8af0-31e761ff03d8",
+                "isLibraryItem": false,
+                "name": "Local CSS",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770509168625
+            },
+            {
+                "content": "@media screen and (min-width: 1120px) {\n    .mw-body {\n        display: grid;\n        grid-template:\n            min-content min-content min-content 1fr / minmax(0, 48rem)\n            min-content;\n        grid-template-areas:\n            \"titlebar-cx .\"\n            \"titlebar columnEnd\"\n            \"toolbar columnEnd\"\n            \"content columnEnd\";\n    }\n}\n",
+                "createdAt": 1770509191641,
+                "id": "791bf66f-69ad-4ce5-8737-e9f5fc00449f",
+                "isLibraryItem": false,
+                "name": "Narrower article",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770509558342
+            },
+            {
+                "content": "/* CSS */\n",
+                "createdAt": 1770509274675,
+                "id": "e82369e6-0179-4590-af88-2feb15e396d6",
+                "isLibraryItem": false,
+                "name": "Local CSS",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770509274675
+            },
+            {
+                "content": "vector-pinnable-header-toggle-button {\n    /* display: none; */\n    border: 0;\n    background-color: red !important;\n    color: var(--color-base, #202122);\n    cursor: pointer;\n    text-align: left;\n    font-size: 0.75rem;\n    border-radius: 16px;\n}",
+                "createdAt": 1770509279692,
+                "id": "18e74b4e-bd34-4826-a39b-0012d06c999b",
+                "isLibraryItem": false,
+                "name": "Nicer Hide buttons",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770509481827
+            },
+            {
+                "content": "/* CSS */\n",
+                "createdAt": 1770509819664,
+                "id": "37a27db7-20dc-42b4-930a-00474a6b9c7f",
+                "isLibraryItem": false,
+                "name": "Local CSS",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770509825643
+            },
+            {
+                "content": ".vector-pinnable-header-toggle-button .vector-pinnable-header-unpin-button {color: red;}\n",
+                "createdAt": 1770509861647,
+                "id": "599d2899-7bf2-4f2e-b852-0e92df920801",
+                "isLibraryItem": false,
+                "name": "Local CSS",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770509878476
+            },
+            {
+                "content": ".infobox {\n    border: none;\n    padding: 16px;\n    border-radius: 16px;\n}\n.infobox .infobox-above,\n.infobox .infobox-title,\n.infobox caption {\n    text-align: left;\n}\n\n.infobox .infobox-subheader {\n    padding-bottom: 16px;\n    text-align: left;\n}\n\n.mw-parser-output .sidebar {\n    border: none !important;\n    border-radius: 16px;\n}\n\n.mw-parser-output .sidebar-pretitle {\n    padding-top: 1rem;\n    line-height: 1.2em;\n}\n\n.mw-parser-output .sidebar-title-with-pretitle {\n    padding-bottom: 1rem !important;\n}",
+                "createdAt": 1770510609718,
+                "id": "34efa4c9-f11d-4d57-9a07-6a414e9f5b13",
+                "isLibraryItem": false,
+                "name": "Nicer article boxes",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770511718327
+            },
+            {
+                "content": "<button\n    onclick=\"window.scrollTo({top:0,behavior:'smooth'})\"\n    id=\"tb_back_to_top\"\n>\n    ↑\n</button>\n",
+                "createdAt": 1770512358504,
+                "id": "ea4393a5-46ab-4230-ae65-89377da3074e",
+                "isLibraryItem": false,
+                "name": "Local HTML",
+                "relatedSnippetIds": [],
+                "type": "html",
+                "updatedAt": 1770548891015
+            },
+            {
+                "content": "#tb_back_to_top {\n    position: fixed;\n    bottom: 16px;\n    right: 16px;\n    width: 32px;\n    height: 32px;\n    border-radius: 10px;\n    border: 1px solid rgba(0, 0, 0, 0.15);\n    background: rgba(255, 255, 255, 0.55);\n    backdrop-filter: blur(8px);\n    color: #111;\n    font-size: 14px;\n    cursor: pointer;\n    z-index: 9999;\n    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);\n}\n",
+                "createdAt": 1770548865674,
+                "id": "40441d72-2dce-4817-bef3-af14313af3e7",
+                "isLibraryItem": false,
+                "name": "Local CSS",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770548918854
+            },
+            {
+                "content": "/* CSS */\n",
+                "createdAt": 1770554747746,
+                "id": "548372e7-8627-4e62-8ef9-9845b0ef3e17",
+                "isLibraryItem": false,
+                "name": "Local CSS",
+                "relatedSnippetIds": [],
+                "type": "css",
+                "updatedAt": 1770554747746
             }
         ],
         "globalEnabled": true,

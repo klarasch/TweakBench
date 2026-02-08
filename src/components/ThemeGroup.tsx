@@ -24,6 +24,7 @@ interface ThemeGroupProps {
     onDomainClick: (e: React.MouseEvent) => void;
     isCollapsed: boolean;
     onToggleCollapse: () => void;
+    isDraggingOver?: boolean;
 }
 
 export const ThemeGroup: React.FC<ThemeGroupProps> = ({
@@ -42,7 +43,8 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
     onDeleteTheme,
     onDomainClick,
     isCollapsed,
-    onToggleCollapse
+    onToggleCollapse,
+    isDraggingOver: isDragTarget
 }) => {
     // Sortable logic for the GROUP container
     const {
@@ -56,9 +58,9 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
 
     const style = {
         transform: CSS.Transform.toString(transform),
-        transition: transition || undefined, // use dnd-kit default or none if not provided
-        opacity: isDragging ? 0.5 : 1,
-        zIndex: isDragging ? 10 : 'auto',
+        transition: isDragging ? undefined : transition, // Remove transition when dragging for snappy feel
+        opacity: isDragging ? 0.8 : 1, // Match SnippetStackItem
+        zIndex: isDragging ? 20 : 'auto',
         position: 'relative' as 'relative',
     };
 
@@ -112,6 +114,7 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
                 }
                 ${effectivelyCollapsed ? 'bg-slate-800/50' : ''}
                 ${isDragging ? 'shadow-xl ring-2 ring-blue-500/50 z-10 border-blue-500/50' : ''}
+                ${isDragTarget ? 'ring-2 ring-blue-400/50 border-blue-400/50 bg-blue-500/[0.08]' : ''}
             `}
         >
             {/* Group Header - Drag handle is now here only */}
@@ -254,29 +257,31 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
                         items={themes.map(t => t.id)}
                         strategy={verticalListSortingStrategy}
                     >
-                        {themes.map((theme, index) => (
-                            <div key={theme.id}>
-                                {index > 0 && <div className="mx-4 h-px bg-slate-800/50" />}
-                                <SortableThemeItem
-                                    theme={theme}
-                                    activeUrl={activeUrl}
-                                    isSelectionMode={isSelectionMode}
-                                    isSelected={selectedThemeIds.has(theme.id)}
-                                    globalEnabled={globalEnabled}
-                                    onSelect={() => onSelectTheme(theme.id)}
-                                    onToggleSelection={() => onToggleSelection(theme.id)}
-                                    onContextMenu={(e) => onContextMenu(e, theme.id)}
-                                    onKebabClick={(e) => {
-                                        e.stopPropagation();
-                                        onContextMenu(e, theme.id);
-                                    }}
-                                    onUpdateTheme={(updates) => onUpdateTheme(theme.id, updates)}
-                                    onDeleteClick={(e) => onDeleteTheme(e, theme.id)}
-                                    isOtherInGroupActive={themes.some(t => t.isActive && t.id !== theme.id)}
-                                    isNested={true}
-                                />
-                            </div>
-                        ))}
+                        {themes.map((theme, index) => {
+                            return (
+                                <div key={theme.id}>
+                                    {index > 0 && <div className="mx-4 h-px bg-slate-800/50" />}
+                                    <SortableThemeItem
+                                        theme={theme}
+                                        activeUrl={activeUrl}
+                                        isSelectionMode={isSelectionMode}
+                                        isSelected={selectedThemeIds.has(theme.id)}
+                                        globalEnabled={globalEnabled}
+                                        onSelect={() => onSelectTheme(theme.id)}
+                                        onToggleSelection={() => onToggleSelection(theme.id)}
+                                        onContextMenu={(e) => onContextMenu(e, theme.id)}
+                                        onKebabClick={(e) => {
+                                            e.stopPropagation();
+                                            onContextMenu(e, theme.id);
+                                        }}
+                                        onUpdateTheme={(updates) => onUpdateTheme(theme.id, updates)}
+                                        onDeleteClick={(e) => onDeleteTheme(e, theme.id)}
+                                        isOtherInGroupActive={themes.some(t => t.isActive && t.id !== theme.id)}
+                                        isNested={true}
+                                    />
+                                </div>
+                            );
+                        })}
                     </SortableContext>
                 </div>
             )}

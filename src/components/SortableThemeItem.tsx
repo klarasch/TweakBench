@@ -21,10 +21,10 @@ export const SortableThemeItem: React.FC<SortableThemeItemProps> = (props) => {
 
     const style = {
         transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.5 : 1,
+        transition: isDragging ? undefined : transition, // Remove transition when dragging for snappy feel
         zIndex: isDragging ? 20 : 'auto',
         position: 'relative' as 'relative',
+        opacity: isDragging ? 0.8 : 1, // Match SnippetStackItem
     };
 
     return (
