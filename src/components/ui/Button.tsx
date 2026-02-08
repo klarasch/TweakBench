@@ -22,7 +22,7 @@ export const Button: React.FC<ButtonProps> = ({
     const baseStyles = "inline-flex items-center justify-center font-medium transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed rounded-md box-border overflow-hidden";
 
     const variants = {
-        filled: "bg-blue-600 text-white hover:bg-blue-500 active:bg-blue-700 shadow-sm border border-blue-800",
+        filled: "bg-blue-600 text-white hover:bg-blue-500 active:bg-blue-700 shadow-sm border border-slate-800/50",
         outline: "bg-transparent border border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white hover:border-slate-600",
         ghost: "bg-transparent text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent",
         danger: "bg-red-600 text-white hover:bg-red-500 border border-transparent",

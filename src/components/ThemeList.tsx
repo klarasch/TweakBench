@@ -716,553 +716,555 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
     ];
 
     return (
-        <div className="flex flex-col gap-4 relative pb-20">
-            <div className="flex justify-between items-center px-1">
-                <h2 className="text-lg font-bold text-slate-100 tracking-tight">Tweaks</h2>
-                <div className="flex items-center gap-1">
-                    {!isSelectionMode ? (
-                        <>
-                            {groupCount > 1 && (
+        <div>
+            <div className="p-4 flex flex-col gap-4 relative pb-20">
+                <div className="flex justify-between items-center px-1">
+                    <h2 className="text-lg font-bold text-slate-100 tracking-tight">Tweaks</h2>
+                    <div className="flex items-center gap-1">
+                        {!isSelectionMode ? (
+                            <>
+                                {groupCount > 1 && (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={toggleAllGroups}
+                                        className="text-slate-400 hover:text-white px-2"
+                                        title={allGroupsCollapsed ? 'Expand all groups' : 'Collapse all groups'}
+                                    >
+                                        {allGroupsCollapsed ? 'Expand all' : 'Collapse all'}
+                                    </Button>
+                                )}
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={toggleAllGroups}
+                                    onClick={() => setIsSelectionMode(true)}
                                     className="text-slate-400 hover:text-white px-2"
-                                    title={allGroupsCollapsed ? 'Expand all groups' : 'Collapse all groups'}
                                 >
-                                    {allGroupsCollapsed ? 'Expand all' : 'Collapse all'}
+                                    Select
                                 </Button>
-                            )}
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setIsSelectionMode(true)}
-                                className="text-slate-400 hover:text-white px-2"
-                            >
-                                Select
-                            </Button>
 
-                            <div className="w-px h-4 bg-slate-800 mx-1" />
+                                <div className="w-px h-4 bg-slate-800 mx-1" />
 
-                            {/* Compact view for narrow screens */}
-                            <div className="md:hidden">
+                                {/* Compact view for narrow screens */}
+                                <div className="md:hidden">
+                                    <button
+                                        onClick={(e) => {
+                                            const rect = e.currentTarget.getBoundingClientRect();
+                                            setMenuState({ x: rect.left, y: rect.bottom, themeId: 'CREATE_MENU' });
+                                        }}
+                                        className="p-1.5 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                                        title="Create"
+                                    >
+                                        <Plus size={16} />
+                                    </button>
+                                </div>
+                                {/* Full view for wider screens */}
+                                <div className="hidden md:flex md:gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setIsCreatingGroup(true)}
+                                        icon={<Plus size={14} />}
+                                    >
+                                        Create domain group
+                                    </Button>
+                                    <Button
+                                        variant="filled"
+                                        size="sm"
+                                        onClick={() => setIsCreating(true)}
+                                        icon={<Plus size={14} />}
+                                    >
+                                        Create theme
+                                    </Button>
+                                </div>
+                                <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".js,.json" />
+                                <input type="file" ref={allDataFileInputRef} onChange={handleAllDataFileChange} className="hidden" accept=".json" />
                                 <button
                                     onClick={(e) => {
                                         const rect = e.currentTarget.getBoundingClientRect();
-                                        setMenuState({ x: rect.left, y: rect.bottom, themeId: 'CREATE_MENU' });
+                                        setMenuState({ x: rect.left, y: rect.bottom, themeId: 'HEADER_MENU' });
                                     }}
-                                    className="p-1.5 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors"
-                                    title="Create"
+                                    className="p-1.5 rounded hover:bg-slate-700 text-slate-300"
+                                    title="More options"
                                 >
-                                    <Plus size={16} />
+                                    <MoreVertical size={16} />
                                 </button>
+                            </>
+                        ) : (
+                            <>
+                                {groupCount > 1 && (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={toggleAllGroups}
+                                        className="text-slate-400 hover:text-white px-2"
+                                        title={allGroupsCollapsed ? 'Expand all groups' : 'Collapse all groups'}
+                                    >
+                                        {allGroupsCollapsed ? 'Expand all' : 'Collapse all'}
+                                    </Button>
+                                )}
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                        if (selectedThemeIds.size > 0) {
+                                            setSelectedThemeIds(new Set());
+                                        } else {
+                                            const allIds = new Set(themes.map(t => t.id));
+                                            setSelectedThemeIds(allIds);
+                                        }
+                                    }}
+                                    className="text-slate-400 hover:text-white px-2"
+                                >
+                                    {selectedThemeIds.size > 0 ? 'Deselect all' : 'Select all'}
+                                </Button>
+
+                                {selectedThemeIds.size > 0 && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            const rect = e.currentTarget.getBoundingClientRect();
+                                            setMenuState({ x: rect.left, y: rect.bottom, themeId: 'BULK_ACTIONS_MENU' });
+                                        }}
+                                        className="p-1 rounded hover:bg-slate-700 text-slate-300 mx-1"
+                                        title="Bulk actions"
+                                    >
+                                        <MoreVertical size={20} />
+                                    </button>
+                                )}
+
+                                <div className="h-6 w-px bg-slate-800 mx-1"></div>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setIsSelectionMode(false)}
+                                    className="text-blue-400 font-medium px-2"
+                                >
+                                    Done
+                                </Button>
+                            </>
+                        )}
+                    </div>
+                </div>
+
+                {/* Create Theme Modal */}
+                <Modal
+                    isOpen={isCreating}
+                    onClose={() => setIsCreating(false)}
+                    title={newThemeGroupId ? "Add theme to group" : "Create new theme"}
+                    size="sm"
+                    footer={
+                        <>
+                            <Button variant="ghost" size="sm" onClick={() => setIsCreating(false)}>
+                                Cancel
+                            </Button>
+                            <Button
+                                variant="filled"
+                                size="sm"
+                                onClick={handleCreate}
+                                disabled={!newThemeName.trim()}
+                            >
+                                {newThemeGroupId ? "Add to group" : "Create theme"}
+                            </Button>
+                        </>
+                    }
+                >
+                    <div className="flex flex-col gap-4">
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-semibold text-slate-400 uppercase">Theme name</label>
+                            <input
+                                type="text"
+                                value={newThemeName}
+                                onChange={(e) => setNewThemeName(e.target.value)}
+                                placeholder="My Awesome Theme"
+                                className="w-full bg-slate-950 border border-slate-800 rounded p-2 text-sm text-white focus:border-blue-500 focus:outline-none transition-colors"
+                                autoFocus
+                                onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+                            />
+                        </div>
+
+                        {!newThemeGroupId && scannedDomain && (
+                            <div className="flex items-start gap-3 p-3 bg-slate-800/50 rounded border border-slate-800/50">
+                                <div className="mt-0.5">
+                                    <input
+                                        type="checkbox"
+                                        id="limitDomain"
+                                        checked={limitToDomain}
+                                        onChange={(e) => setLimitToDomain(e.target.checked)}
+                                        className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-blue-500 focus:ring-offset-slate-900"
+                                    />
+                                </div>
+                                <label htmlFor="limitDomain" className="flex flex-col cursor-pointer select-none">
+                                    <span className="text-sm font-medium text-slate-200 flex items-center gap-1.5">
+                                        Limit to {scannedDomain}
+                                        <Globe size={12} className="text-slate-500" />
+                                    </span>
+                                    <span className="text-xs text-slate-500 mt-0.5">
+                                        This theme will only activate on this domain. You can change this later.
+                                    </span>
+                                </label>
                             </div>
-                            {/* Full view for wider screens */}
-                            <div className="hidden md:flex md:gap-2">
+                        )}
+                    </div>
+                </Modal>
+
+                {/* Delete Confirmation */}
+                <ConfirmDialog
+                    isOpen={!!themeToDelete}
+                    onClose={() => setThemeToDelete(null)}
+                    onConfirm={() => {
+                        if (themeToDelete) deleteTheme(themeToDelete);
+                    }}
+                    title="Delete theme"
+                    message={
+                        <span>
+                            Are you sure you want to delete theme <strong>"{themeToDeleteDetails?.name}"</strong>? This action cannot be undone.
+                        </span>
+                    }
+                    confirmLabel="Delete"
+                    isDangerous
+                />
+
+                {/* Bulk Delete Confirmation */}
+                <ConfirmDialog
+                    isOpen={confirmBulkDelete}
+                    onClose={() => setConfirmBulkDelete(false)}
+                    onConfirm={confirmBulkDeleteAction}
+                    title="Delete themes"
+                    message={`Remove ${selectedThemeIds.size} theme${selectedThemeIds.size === 1 ? '' : 's'}? This action cannot be undone.`}
+                    confirmLabel="Delete"
+                    isDangerous
+                />
+
+                {/* Group Delete Confirmation */}
+                <ConfirmDialog
+                    isOpen={!!groupToDelete}
+                    onClose={() => setGroupToDelete(null)}
+                    onConfirm={() => {
+                        if (groupToDelete) {
+                            const groupThemes = themes.filter(t => t.groupId === groupToDelete);
+                            groupThemes.forEach(t => deleteTheme(t.id));
+                            showToast('Group deleted');
+                            setGroupToDelete(null);
+                        }
+                    }}
+                    title="Delete group"
+                    message={(() => {
+                        if (!groupToDelete) return '';
+                        const groupThemes = themes.filter(t => t.groupId === groupToDelete);
+                        return `Delete this domain group and all ${groupThemes.length} theme${groupThemes.length === 1 ? '' : 's'} in it? This action cannot be undone.`;
+                    })()}
+                    confirmLabel="Delete"
+                    isDangerous
+                />
+
+                {/* Bulk Export Confirmation */}
+                <ConfirmDialog
+                    isOpen={!!confirmBulkExport}
+                    onClose={() => setConfirmBulkExport(null)}
+                    onConfirm={() => {
+                        if (confirmBulkExport) {
+                            executeBulkExport(confirmBulkExport);
+                            setConfirmBulkExport(null);
+                        }
+                    }}
+                    title="Export themes"
+                    message={`Export ${selectedThemeIds.size} theme files? This will download multiple files.`}
+                    confirmLabel="Export"
+                />
+
+                {/* Import Mode Selection Dialog */}
+                <Modal
+                    isOpen={isImportDialogOpen}
+                    onClose={() => {
+                        setIsImportDialogOpen(false);
+                        setPendingImportData(null);
+                    }}
+                    title="Import all data"
+                    size="sm"
+                    footer={
+                        <>
+                            <Button variant="ghost" size="sm" onClick={() => {
+                                setIsImportDialogOpen(false);
+                                setPendingImportData(null);
+                            }}>
+                                Cancel
+                            </Button>
+                            <Button
+                                variant="filled"
+                                size="sm"
+                                onClick={handleConfirmImport}
+                            >
+                                Import
+                            </Button>
+                        </>
+                    }
+                >
+                    <div className="flex flex-col gap-4">
+                        <p className="text-sm text-slate-300">
+                            Choose how to import the data:
+                        </p>
+
+                        <div className="flex flex-col gap-2">
+                            <label className="flex items-start gap-3 p-3 bg-slate-800/50 rounded border border-slate-700 cursor-pointer hover:border-blue-500/50 transition-colors">
+                                <input
+                                    type="radio"
+                                    name="importMode"
+                                    value="merge"
+                                    checked={importMode === 'merge'}
+                                    onChange={(e) => setImportMode(e.target.value as 'merge')}
+                                    className="mt-0.5"
+                                />
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-semibold text-slate-200">Merge (recommended)</span>
+                                    <span className="text-xs text-slate-400">Add imported items alongside existing ones</span>
+                                </div>
+                            </label>
+
+                            <label className="flex items-start gap-3 p-3 bg-slate-800/50 rounded border border-slate-700 cursor-pointer hover:border-blue-500/50 transition-colors">
+                                <input
+                                    type="radio"
+                                    name="importMode"
+                                    value="skip-duplicates"
+                                    checked={importMode === 'skip-duplicates'}
+                                    onChange={(e) => setImportMode(e.target.value as 'skip-duplicates')}
+                                    className="mt-0.5"
+                                />
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-semibold text-slate-200">Skip duplicates</span>
+                                    <span className="text-xs text-slate-400">Only import items with unique names</span>
+                                </div>
+                            </label>
+
+                            <label className="flex items-start gap-3 p-3 bg-slate-800/50 rounded border border-red-900/50 cursor-pointer hover:border-red-500/50 transition-colors">
+                                <input
+                                    type="radio"
+                                    name="importMode"
+                                    value="replace"
+                                    checked={importMode === 'replace'}
+                                    onChange={(e) => setImportMode(e.target.value as 'replace')}
+                                    className="mt-0.5"
+                                />
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-semibold text-red-400">Replace all</span>
+                                    <span className="text-xs text-slate-400">⚠️ Delete all existing data and replace with import</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </Modal>
+
+                <div className="flex flex-col gap-2">
+                    {themes.length === 0 && !isCreating && (
+                        <div className="text-center p-8 border border-dashed border-slate-800 rounded-lg text-slate-500 flex flex-col items-center gap-2">
+                            <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-2">
+                                <Plus size={24} className="opacity-50" />
+                            </div>
+                            <p className="font-medium text-slate-400">No themes yet</p>
+                            <p className="text-xs max-w-[200px] mx-auto">Create a theme or load some examples to start customizing your web experience.</p>
+                            <div className="flex gap-2 mt-2">
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => setIsCreatingGroup(true)}
-                                    icon={<Plus size={14} />}
+                                    onClick={async () => {
+                                        await useStore.getState().loadExampleData();
+                                        showToast('Starter kit loaded');
+                                    }}
                                 >
-                                    Create domain group
+                                    Load starter kit
                                 </Button>
                                 <Button
                                     variant="filled"
                                     size="sm"
                                     onClick={() => setIsCreating(true)}
-                                    icon={<Plus size={14} />}
                                 >
-                                    Create theme
+                                    Create first theme
                                 </Button>
                             </div>
-                            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".js,.json" />
-                            <input type="file" ref={allDataFileInputRef} onChange={handleAllDataFileChange} className="hidden" accept=".json" />
-                            <button
-                                onClick={(e) => {
-                                    const rect = e.currentTarget.getBoundingClientRect();
-                                    setMenuState({ x: rect.left, y: rect.bottom, themeId: 'HEADER_MENU' });
-                                }}
-                                className="p-1.5 rounded hover:bg-slate-700 text-slate-300"
-                                title="More options"
+                        </div>
+                    )}
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                        modifiers={[restrictToVerticalAxis]}
+                    >
+                        <div className="flex flex-col gap-2">
+                            <SortableContext
+                                items={displayItems.map(i => i.id)}
+                                strategy={verticalListSortingStrategy}
                             >
-                                <MoreVertical size={16} />
-                            </button>
-                        </>
-                    ) : (
-                        <>
-                            {groupCount > 1 && (
+                                {displayItems.map((item) => (
+                                    item.type === 'group' ? (
+                                        <ThemeGroup
+                                            key={item.id}
+                                            id={item.id}
+                                            themes={item.themes}
+                                            domainPatterns={item.domainPatterns}
+                                            activeUrl={activeUrl}
+                                            isSelectionMode={isSelectionMode}
+                                            selectedThemeIds={selectedThemeIds}
+                                            globalEnabled={globalEnabled}
+                                            onSelectTheme={onSelectTheme}
+                                            onToggleSelection={handleToggleSelection}
+                                            onContextMenu={handleContextMenu}
+                                            onGroupContextMenu={handleGroupContextMenu}
+                                            onUpdateTheme={updateTheme}
+                                            onDeleteTheme={(e: React.MouseEvent, id: string) => { e.stopPropagation(); setThemeToDelete(id); }}
+                                            onDomainClick={(e: React.MouseEvent) => {
+                                                e.stopPropagation();
+                                                setEditingDomainGroup(item.id);
+                                            }}
+                                            isCollapsed={collapsedGroups.has(item.id)}
+                                            onToggleCollapse={() => {
+                                                setCollapsedGroups(prev => {
+                                                    const next = new Set(prev);
+                                                    if (next.has(item.id)) {
+                                                        next.delete(item.id);
+                                                    } else {
+                                                        next.add(item.id);
+                                                    }
+                                                    return next;
+                                                });
+                                            }}
+                                        />
+                                    ) : (
+                                        <SortableThemeItem
+                                            key={item.id}
+                                            theme={item.data}
+                                            isOtherInGroupActive={false}
+                                            activeUrl={activeUrl}
+                                            isSelectionMode={isSelectionMode}
+                                            isSelected={selectedThemeIds.has(item.id)}
+                                            globalEnabled={globalEnabled}
+                                            onSelect={() => onSelectTheme(item.id)}
+                                            onToggleSelection={() => handleToggleSelection(item.id)}
+                                            onContextMenu={(e: React.MouseEvent) => handleContextMenu(e, item.id)}
+                                            onKebabClick={(e: React.MouseEvent) => handleKebabClick(e, item.id)}
+                                            onUpdateTheme={(updates: Partial<Theme>) => updateTheme(item.id, updates)}
+                                            onDeleteClick={(e: React.MouseEvent) => {
+                                                e.stopPropagation();
+                                                setThemeToDelete(item.id);
+                                            }}
+                                            onDomainClick={(e: React.MouseEvent) => {
+                                                e.stopPropagation();
+                                                setEditingDomainTheme(item.id);
+                                            }}
+                                        />
+                                    )
+                                ))}
+                            </SortableContext>
+                        </div>
+
+                    </DndContext>
+                </div>
+
+                {/* Bulk Actions Bar */}
+                {isSelectionMode && selectedThemeIds.size > 0 && (
+                    <div className="fixed bottom-4 left-4 right-4 bg-slate-800 border border-slate-700 rounded-lg p-2 shadow-2xl flex items-center justify-between z-20 animate-in slide-in-from-bottom-2">
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 rounded-full hover:bg-slate-700 text-slate-400 hover:text-white bg-slate-700/50" // Made bigger and slightly distinct
+                                onClick={() => setSelectedThemeIds(new Set())}
+                                title="Deselect all"
+                            >
+                                <X size={16} />
+                            </Button>
+                            <div className="text-sm text-slate-300 font-medium">
+                                {selectedThemeIds.size} selected
+                            </div>
+                        </div>
+
+                        <div className="flex gap-2">
+                            <div className="h-6 w-px bg-slate-700 mx-1"></div>
+
+                            <>
+                                <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(true)} title="Enable selected">
+                                    <Play size={14} className={viewportWidth > 600 ? "mr-1.5 text-green-400" : "text-green-400"} />
+                                    {viewportWidth > 600 && "Enable"}
+                                </Button>
+                                <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(false)} title="Disable selected">
+                                    <Pause size={14} className={viewportWidth > 600 ? "mr-1.5 text-slate-400" : "text-slate-400"} />
+                                    {viewportWidth > 600 && "Disable"}
+                                </Button>
+                                <div className="h-6 w-px bg-slate-700 mx-1"></div>
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={toggleAllGroups}
-                                    className="text-slate-400 hover:text-white px-2"
-                                    title={allGroupsCollapsed ? 'Expand all groups' : 'Collapse all groups'}
-                                >
-                                    {allGroupsCollapsed ? 'Expand all' : 'Collapse all'}
-                                </Button>
-                            )}
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                    if (selectedThemeIds.size > 0) {
-                                        setSelectedThemeIds(new Set());
-                                    } else {
-                                        const allIds = new Set(themes.map(t => t.id));
-                                        setSelectedThemeIds(allIds);
-                                    }
-                                }}
-                                className="text-slate-400 hover:text-white px-2"
-                            >
-                                {selectedThemeIds.size > 0 ? 'Deselect all' : 'Select all'}
-                            </Button>
-
-                            {selectedThemeIds.size > 0 && (
-                                <button
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         const rect = e.currentTarget.getBoundingClientRect();
-                                        setMenuState({ x: rect.left, y: rect.bottom, themeId: 'BULK_ACTIONS_MENU' });
+                                        setMenuState({
+                                            x: rect.left,
+                                            y: viewportWidth > 600 ? rect.bottom : rect.top,
+                                            themeId: 'BULK_ACTIONS_MENU'
+                                        });
                                     }}
-                                    className="p-1 rounded hover:bg-slate-700 text-slate-300 mx-1"
-                                    title="Bulk actions"
+                                    title="More actions"
                                 >
-                                    <MoreVertical size={20} />
-                                </button>
-                            )}
-
-                            <div className="h-6 w-px bg-slate-800 mx-1"></div>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setIsSelectionMode(false)}
-                                className="text-blue-400 font-medium px-2"
-                            >
-                                Done
-                            </Button>
-                        </>
-                    )}
-                </div>
-            </div>
-
-            {/* Create Theme Modal */}
-            <Modal
-                isOpen={isCreating}
-                onClose={() => setIsCreating(false)}
-                title={newThemeGroupId ? "Add theme to group" : "Create new theme"}
-                size="sm"
-                footer={
-                    <>
-                        <Button variant="ghost" size="sm" onClick={() => setIsCreating(false)}>
-                            Cancel
-                        </Button>
-                        <Button
-                            variant="filled"
-                            size="sm"
-                            onClick={handleCreate}
-                            disabled={!newThemeName.trim()}
-                        >
-                            {newThemeGroupId ? "Add to group" : "Create theme"}
-                        </Button>
-                    </>
-                }
-            >
-                <div className="flex flex-col gap-4">
-                    <div className="flex flex-col gap-1.5">
-                        <label className="text-xs font-semibold text-slate-400 uppercase">Theme name</label>
-                        <input
-                            type="text"
-                            value={newThemeName}
-                            onChange={(e) => setNewThemeName(e.target.value)}
-                            placeholder="My Awesome Theme"
-                            className="w-full bg-slate-950 border border-slate-800 rounded p-2 text-sm text-white focus:border-blue-500 focus:outline-none transition-colors"
-                            autoFocus
-                            onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-                        />
-                    </div>
-
-                    {!newThemeGroupId && scannedDomain && (
-                        <div className="flex items-start gap-3 p-3 bg-slate-800/50 rounded border border-slate-800/50">
-                            <div className="mt-0.5">
-                                <input
-                                    type="checkbox"
-                                    id="limitDomain"
-                                    checked={limitToDomain}
-                                    onChange={(e) => setLimitToDomain(e.target.checked)}
-                                    className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-blue-500 focus:ring-offset-slate-900"
-                                />
-                            </div>
-                            <label htmlFor="limitDomain" className="flex flex-col cursor-pointer select-none">
-                                <span className="text-sm font-medium text-slate-200 flex items-center gap-1.5">
-                                    Limit to {scannedDomain}
-                                    <Globe size={12} className="text-slate-500" />
-                                </span>
-                                <span className="text-xs text-slate-500 mt-0.5">
-                                    This theme will only activate on this domain. You can change this later.
-                                </span>
-                            </label>
-                        </div>
-                    )}
-                </div>
-            </Modal>
-
-            {/* Delete Confirmation */}
-            <ConfirmDialog
-                isOpen={!!themeToDelete}
-                onClose={() => setThemeToDelete(null)}
-                onConfirm={() => {
-                    if (themeToDelete) deleteTheme(themeToDelete);
-                }}
-                title="Delete theme"
-                message={
-                    <span>
-                        Are you sure you want to delete theme <strong>"{themeToDeleteDetails?.name}"</strong>? This action cannot be undone.
-                    </span>
-                }
-                confirmLabel="Delete"
-                isDangerous
-            />
-
-            {/* Bulk Delete Confirmation */}
-            <ConfirmDialog
-                isOpen={confirmBulkDelete}
-                onClose={() => setConfirmBulkDelete(false)}
-                onConfirm={confirmBulkDeleteAction}
-                title="Delete themes"
-                message={`Remove ${selectedThemeIds.size} theme${selectedThemeIds.size === 1 ? '' : 's'}? This action cannot be undone.`}
-                confirmLabel="Delete"
-                isDangerous
-            />
-
-            {/* Group Delete Confirmation */}
-            <ConfirmDialog
-                isOpen={!!groupToDelete}
-                onClose={() => setGroupToDelete(null)}
-                onConfirm={() => {
-                    if (groupToDelete) {
-                        const groupThemes = themes.filter(t => t.groupId === groupToDelete);
-                        groupThemes.forEach(t => deleteTheme(t.id));
-                        showToast('Group deleted');
-                        setGroupToDelete(null);
-                    }
-                }}
-                title="Delete group"
-                message={(() => {
-                    if (!groupToDelete) return '';
-                    const groupThemes = themes.filter(t => t.groupId === groupToDelete);
-                    return `Delete this domain group and all ${groupThemes.length} theme${groupThemes.length === 1 ? '' : 's'} in it? This action cannot be undone.`;
-                })()}
-                confirmLabel="Delete"
-                isDangerous
-            />
-
-            {/* Bulk Export Confirmation */}
-            <ConfirmDialog
-                isOpen={!!confirmBulkExport}
-                onClose={() => setConfirmBulkExport(null)}
-                onConfirm={() => {
-                    if (confirmBulkExport) {
-                        executeBulkExport(confirmBulkExport);
-                        setConfirmBulkExport(null);
-                    }
-                }}
-                title="Export themes"
-                message={`Export ${selectedThemeIds.size} theme files? This will download multiple files.`}
-                confirmLabel="Export"
-            />
-
-            {/* Import Mode Selection Dialog */}
-            <Modal
-                isOpen={isImportDialogOpen}
-                onClose={() => {
-                    setIsImportDialogOpen(false);
-                    setPendingImportData(null);
-                }}
-                title="Import all data"
-                size="sm"
-                footer={
-                    <>
-                        <Button variant="ghost" size="sm" onClick={() => {
-                            setIsImportDialogOpen(false);
-                            setPendingImportData(null);
-                        }}>
-                            Cancel
-                        </Button>
-                        <Button
-                            variant="filled"
-                            size="sm"
-                            onClick={handleConfirmImport}
-                        >
-                            Import
-                        </Button>
-                    </>
-                }
-            >
-                <div className="flex flex-col gap-4">
-                    <p className="text-sm text-slate-300">
-                        Choose how to import the data:
-                    </p>
-
-                    <div className="flex flex-col gap-2">
-                        <label className="flex items-start gap-3 p-3 bg-slate-800/50 rounded border border-slate-700 cursor-pointer hover:border-blue-500/50 transition-colors">
-                            <input
-                                type="radio"
-                                name="importMode"
-                                value="merge"
-                                checked={importMode === 'merge'}
-                                onChange={(e) => setImportMode(e.target.value as 'merge')}
-                                className="mt-0.5"
-                            />
-                            <div className="flex flex-col">
-                                <span className="text-sm font-semibold text-slate-200">Merge (recommended)</span>
-                                <span className="text-xs text-slate-400">Add imported items alongside existing ones</span>
-                            </div>
-                        </label>
-
-                        <label className="flex items-start gap-3 p-3 bg-slate-800/50 rounded border border-slate-700 cursor-pointer hover:border-blue-500/50 transition-colors">
-                            <input
-                                type="radio"
-                                name="importMode"
-                                value="skip-duplicates"
-                                checked={importMode === 'skip-duplicates'}
-                                onChange={(e) => setImportMode(e.target.value as 'skip-duplicates')}
-                                className="mt-0.5"
-                            />
-                            <div className="flex flex-col">
-                                <span className="text-sm font-semibold text-slate-200">Skip duplicates</span>
-                                <span className="text-xs text-slate-400">Only import items with unique names</span>
-                            </div>
-                        </label>
-
-                        <label className="flex items-start gap-3 p-3 bg-slate-800/50 rounded border border-red-900/50 cursor-pointer hover:border-red-500/50 transition-colors">
-                            <input
-                                type="radio"
-                                name="importMode"
-                                value="replace"
-                                checked={importMode === 'replace'}
-                                onChange={(e) => setImportMode(e.target.value as 'replace')}
-                                className="mt-0.5"
-                            />
-                            <div className="flex flex-col">
-                                <span className="text-sm font-semibold text-red-400">Replace all</span>
-                                <span className="text-xs text-slate-400">⚠️ Delete all existing data and replace with import</span>
-                            </div>
-                        </label>
-                    </div>
-                </div>
-            </Modal>
-
-            <div className="flex flex-col gap-2">
-                {themes.length === 0 && !isCreating && (
-                    <div className="text-center p-8 border border-dashed border-slate-800 rounded-lg text-slate-500 flex flex-col items-center gap-2">
-                        <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-2">
-                            <Plus size={24} className="opacity-50" />
-                        </div>
-                        <p className="font-medium text-slate-400">No themes yet</p>
-                        <p className="text-xs max-w-[200px] mx-auto">Create a theme or load some examples to start customizing your web experience.</p>
-                        <div className="flex gap-2 mt-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={async () => {
-                                    await useStore.getState().loadExampleData();
-                                    showToast('Starter kit loaded');
-                                }}
-                            >
-                                Load starter kit
-                            </Button>
-                            <Button
-                                variant="filled"
-                                size="sm"
-                                onClick={() => setIsCreating(true)}
-                            >
-                                Create first theme
-                            </Button>
+                                    <MoreVertical size={16} />
+                                </Button>
+                                <div className="h-6 w-px bg-slate-700 mx-1"></div>
+                                <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-900/20" onClick={handleBulkDelete} title="Delete selected">
+                                    <Trash2 size={14} className={viewportWidth > 600 ? "mr-1.5" : ""} />
+                                    {viewportWidth > 600 && "Delete"}
+                                </Button>
+                            </>
                         </div>
                     </div>
                 )}
-                <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleDragEnd}
-                    modifiers={[restrictToVerticalAxis]}
-                >
-                    <div className="flex flex-col gap-2">
-                        <SortableContext
-                            items={displayItems.map(i => i.id)}
-                            strategy={verticalListSortingStrategy}
-                        >
-                            {displayItems.map((item) => (
-                                item.type === 'group' ? (
-                                    <ThemeGroup
-                                        key={item.id}
-                                        id={item.id}
-                                        themes={item.themes}
-                                        domainPatterns={item.domainPatterns}
-                                        activeUrl={activeUrl}
-                                        isSelectionMode={isSelectionMode}
-                                        selectedThemeIds={selectedThemeIds}
-                                        globalEnabled={globalEnabled}
-                                        onSelectTheme={onSelectTheme}
-                                        onToggleSelection={handleToggleSelection}
-                                        onContextMenu={handleContextMenu}
-                                        onGroupContextMenu={handleGroupContextMenu}
-                                        onUpdateTheme={updateTheme}
-                                        onDeleteTheme={(e: React.MouseEvent, id: string) => { e.stopPropagation(); setThemeToDelete(id); }}
-                                        onDomainClick={(e: React.MouseEvent) => {
-                                            e.stopPropagation();
-                                            setEditingDomainGroup(item.id);
-                                        }}
-                                        isCollapsed={collapsedGroups.has(item.id)}
-                                        onToggleCollapse={() => {
-                                            setCollapsedGroups(prev => {
-                                                const next = new Set(prev);
-                                                if (next.has(item.id)) {
-                                                    next.delete(item.id);
-                                                } else {
-                                                    next.add(item.id);
-                                                }
-                                                return next;
-                                            });
-                                        }}
-                                    />
-                                ) : (
-                                    <SortableThemeItem
-                                        key={item.id}
-                                        theme={item.data}
-                                        isOtherInGroupActive={false}
-                                        activeUrl={activeUrl}
-                                        isSelectionMode={isSelectionMode}
-                                        isSelected={selectedThemeIds.has(item.id)}
-                                        globalEnabled={globalEnabled}
-                                        onSelect={() => onSelectTheme(item.id)}
-                                        onToggleSelection={() => handleToggleSelection(item.id)}
-                                        onContextMenu={(e: React.MouseEvent) => handleContextMenu(e, item.id)}
-                                        onKebabClick={(e: React.MouseEvent) => handleKebabClick(e, item.id)}
-                                        onUpdateTheme={(updates: Partial<Theme>) => updateTheme(item.id, updates)}
-                                        onDeleteClick={(e: React.MouseEvent) => {
-                                            e.stopPropagation();
-                                            setThemeToDelete(item.id);
-                                        }}
-                                        onDomainClick={(e: React.MouseEvent) => {
-                                            e.stopPropagation();
-                                            setEditingDomainTheme(item.id);
-                                        }}
-                                    />
-                                )
-                            ))}
-                        </SortableContext>
-                    </div>
 
-                </DndContext>
-            </div>
+                {menuState.themeId && (
+                    <ContextMenu
+                        x={menuState.x}
+                        y={menuState.y}
+                        items={
+                            menuState.themeId === 'HEADER_MENU'
+                                ? getMenuItemsForHeader()
+                                : menuState.themeId === 'CREATE_MENU'
+                                    ? getMenuItemsForCreate()
+                                    : getMenuItems(menuState.themeId, menuState.groupId)
+                        }
+                        onClose={() => setMenuState({ ...menuState, themeId: null, groupId: undefined })}
+                    />
+                )}
 
-            {/* Bulk Actions Bar */}
-            {isSelectionMode && selectedThemeIds.size > 0 && (
-                <div className="fixed bottom-4 left-4 right-4 bg-slate-800 border border-slate-700 rounded-lg p-2 shadow-2xl flex items-center justify-between z-20 animate-in slide-in-from-bottom-2">
-                    <div className="flex items-center gap-2">
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0 rounded-full hover:bg-slate-700 text-slate-400 hover:text-white bg-slate-700/50" // Made bigger and slightly distinct
-                            onClick={() => setSelectedThemeIds(new Set())}
-                            title="Deselect all"
-                        >
-                            <X size={16} />
-                        </Button>
-                        <div className="text-sm text-slate-300 font-medium">
-                            {selectedThemeIds.size} selected
-                        </div>
-                    </div>
 
-                    <div className="flex gap-2">
-                        <div className="h-6 w-px bg-slate-700 mx-1"></div>
-
-                        <>
-                            <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(true)} title="Enable selected">
-                                <Play size={14} className={viewportWidth > 600 ? "mr-1.5 text-green-400" : "text-green-400"} />
-                                {viewportWidth > 600 && "Enable"}
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(false)} title="Disable selected">
-                                <Pause size={14} className={viewportWidth > 600 ? "mr-1.5 text-slate-400" : "text-slate-400"} />
-                                {viewportWidth > 600 && "Disable"}
-                            </Button>
-                            <div className="h-6 w-px bg-slate-700 mx-1"></div>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    const rect = e.currentTarget.getBoundingClientRect();
-                                    setMenuState({
-                                        x: rect.left,
-                                        y: viewportWidth > 600 ? rect.bottom : rect.top,
-                                        themeId: 'BULK_ACTIONS_MENU'
-                                    });
-                                }}
-                                title="More actions"
-                            >
-                                <MoreVertical size={16} />
-                            </Button>
-                            <div className="h-6 w-px bg-slate-700 mx-1"></div>
-                            <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-900/20" onClick={handleBulkDelete} title="Delete selected">
-                                <Trash2 size={14} className={viewportWidth > 600 ? "mr-1.5" : ""} />
-                                {viewportWidth > 600 && "Delete"}
-                            </Button>
-                        </>
-                    </div>
-                </div>
-            )}
-
-            {menuState.themeId && (
-                <ContextMenu
-                    x={menuState.x}
-                    y={menuState.y}
-                    items={
-                        menuState.themeId === 'HEADER_MENU'
-                            ? getMenuItemsForHeader()
-                            : menuState.themeId === 'CREATE_MENU'
-                                ? getMenuItemsForCreate()
-                                : getMenuItems(menuState.themeId, menuState.groupId)
-                    }
-                    onClose={() => setMenuState({ ...menuState, themeId: null, groupId: undefined })}
+                {/* Domain Configuration Modal */}
+                <DomainConfigurationModal
+                    isOpen={!!editingDomainGroup}
+                    onClose={() => setEditingDomainGroup(null)}
+                    themes={themes}
+                    groupId={editingDomainGroup || undefined}
+                    onUpdateTheme={updateTheme}
+                    activeUrl={activeUrl}
                 />
-            )}
 
+                {/* Domain Configuration Modal for Individual Themes */}
+                <DomainConfigurationModal
+                    isOpen={!!editingDomainTheme}
+                    onClose={() => setEditingDomainTheme(null)}
+                    themes={editingDomainTheme ? themes.filter(t => t.id === editingDomainTheme) : []}
+                    onUpdateTheme={updateTheme}
+                    activeUrl={activeUrl}
+                />
 
-            {/* Domain Configuration Modal */}
-            <DomainConfigurationModal
-                isOpen={!!editingDomainGroup}
-                onClose={() => setEditingDomainGroup(null)}
-                themes={themes}
-                groupId={editingDomainGroup || undefined}
-                onUpdateTheme={updateTheme}
-                activeUrl={activeUrl}
-            />
+                {/* Create Group Modal */}
+                <DomainConfigurationModal
+                    isOpen={isCreatingGroup}
+                    onClose={() => setIsCreatingGroup(false)}
+                    activeUrl={activeUrl}
+                    mode="create"
+                    onCreateGroup={(domainPatterns: string[]) => {
+                        createEmptyGroup(domainPatterns);
+                        setIsCreatingGroup(false);
+                        showToast('Domain group created');
+                    }}
+                />
 
-            {/* Domain Configuration Modal for Individual Themes */}
-            <DomainConfigurationModal
-                isOpen={!!editingDomainTheme}
-                onClose={() => setEditingDomainTheme(null)}
-                themes={editingDomainTheme ? themes.filter(t => t.id === editingDomainTheme) : []}
-                onUpdateTheme={updateTheme}
-                activeUrl={activeUrl}
-            />
-
-            {/* Create Group Modal */}
-            <DomainConfigurationModal
-                isOpen={isCreatingGroup}
-                onClose={() => setIsCreatingGroup(false)}
-                activeUrl={activeUrl}
-                mode="create"
-                onCreateGroup={(domainPatterns: string[]) => {
-                    createEmptyGroup(domainPatterns);
-                    setIsCreatingGroup(false);
-                    showToast('Domain group created');
-                }}
-            />
-
+            </div>
             {/* Sticky Footer */}
             <div className="fixed bottom-0 text-[10px] text-slate-600 px-4 py-5 w-full bg-slate-900/95 backdrop-blur-sm border-t border-slate-800/60 text-center z-10 transition-colors shadow-[0_-10px_20px_rgba(0,0,0,0.1)]">
                 <p>

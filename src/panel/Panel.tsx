@@ -69,7 +69,7 @@ const Panel: React.FC = () => {
 
                 {view === 'list' ? (
                     // List View
-                    <div className={`flex-1 overflow-y-auto p-4 pt-4 transition-all duration-300 ${!globalEnabled ? 'opacity-90 grayscale-[0.5]' : ''}`}>
+                    <div className={`flex-1 overflow-y-auto pt-4 transition-all duration-300 ${!globalEnabled ? 'opacity-90 grayscale-[0.5]' : ''}`}>
                         <ThemeList onSelectTheme={handleSelectTheme} activeUrl={activeUrl} />
                     </div>
                 ) : (
