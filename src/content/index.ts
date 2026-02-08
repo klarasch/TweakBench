@@ -277,6 +277,16 @@ function injectOrUpdateStyle(id: string, content: string) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function injectOrUpdateHTML(id: string, snippet: any) {
     let el = injectedElements.get(id);
+
+    // Check if we lost the reference but it's still in DOM
+    if (!el || !el.isConnected) {
+        const existing = document.querySelector(`[data-tb-snippet-id="${id}"]`);
+        if (existing instanceof HTMLElement) {
+            el = existing;
+            injectedElements.set(id, el);
+        }
+    }
+
     const inDOM = el && el.isConnected;
 
     // HTML injection is trickier because we need a target selector.
@@ -299,7 +309,6 @@ function injectOrUpdateHTML(id: string, snippet: any) {
     let isWrapped = false;
 
     // Logic: If exactly one Element child, use it directly. Otherwise wrap in DIV.
-    // We ignore whitespace text nodes for this decision, but we might lose them if we unwrap.
     if (temp.children.length === 1) {
         newEl = temp.firstElementChild as HTMLElement;
     } else {
@@ -308,24 +317,25 @@ function injectOrUpdateHTML(id: string, snippet: any) {
         isWrapped = true;
     }
 
-    // 2. Tag it with metadata
-    // We attach ID to the injected element (or wrapper).
-    // Note: If user provided an ID in their HTML, we overwrite it. 
-    // This is necessary for tracking.
-    newEl.id = `tb-html-${id}`;
+    // 2. Tag it with metadata without stomping on user ID
+    // We use data-tb-snippet-id for tracking instead of id property.
+    newEl.setAttribute('data-tb-snippet-id', id);
+    newEl.classList.add('tb-snippet');
+
+    // If user provided an ID, keep it. Otherwise set a stable default.
+    if (!newEl.id) {
+        newEl.id = `tb-snippet-${id}`;
+    }
+
     newEl.setAttribute('data-tb-generated', isWrapped ? 'wrapped' : 'direct');
     newEl.setAttribute('data-tb-position', position);
     newEl.setAttribute('data-tb-selector', selector);
     newEl.setAttribute('data-tb-content-raw', snippet.content);
 
     // Check if we need to replace existing
-    // Optimization: If content is same, do nothing
     if (el && inDOM) {
-        // We use data-tb-content-hash or just compare innerHTML (risky but better than nothing)
-        // Actually, comparing snippet.content directly with a stored attribute is cleanest.
         const lastContent = el.getAttribute('data-tb-content-raw');
         if (lastContent === snippet.content) {
-            // Still check position/selector in case they changed
             const lastPosition = el.getAttribute('data-tb-position');
             const lastSelector = el.getAttribute('data-tb-selector');
             if (lastPosition === position && lastSelector === selector) {
@@ -335,25 +345,13 @@ function injectOrUpdateHTML(id: string, snippet: any) {
     }
 
     if (el && inDOM) {
-        // Check if we strictly need to update (avoid flash)
-        // If position/selector changed, we move.
-        // If content changed, we replace.
-        // For now, Replace is safest.
-
-        // Match position?
-        // If we just do replaceWith, position is preserved relative to siblings, 
-        // BUT if the user changed 'position' (e.g. append -> prepend), replaceWith won't move it.
-        // So we need to remove and re-insert if info changed.
-
         const lastPosition = el.getAttribute('data-tb-position');
         const lastSelector = el.getAttribute('data-tb-selector');
 
         if (lastPosition !== position || lastSelector !== selector) {
             el.remove();
-            el = undefined; // Trigger insertion logic
+            el = undefined;
         } else {
-            // Same position/selector, just content update?
-            // replaceWith keeps it in same spot.
             el.replaceWith(newEl);
             injectedElements.set(id, newEl);
             return;
