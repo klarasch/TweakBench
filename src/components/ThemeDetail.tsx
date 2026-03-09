@@ -26,6 +26,8 @@ import {
     useSensor,
     useSensors,
     type DragEndEvent,
+    type DragStartEvent,
+    DragOverlay,
 } from '@dnd-kit/core';
 import {
     arrayMove,
@@ -144,6 +146,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
 
     const [justDroppedId, setJustDroppedId] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useState(false);
+    const [activeDragId, setActiveDragId] = useState<string | null>(null);
 
     // Quick Add State
     const [quickAddState, setQuickAddState] = useState<{ x: number; y: number; type: 'css' | 'html' } | null>(null);
@@ -423,8 +426,9 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
         });
     }, []);
 
-    const handleDragStart = () => {
+    const handleDragStart = (event: DragStartEvent) => {
         setIsDragging(true);
+        setActiveDragId(event.active.id as string);
 
         // Collect ALL currently expanded items in the current view
         const expandedIds = new Set<string>();
@@ -453,6 +457,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
 
     const handleDragEnd = (event: DragEndEvent) => {
         setIsDragging(false);
+        setActiveDragId(null);
         const { active, over } = event;
         const itemId = active.id as string;
 
@@ -1400,6 +1405,32 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
                                         )}
                                     />
                                 </SortableContext>
+                                <DragOverlay dropAnimation={null}>
+                                    {activeDragId ? (() => {
+                                        const dragItem = displayedItems.find(i => i.id === activeDragId);
+                                        if (dragItem) {
+                                            return (
+                                                <SnippetStackItem
+                                                    item={dragItem}
+                                                    themeId={themeId}
+                                                    isCollapsed={true}
+                                                    onToggleCollapse={() => { }}
+                                                    isSelected={false}
+                                                    itemRef={() => { }}
+                                                    onKebabClick={() => { }}
+                                                    isEditing={false}
+                                                    onSetEditing={() => { }}
+                                                    onSelect={() => { }}
+                                                    isThemeActive={theme?.isActive ?? false}
+                                                    isMatch={isMatch}
+                                                    isSelectionMode={false}
+                                                    isOverlay={true}
+                                                />
+                                            );
+                                        }
+                                        return null;
+                                    })() : null}
+                                </DragOverlay>
                             </DndContext>
                         ) : (
                             // Empty State

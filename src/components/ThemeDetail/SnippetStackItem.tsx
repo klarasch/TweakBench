@@ -28,6 +28,7 @@ interface SnippetStackItemProps {
     isSelectionMode?: boolean;
     searchQuery?: string;
     currentMatch?: { from: number; to: number } | null;
+    isOverlay?: boolean;
 }
 
 export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
@@ -46,7 +47,8 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
     editorRef,
     isSelectionMode,
     searchQuery,
-    currentMatch
+    currentMatch,
+    isOverlay
 }) => {
     // Only subscribe to snippets that matter for this specific item rendering logic
     const s = useStore(useCallback((state: any) => state.snippets.find((sn: any) => sn.id === item.snippetId), [item.snippetId]));
@@ -58,6 +60,16 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
     const [confirmRevert, setConfirmRevert] = useState(false);
     const [confirmReset, setConfirmReset] = useState(false);
     const [confirmSave, setConfirmSave] = useState(false);
+
+    // Performance: Track if this item has ever been expanded.
+    // If so, we'll keep the CodeEditor mounted but hidden via CSS rather than unmounting it.
+    const [hasBeenExpanded, setHasBeenExpanded] = useState(!isCollapsed);
+    React.useEffect(() => {
+        if (!isCollapsed) {
+            setHasBeenExpanded(true);
+        }
+    }, [isCollapsed]);
+
 
     const handlePushClick = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -86,16 +98,38 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
         setNodeRef,
         transform,
         transition,
-        isDragging
-    } = useSortable({ id: item.id, disabled: isEditing });
+        isDragging: sortableIsDragging
+    } = useSortable({ id: isOverlay ? `${item.id}-overlay` : item.id, disabled: isEditing || isOverlay });
+
+    const isDragging = isOverlay ? false : sortableIsDragging;
 
     const style = {
-        transform: CSS.Transform.toString(transform),
+        transform: isOverlay ? undefined : CSS.Transform.toString(transform),
         transition: isDragging ? undefined : transition, // Remove transition when dragging for snappy feel
-        zIndex: isDragging ? 20 : 'auto', // High Z-Index when dragging
-        opacity: isDragging ? 0.8 : 1,
-        cursor: isDragging ? 'grabbing' : undefined,
+        zIndex: isDragging ? 20 : isOverlay ? 50 : 'auto', // High Z-Index when dragging
+        opacity: isDragging ? 0.3 : 1, // 0.3 opacity for the original placeholder item
+        cursor: isDragging || isOverlay ? 'grabbing' : undefined,
     };
+
+    // Memoize CodeEditor callbacks to prevent heavy re-renders during drag
+    // (since useSortable updates SnippetStackItem's transform on every pixel move)
+    const handleEditorChange = useCallback((val: string) => {
+        if (s.isLibraryItem === false) {
+            useStore.getState().updateSnippet(s.id, { content: val });
+        } else {
+            useStore.getState().updateThemeItem(themeId, item.id, {
+                overrides: { ...item.overrides, content: val }
+            });
+        }
+    }, [s.id, s.isLibraryItem, themeId, item.id, item.overrides]);
+
+    const handleEditorFocus = useCallback(() => {
+        onSelect(item.id);
+    }, [onSelect, item.id]);
+
+    const handleEditorRef = useCallback((el: any) => {
+        editorRef?.(item.id, el);
+    }, [editorRef, item.id]);
 
     if (!s) return null;
 
@@ -109,13 +143,14 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
             {...attributes}
             className={`
                 group relative border transition-all rounded-lg mb-4 overflow-hidden shrink-0 scroll-mt-14 cursor-default
-                ${isSelected
+                ${isSelected && !isOverlay
                     ? 'bg-slate-900 border-blue-500/50 shadow-[0_0_15px_-3px_rgba(59,130,246,0.15)] ring-1 ring-blue-500/20'
                     : item.isEnabled
                         ? 'bg-slate-900 border-slate-700 shadow-sm'
                         : 'bg-slate-900/50 border-slate-800 opacity-75 grayscale-[0.3]'
                 }
-                ${isDragging ? 'shadow-2xl border-blue-500 scale-[1.02] z-50 [&_*]:!cursor-grabbing' : ''}
+                ${isDragging ? 'shadow-inner border-slate-600 grayscale-[0.5] [&_*]:!cursor-grabbing' : ''}
+                ${isOverlay ? 'shadow-2xl border-blue-500 scale-[1.02] z-50 bg-slate-900 [&_*]:!cursor-grabbing' : ''}
             `}
             onClick={() => {
                 // Ensure clicking anywhere selects the item (unless handled by child)
@@ -338,8 +373,8 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
 
             {/* HTML Controls Row (Expanded Only) */}
             {
-                s.type === 'html' && !isCollapsed && (
-                    <div className="bg-slate-950/30 px-3 pb-3 pt-3 flex gap-2 items-center border-b border-slate-800/50" onClick={e => e.stopPropagation()}>
+                s.type === 'html' && hasBeenExpanded && (
+                    <div className={`bg-slate-950/30 px-3 pb-3 pt-3 flex gap-2 items-center border-b border-slate-800/50 ${isCollapsed ? 'hidden' : ''}`} onClick={e => e.stopPropagation()}>
                         <div className="flex-1 flex gap-2 items-center bg-slate-900 border border-slate-800 rounded px-2 py-1">
                             <span className="text-[10px] text-slate-500 font-mono uppercase">Target</span>
                             <input
@@ -374,26 +409,16 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
 
             {/* Snippet Editor Body */}
             {
-                !isCollapsed && (
-                    <div className="flex flex-col border-t border-slate-800">
+                hasBeenExpanded && (
+                    <div className={`flex flex-col border-t border-slate-800 ${isCollapsed ? 'hidden' : ''}`}>
                         <CodeEditor
-                            ref={(el) => editorRef?.(item.id, el)}
+                            ref={handleEditorRef}
                             value={item.overrides?.content ?? s.content}
-                            onChange={(val) => {
-                                if (s.isLibraryItem === false) {
-                                    useStore.getState().updateSnippet(s.id, { content: val });
-                                } else {
-                                    useStore.getState().updateThemeItem(themeId, item.id, {
-                                        overrides: { ...item.overrides, content: val }
-                                    });
-                                }
-                            }}
+                            onChange={handleEditorChange}
                             className="flex-1 rounded-none border-x-0 border-b-0 border-t-0"
                             mode={s.type}
                             autoHeight={true}
-                            onFocus={() => {
-                                onSelect(item.id);
-                            }}
+                            onFocus={handleEditorFocus}
                             searchQuery={searchQuery}
                             currentMatch={currentMatch}
                             themeId={themeId}
