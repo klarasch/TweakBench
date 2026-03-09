@@ -24,6 +24,11 @@ interface ThemeGroupProps {
     onDomainClick: (e: React.MouseEvent) => void;
     isCollapsed: boolean;
     onToggleCollapse: () => void;
+    // Rename props
+    renamingThemeId?: string | null;
+    onRenameStart?: (id: string) => void;
+    onRename?: (id: string, newName: string) => void;
+    onRenameCancel?: () => void;
 }
 
 export const ThemeGroup: React.FC<ThemeGroupProps> = ({
@@ -42,7 +47,11 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
     onDeleteTheme,
     onDomainClick,
     isCollapsed,
-    onToggleCollapse
+    onToggleCollapse,
+    renamingThemeId,
+    onRenameStart,
+    onRename,
+    onRenameCancel
 }) => {
     // Sortable logic for the GROUP container
     const {
@@ -277,6 +286,10 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
                                         onDeleteClick={(e) => onDeleteTheme(e, theme.id)}
                                         isOtherInGroupActive={themes.some(t => t.isActive && t.id !== theme.id)}
                                         isNested={true}
+                                        isRenaming={renamingThemeId === theme.id}
+                                        onRenameStart={() => onRenameStart?.(theme.id)}
+                                        onRename={(newName) => onRename?.(theme.id, newName)}
+                                        onRenameCancel={onRenameCancel}
                                     />
                                 </div>
                             );

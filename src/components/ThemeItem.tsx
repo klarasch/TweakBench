@@ -19,6 +19,11 @@ export interface ThemeItemProps {
     onDomainClick?: (e: React.MouseEvent) => void;
     isOtherInGroupActive?: boolean;
     isNested?: boolean;
+    // Rename props
+    isRenaming?: boolean;
+    onRenameStart?: () => void;
+    onRename?: (newName: string) => void;
+    onRenameCancel?: () => void;
     // DnD props passed from parent wrapper
     dragHandleProps?: any;
     isDragging?: boolean;
@@ -40,6 +45,10 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
     onDomainClick,
     isOtherInGroupActive,
     isNested,
+    isRenaming,
+    onRenameStart,
+    onRename,
+    onRenameCancel,
     dragHandleProps,
     isDragging,
     setNodeRef,
@@ -67,6 +76,7 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
                 ${isDragging ? 'shadow-2xl ring-2 ring-blue-500/50 z-50 border-blue-500/50 scale-[1.02] bg-slate-800' : ''}
             `}
             onClick={() => {
+                if (isRenaming) return;
                 if (isSelectionMode) {
                     onToggleSelection();
                 } else {
@@ -84,10 +94,39 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
                             </div>
                         </div>
                     )}
-                    <span className={`text-sm font-medium truncate ${isActiveOnTab ? 'text-green-400' : 'text-slate-200'} ${isSelected ? 'text-white' : ''}`}>
-                        {theme.name}
-                    </span>
-                    {!theme.groupId && onDomainClick && (
+                    {isRenaming ? (
+                        <input
+                            autoFocus
+                            className="bg-slate-950 text-white text-sm font-medium border border-blue-500 rounded px-1.5 py-0.5 outline-none flex-1 min-w-0 w-full"
+                            defaultValue={theme.name}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.stopPropagation();
+                                    onRename?.(e.currentTarget.value);
+                                } else if (e.key === 'Escape') {
+                                    e.stopPropagation();
+                                    onRenameCancel?.();
+                                }
+                            }}
+                            onBlur={(e) => {
+                                onRename?.(e.target.value);
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            onPointerDown={(e) => e.stopPropagation()}
+                        />
+                    ) : (
+                        <span
+                            className={`text-sm font-medium truncate ${isActiveOnTab ? 'text-green-400' : 'text-slate-200'} ${isSelected ? 'text-white' : ''}`}
+                            onDoubleClick={(e) => {
+                                if (isSelectionMode) return;
+                                e.stopPropagation();
+                                onRenameStart?.();
+                            }}
+                        >
+                            {theme.name}
+                        </span>
+                    )}
+                    {!theme.groupId && onDomainClick && !isRenaming && (
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();
@@ -120,7 +159,7 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
                             checked={theme.isActive}
                             isActive={isActiveOnTab}
                             onChange={(checked) => onUpdateTheme({ isActive: checked })}
-                            disabled={!globalEnabled}
+                            disabled={!globalEnabled || isRenaming}
                             size="sm"
                         />
                         {!isSelectionMode && (
@@ -133,6 +172,7 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
                                     onPointerDown={e => e.stopPropagation()}
                                     className="p-1 rounded text-slate-500 hover:text-white hover:bg-slate-700"
                                     title="Edit theme"
+                                    disabled={isRenaming}
                                 >
                                     <Pencil size={14} />
                                 </button>
@@ -143,8 +183,9 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
                                     }}
                                     onPointerDown={e => e.stopPropagation()}
                                     className="p-1 rounded text-slate-500 hover:text-white hover:bg-slate-700"
+                                    disabled={isRenaming}
                                 >
-                                    <MoreVertical size={14} />
+                                    < MoreVertical size={14} />
                                 </button>
                             </div>
                         )}

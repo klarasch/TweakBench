@@ -33,3 +33,6 @@
 - Bumped version to 0.1.8.
 - Changed main tile action to toggle theme state; introduced hover-triggered pencil icon and overflow menu option for editing themes.
 - Disabled build minification and hashing to facilitate Chrome extension review.
+- Implemented double-click to rename for themes in the main list.
+- Added "Rename" option to theme context and kebab menus.
+- Bumped version to 0.1.9.

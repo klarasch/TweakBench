@@ -153,6 +153,9 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
     // DnD Drag State
     const [activeDragId, setActiveDragId] = useState<string | null>(null);
 
+    // Renaming State
+    const [renamingThemeId, setRenamingThemeId] = useState<string | null>(null);
+
     // Responsive State
     const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
     const [listWidth, setListWidth] = useState<number>(0);
@@ -577,6 +580,11 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                 onClick: () => onSelectTheme(targetId)
             },
             {
+                label: 'Rename',
+                icon: <Pencil size={14} />,
+                onClick: () => setRenamingThemeId(targetId)
+            },
+            {
                 label: theme.isActive ? 'Disable theme' : 'Enable theme',
                 icon: theme.isActive ? <Pause size={14} /> : <Play size={14} />,
                 onClick: () => updateTheme(targetId, { isActive: !theme.isActive })
@@ -930,6 +938,13 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                                                 return next;
                                                             });
                                                         }}
+                                                        renamingThemeId={renamingThemeId}
+                                                        onRenameStart={setRenamingThemeId}
+                                                        onRename={(id, newName) => {
+                                                            updateTheme(id, { name: newName });
+                                                            setRenamingThemeId(null);
+                                                        }}
+                                                        onRenameCancel={() => setRenamingThemeId(null)}
                                                     />
                                                 ) : (
                                                     <SortableThemeItem
@@ -952,6 +967,13 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                                             e.stopPropagation();
                                                             setEditingDomainTheme(item.id);
                                                         }}
+                                                        isRenaming={renamingThemeId === item.id}
+                                                        onRenameStart={() => setRenamingThemeId(item.id)}
+                                                        onRename={(newName) => {
+                                                            updateTheme(item.id, { name: newName });
+                                                            setRenamingThemeId(null);
+                                                        }}
+                                                        onRenameCancel={() => setRenamingThemeId(null)}
                                                     />
                                                 )}
                                             </div>
