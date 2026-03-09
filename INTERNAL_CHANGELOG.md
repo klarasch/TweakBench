@@ -31,3 +31,4 @@
 - Corrected "Load starter kit" bug by fixing the fetch path and store integration.
 - Fixed regression in `addTheme` where a default "Main CSS" snippet was added to every new theme.
 - Bumped version to 0.1.8.
+- Changed main tile action to toggle theme state; introduced hover-triggered pencil icon and overflow menu option for editing themes.

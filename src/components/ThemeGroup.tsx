@@ -199,7 +199,7 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
                     )}
                 </div>
 
-                <div className="flex items-center gap-1 ml-2">
+                <div className="flex items-center gap-2 ml-2">
                     {!isSelectionMode && (
                         <>
                             {effectivelyCollapsed && activeTheme && (
@@ -219,29 +219,31 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
                                     />
                                 </>
                             )}
-                            {!effectivelyCollapsed && (
+                            <div className="flex items-center gap-1">
+                                {!effectivelyCollapsed && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onGroupContextMenu(e, themes[0].groupId!, { x: e.pageX, y: e.pageY, action: 'add-theme' });
+                                        }}
+                                        className="p-1 rounded text-slate-500 hover:text-white hover:bg-slate-700 pointer-events-auto"
+                                        onPointerDown={e => e.stopPropagation()} // Prevent drag
+                                        title="Add theme to group"
+                                    >
+                                        <Plus size={14} />
+                                    </button>
+                                )}
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        onGroupContextMenu(e, themes[0].groupId!, { x: e.pageX, y: e.pageY, action: 'add-theme' });
+                                        onGroupContextMenu(e, themes[0].groupId!, { x: e.pageX, y: e.pageY });
                                     }}
                                     className="p-1 rounded text-slate-500 hover:text-white hover:bg-slate-700 pointer-events-auto"
                                     onPointerDown={e => e.stopPropagation()} // Prevent drag
-                                    title="Add theme to group"
                                 >
-                                    <Plus size={14} />
+                                    <MoreVertical size={14} />
                                 </button>
-                            )}
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onGroupContextMenu(e, themes[0].groupId!, { x: e.pageX, y: e.pageY });
-                                }}
-                                className="p-1 rounded text-slate-500 hover:text-white hover:bg-slate-700 pointer-events-auto"
-                                onPointerDown={e => e.stopPropagation()} // Prevent drag
-                            >
-                                <MoreVertical size={14} />
-                            </button>
+                            </div>
                         </>
                     )}
                 </div>

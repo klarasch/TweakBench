@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.8] - 2026-02-08
 
+### Changed
+- **Theme Listing UX**: The primary action when clicking a theme tile in the list now enables/disables the theme directly, rather than entering the edit mode. To edit a theme, a new hover-triggered pencil icon button has been added to the tiles, and an "Edit theme" option has been added to the theme's overflow (kebab) menu.
+
 ### Fixed
 - **Theme Creation**: New themes now correctly start with an empty state (no default snippet added). This fix resolves a regression from previous versions.
 

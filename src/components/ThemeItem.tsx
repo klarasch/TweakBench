@@ -1,5 +1,5 @@
 import React from 'react';
-import { MoreVertical, Globe } from 'lucide-react';
+import { MoreVertical, Globe, Pencil } from 'lucide-react';
 import type { Theme } from '../types';
 import { isDomainMatch } from '../utils/domains';
 import { Toggle } from './ui/Toggle';
@@ -70,7 +70,7 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
                 if (isSelectionMode) {
                     onToggleSelection();
                 } else {
-                    onSelect();
+                    onUpdateTheme({ isActive: !theme.isActive });
                 }
             }}
             onContextMenu={onContextMenu}
@@ -115,7 +115,7 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
                             Group active
                         </div>
                     ) : null}
-                    <div className="flex gap-1 items-center ml-2">
+                    <div className="flex gap-2 items-center ml-2">
                         <Toggle
                             checked={theme.isActive}
                             isActive={isActiveOnTab}
@@ -126,11 +126,25 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
                         {!isSelectionMode && (
                             <div className="flex items-center gap-1">
                                 <button
-                                    onClick={onKebabClick}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onSelect();
+                                    }}
+                                    onPointerDown={e => e.stopPropagation()}
+                                    className="p-1 rounded text-slate-500 hover:text-white hover:bg-slate-700"
+                                    title="Edit theme"
+                                >
+                                    <Pencil size={14} />
+                                </button>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onKebabClick(e);
+                                    }}
                                     onPointerDown={e => e.stopPropagation()}
                                     className="p-1 rounded text-slate-500 hover:text-white hover:bg-slate-700"
                                 >
-                                    <MoreVertical size={16} />
+                                    <MoreVertical size={14} />
                                 </button>
                             </div>
                         )}

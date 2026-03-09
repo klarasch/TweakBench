@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
 import { useStore } from '../store.ts';
-import { Plus, Trash2, Play, Pause, MoreVertical, Upload, Download, Globe, X, Copy, Link as LinkIcon, Ungroup } from 'lucide-react';
+import { Plus, Trash2, Play, Pause, MoreVertical, Upload, Download, Globe, X, Copy, Link as LinkIcon, Ungroup, Pencil } from 'lucide-react';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
 import { getDomainFromUrl } from '../utils/domains.ts';
 import { Button } from './ui/Button';
@@ -571,6 +571,11 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
         if (!theme) return [];
 
         const items: ContextMenuItem[] = [
+            {
+                label: 'Edit theme',
+                icon: <Pencil size={14} />,
+                onClick: () => onSelectTheme(targetId)
+            },
             {
                 label: theme.isActive ? 'Disable theme' : 'Enable theme',
                 icon: theme.isActive ? <Pause size={14} /> : <Play size={14} />,
