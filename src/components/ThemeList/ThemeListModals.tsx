@@ -37,9 +37,9 @@ interface ThemeListModalsProps {
     confirmBulkDeleteAction: () => void;
 
     // Bulk Export
-    confirmBulkExport: 'js' | 'css' | null;
-    setConfirmBulkExport: (type: 'js' | 'css' | null) => void;
-    executeBulkExport: (type: 'js' | 'css') => void;
+    confirmBulkExport: 'json' | 'css' | null;
+    setConfirmBulkExport: (type: 'json' | 'css' | null) => void;
+    executeBulkExport: (type: 'json' | 'css') => void;
 
     // Group Delete
     groupToDelete: string | null;

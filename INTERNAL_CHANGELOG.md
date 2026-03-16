@@ -35,4 +35,6 @@
 - Disabled build minification and hashing to facilitate Chrome extension review.
 - Implemented double-click to rename for themes in the main list.
 - Added "Rename" option to theme context and kebab menus.
+- Added "Export group" option to domain group overflow menus in ThemeList.
+- Transitioned single-theme export format from JavaScript to structured JSON for robustness and unified import flows.
 - Bumped version to 0.1.9.

@@ -67,6 +67,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
 
     const {
         handleExport,
+        handleExportGroup,
         handleExportAllData,
         processImportContent,
         executeThemeImport,
@@ -76,7 +77,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
     // Modals State
     const [themeToDelete, setThemeToDelete] = useState<string | null>(null);
     const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
-    const [confirmBulkExport, setConfirmBulkExport] = useState<'js' | 'css' | null>(null);
+    const [confirmBulkExport, setConfirmBulkExport] = useState<'json' | 'css' | null>(null);
     const [groupToDelete, setGroupToDelete] = useState<string | null>(null);
     const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
     const [importMode, setImportMode] = useState<'merge' | 'replace' | 'skip-duplicates'>('merge');
@@ -421,7 +422,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
         // Optional: Stay in selection mode? Yes.
     };
 
-    const handleBulkExport = (type: 'js' | 'css') => {
+    const handleBulkExport = (type: 'json' | 'css') => {
         if (selectedThemeIds.size > 5) {
             setConfirmBulkExport(type);
         } else {
@@ -429,7 +430,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
         }
     };
 
-    const executeBulkExport = (type: 'js' | 'css') => {
+    const executeBulkExport = (type: 'json' | 'css') => {
         let delay = 0;
         selectedThemeIds.forEach(id => {
             setTimeout(() => {
@@ -513,6 +514,13 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                         showToast('Themes ungrouped');
                     }
                 },
+                { separator: true },
+                {
+                    label: 'Export group',
+                    icon: <Download size={14} />,
+                    onClick: () => handleExportGroup(groupId)
+                },
+                { separator: true },
                 {
                     label: 'Delete group',
                     icon: <Trash2 size={14} />,
@@ -555,9 +563,9 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                 },
                 { separator: true },
                 {
-                    label: 'Export selected',
+                    label: 'Export selected as JSON',
                     icon: <Download size={14} className="text-blue-400" />,
-                    onClick: () => handleBulkExport('js')
+                    onClick: () => handleBulkExport('json')
                 },
                 { separator: true },
                 {
@@ -604,13 +612,15 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
 
         items.push({ separator: true });
         items.push({
-            label: 'Export to JS',
+            label: 'Export to JSON',
             icon: <Download size={14} />,
-            onClick: () => handleExport(targetId, 'js')
+            title: 'Export for other TweakBench users (includes structure, HTML snippets, and CSS)',
+            onClick: () => handleExport(targetId, 'json')
         });
         items.push({
             label: 'Export to CSS only',
             icon: <Download size={14} />,
+            title: 'Export as clean CSS file for use outside TweakBench',
             onClick: () => handleExport(targetId, 'css')
         });
 

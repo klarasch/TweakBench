@@ -22,6 +22,7 @@ TweakBench is a browser extension tool (built with Vite, React, TypeScript) for 
 - Hover-triggered pencil icon and context menu option for editing themes.
 - **Double-click to rename** for themes in the main list.
 - Versatile "Rename" option in kebab and context menus.
+- "Export group" option in the domain group overflow menu.
 
 ## Performance Bottlenecks to Investigate
 - `chrome.storage.onChanged` latency.

@@ -2,71 +2,21 @@ import type { Theme, Snippet, SnippetType } from '../types';
 
 // === EXPORT LOGIC ===
 
-export const exportThemeToJS = (theme: Theme, allSnippets: Snippet[]): string => {
-    // 1. Gather relevant snippets
-    const itemsWithSnippets = theme.items.map(item => {
-        const snippet = allSnippets.find(s => s.id === item.snippetId);
-        return { item, snippet };
-    }).filter(x => x.snippet !== undefined);
+export const exportThemeToJSON = (theme: Theme, allSnippets: Snippet[]): string => {
+    // Gather relevant snippets
+    const snippetIds = new Set<string>(theme.items.map(i => i.snippetId));
+    const snippets = allSnippets.filter(s => snippetIds.has(s.id));
 
-    // 2. Build Metadata Block
-    const metadata = `/* ==TweakBench ThemeData==
-@name ${theme.name}
-@version 1.0
-@author User
-@match ${theme.domainPatterns.join(',')}
-==/TweakBench ThemeData== */`;
-
-    // 3. Build Snippet Blocks
-    const snippetBlocks = itemsWithSnippets.map(({ item, snippet }, index) => {
-        if (!snippet) return '';
-
-        // Determine content (use override if present)
-        const contentToUse = item.overrides?.content ?? snippet.content;
-        const selectorToUse = item.overrides?.selector ?? (snippet as any).selector ?? 'body'; // fallback
-        const positionToUse = item.overrides?.position ?? (snippet as any).position ?? 'append';
-
-        const snippetMeta = `    // ==TweakBench Snippet==
-    // @name ${snippet.name}
-    // @type ${snippet.type}
-    // @id ${snippet.id}
-    ${snippet.type === 'html' ? `// @selector ${selectorToUse}` : ''}
-    ${snippet.type === 'html' ? `// @position ${positionToUse}` : ''}
-    // @enabled ${item.isEnabled}
-    // ==/TweakBench Snippet==`;
-
-        let injectionCode = '';
-        if (snippet.type === 'css') {
-            injectionCode = `
-    const css_${index} = \`${contentToUse.replace(/`/g, '\\`')}\`;
-    if (${item.isEnabled}) {
-        const style = document.createElement('style');
-        style.textContent = css_${index};
-        style.id = 'tb-style-${index}';
-        document.head.append(style);
-    }
-`;
-        } else {
-            injectionCode = `
-    const html_${index} = \`${contentToUse.replace(/`/g, '\\`')}\`;
-    if (${item.isEnabled}) {
-        const target = document.querySelector('${selectorToUse}');
-        if (target) {
-            const pos = '${positionToUse}';
-            if (pos === 'prepend') target.insertAdjacentHTML('afterbegin', html_${index});
-            else if (pos === 'append') target.insertAdjacentHTML('beforeend', html_${index});
-            else if (pos === 'before') target.insertAdjacentHTML('beforebegin', html_${index});
-            else if (pos === 'after') target.insertAdjacentHTML('afterend', html_${index});
+    const exportData = {
+        version: '1.0',
+        type: 'theme',
+        exportedAt: Date.now(),
+        data: {
+            themes: [theme],
+            snippets
         }
-    }
-`;
-        }
-
-        return `${snippetMeta}\n${injectionCode}`;
-    }).join('\n');
-
-    // 4. Combine into final JS
-    return `${metadata}\n\n(function() {\n    'use strict';\n${snippetBlocks}\n})();`;
+    };
+    return JSON.stringify(exportData, null, 2);
 };
 
 export const exportThemeToCSS = (theme: Theme, allSnippets: Snippet[]): string => {
@@ -224,9 +174,9 @@ export const importAllData = (jsonContent: string): ExportedData['data'] | null 
     try {
         const parsed = JSON.parse(jsonContent) as ExportedData;
 
-        // Detect if it's a full backup or a group export
-        const isGroupExport = (parsed as any).type === 'group';
-        const data = isGroupExport ? (parsed as any).data : (parsed as any).data || parsed;
+        // Detect if it's a full backup, a group export, or a single theme export
+        const isTargetExport = ['group', 'theme'].includes((parsed as any).type);
+        const data = isTargetExport ? (parsed as any).data : (parsed as any).data || parsed;
 
         console.log('impexp.ts: Parsed data', {
             hasThemes: !!data.themes,

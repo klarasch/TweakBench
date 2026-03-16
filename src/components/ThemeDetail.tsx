@@ -12,7 +12,7 @@ import { useActiveTab } from '../hooks/useActiveTab.ts';
 import { isDomainMatch } from '../utils/domains.ts';
 import { useToast } from './ui/Toast';
 import type { SnippetType } from '../types.ts';
-import { exportThemeToJS, exportThemeToCSS } from '../utils/impexp.ts';
+import { exportThemeToJSON, exportThemeToCSS } from '../utils/impexp.ts';
 import { QuickAddMenu } from './ThemeDetail/QuickAddMenu.tsx';
 import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
 import { useThemeDetailSearch } from '../hooks/useThemeDetailSearch.ts';
@@ -603,18 +603,18 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
         editorRefs.current[id] = el;
     }, []);
 
-    const handleExport = (type: 'js' | 'css') => {
+    const handleExport = (type: 'json' | 'css') => {
         if (!theme) return;
         let content = '';
         let extension = '';
-        if (type === 'js') {
-            content = exportThemeToJS(theme, snippets);
-            extension = 'tb.js';
+        if (type === 'json') {
+            content = exportThemeToJSON(theme, snippets);
+            extension = 'json';
         } else {
             content = exportThemeToCSS(theme, snippets);
             extension = 'css';
         }
-        const blob = new Blob([content], { type: type === 'js' ? 'text/javascript' : 'text/css' });
+        const blob = new Blob([content], { type: type === 'json' ? 'application/json' : 'text/css' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -644,13 +644,15 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
                 },
                 { separator: true },
                 {
-                    label: 'Export to JS',
+                    label: 'Export to JSON',
                     icon: <Download size={14} />,
-                    onClick: () => handleExport('js')
+                    title: 'Export for other TweakBench users (includes structure, HTML snippets, and CSS)',
+                    onClick: () => handleExport('json')
                 },
                 {
                     label: 'Export to CSS only',
                     icon: <Download size={14} />,
+                    title: 'Export as clean CSS file for use outside TweakBench',
                     onClick: () => handleExport('css')
                 },
                 { separator: true },

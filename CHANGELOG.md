@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.9] - 2026-03-09
 
+### Changed
+- **Export Format**: Transitioned the single-theme export format from JavaScript (`.js`) to JSON (`.json`) for better reliability, smaller file sizes, and unified import logic.
+
 ### Added
+- **Export Group**: Added "Export group" option to the domain group overflow (kebab) menu, allowing users to export all themes and snippets within a group as a single JSON file.
 - **Inline Renaming**: Double-clicking a theme name in the list now triggers an inline rename mode, allowing for faster editing without opening the full theme detail.
 - **Rename Action**: Added a "Rename" option to the theme overflow (kebab) and context menus.
 

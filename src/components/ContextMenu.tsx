@@ -8,6 +8,7 @@ export interface ContextMenuItem {
     danger?: boolean;
     disabled?: boolean;
     separator?: boolean;
+    title?: string;
 }
 
 interface ContextMenuProps {
@@ -117,6 +118,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
                                 }
                             }}
                             disabled={item.disabled}
+                            title={item.title}
                             className={`w-full text-left px-3 py-1.5 text-sm flex items-center gap-2 hover:bg-slate-700 transition-colors
                                 ${item.danger ? 'text-red-400 hover:text-red-300' : 'text-slate-200 hover:text-white'}
                                 ${item.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
