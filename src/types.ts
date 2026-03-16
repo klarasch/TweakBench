@@ -48,4 +48,6 @@ export interface AppState {
     snippets: Snippet[];
     activeThemeId: string | null;
     globalEnabled: boolean;
+    panelView?: 'list' | 'detail';
+    selectedThemeId?: string | null;
 }
