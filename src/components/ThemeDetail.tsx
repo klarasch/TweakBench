@@ -646,13 +646,13 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
                 {
                     label: 'Export to JSON',
                     icon: <Download size={14} />,
-                    title: 'Export for other TweakBench users (includes structure, HTML snippets, and CSS)',
+                    title: 'Export for other ThemeBench users (includes structure, HTML snippets, and CSS)',
                     onClick: () => handleExport('json')
                 },
                 {
                     label: 'Export to CSS only',
                     icon: <Download size={14} />,
-                    title: 'Export as clean CSS file for use outside TweakBench',
+                    title: 'Export as clean CSS file for use outside ThemeBench',
                     onClick: () => handleExport('css')
                 },
                 { separator: true },

@@ -174,7 +174,7 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                     setConfirmEnableGlobal(false);
                 }}
                 title="Re-enable plugin?"
-                message="This will re-enable the TweakBench plugin and all active themes."
+                message="This will re-enable the ThemeBench plugin and all active themes."
                 confirmLabel="Re-enable"
             />
 

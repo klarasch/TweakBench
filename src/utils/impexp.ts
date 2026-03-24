@@ -51,7 +51,8 @@ export interface ImportedThemeData {
 
 export const parseThemeFromJS = (jsContent: string): ImportedThemeData | null => {
     // 1. Parse Theme Metadata
-    const themeMetaRegex = /\/\* ==TweakBench ThemeData==([\s\S]*?)==\/TweakBench ThemeData== \*\//;
+    // Support legacy TweakBench/ThemeBench and new ThemeBench formats for backwards compatibility
+    const themeMetaRegex = /\/\* ==(?:ThemeBench|TweakBench|ThemeBench) ThemeData==([\s\S]*?)==\/(?:ThemeBench|TweakBench|ThemeBench) ThemeData== \*\//;
     const themeMatch = jsContent.match(themeMetaRegex);
     if (!themeMatch) return null;
 
@@ -79,7 +80,8 @@ export const parseThemeFromJS = (jsContent: string): ImportedThemeData | null =>
 
     let match;
     // Reset lastIndex just in case
-    const globalSnippetRegex = /\/\/ ==TweakBench Snippet==([\s\S]*?)\/\/ ==\/TweakBench Snippet==/g;
+    // Support legacy TweakBench/ThemeBench and new ThemeBench formats for backwards compatibility
+    const globalSnippetRegex = /\/\/ ==(?:ThemeBench|TweakBench|ThemeBench) Snippet==([\s\S]*?)\/\/ ==\/(?:ThemeBench|TweakBench|ThemeBench) Snippet==/g;
 
     while ((match = globalSnippetRegex.exec(jsContent)) !== null) {
         const metaBlock = match[1];

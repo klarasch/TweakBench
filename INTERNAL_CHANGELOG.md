@@ -38,3 +38,5 @@
 - Added "Export group" option to domain group overflow menus in ThemeList.
 - Transitioned single-theme export format from JavaScript to structured JSON for robustness and unified import flows.
 - Bumped version to 0.1.9.
+- 2026-03-16 17:59:30 UTC - Rebranded TweakBench to ThemeBench across all files, preserving legacy import support.
+- 2026-03-24 09:59:31 UTC - Rebranded ThemeBench/TweakBench to ThemeBench, and updated title from Tweaks to Themes.

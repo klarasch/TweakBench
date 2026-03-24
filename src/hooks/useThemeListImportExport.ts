@@ -42,7 +42,7 @@ export const useThemeListImportExport = () => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `TweakBench_Group_${groupName.replace(/[*.]/g, '_')}.json`;
+        a.download = `ThemeBench_Group_${groupName.replace(/[*.]/g, '_')}.json`;
         a.click();
         URL.revokeObjectURL(url);
         showToast('Group exported');
@@ -54,7 +54,7 @@ export const useThemeListImportExport = () => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `TweakBench_Backup_${new Date().toISOString().split('T')[0]}.json`;
+        a.download = `ThemeBench_Backup_${new Date().toISOString().split('T')[0]}.json`;
         a.click();
         URL.revokeObjectURL(url);
     };

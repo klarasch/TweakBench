@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.9] - 2026-03-09
 
 ### Changed
+- **Rebranding**: App renamed to ThemeBench. Main page title changed from "Tweaks" to "Themes".
 - **Export Format**: Transitioned the single-theme export format from JavaScript (`.js`) to JSON (`.json`) for better reliability, smaller file sizes, and unified import logic.
 
 ### Added
@@ -76,3 +77,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Domain Groups (formerly Switch Groups) for mutual exclusivity and shared rules.
 - Drag and drop reordering for themes and groups.
 - Snippet duplication and detachment.
+- **Rebranding:** App renamed from TweakBench to ThemeBench. Updated all user-facing names, manifest, exported files, internal logs, and project metadata.

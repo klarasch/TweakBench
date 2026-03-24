@@ -1,7 +1,7 @@
-# Agent Context: TweakBench
+# Agent Context: ThemeBench
 
 ## Project Overview
-TweakBench is a browser extension tool (built with Vite, React, TypeScript) for "tweaking" web pages by injecting CSS and JS snippets (themes).
+ThemeBench is a browser extension tool (built with Vite, React, TypeScript) for "tweaking" web pages by injecting CSS and JS snippets (themes).
 
 ## Architecture
 - **Popup/Panel**: React-based UI for managing themes and snippets.

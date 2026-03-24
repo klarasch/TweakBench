@@ -341,7 +341,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                 const newId = executeThemeImport(result.theme);
                 onSelectTheme(newId);
             } else {
-                showToast('Failed to parse file. Please ensure it\'s a valid TweakBench export.', 'error');
+                showToast('Failed to parse file. Please ensure it\'s a valid ThemeBench export.', 'error');
             }
         };
         reader.readAsText(file);
@@ -369,7 +369,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                     setIsImportDialogOpen(true);
                 }
             } else {
-                showToast('Failed to parse import file. Please ensure it\'s a valid TweakBench backup.', 'error');
+                showToast('Failed to parse import file. Please ensure it\'s a valid ThemeBench backup.', 'error');
             }
         };
         reader.readAsText(file);
@@ -614,13 +614,13 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
         items.push({
             label: 'Export to JSON',
             icon: <Download size={14} />,
-            title: 'Export for other TweakBench users (includes structure, HTML snippets, and CSS)',
+            title: 'Export for other ThemeBench users (includes structure, HTML snippets, and CSS)',
             onClick: () => handleExport(targetId, 'json')
         });
         items.push({
             label: 'Export to CSS only',
             icon: <Download size={14} />,
-            title: 'Export as clean CSS file for use outside TweakBench',
+            title: 'Export as clean CSS file for use outside ThemeBench',
             onClick: () => handleExport(targetId, 'css')
         });
 
@@ -685,7 +685,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
         >
             <div className="p-4 flex flex-col gap-4 relative pb-20">
                 <div className="flex justify-between items-center px-1">
-                    <h2 className="text-lg font-bold text-slate-100 tracking-tight">Tweaks</h2>
+                    <h2 className="text-lg font-bold text-slate-100 tracking-tight">Themes</h2>
                     <div className="flex items-center gap-1">
                         {!isSelectionMode ? (
                             <>

@@ -1,4 +1,4 @@
-console.log('TweakBench: Content Script Loaded');
+console.log('ThemeBench: Content Script Loaded');
 
 import type { AppState } from '../types.ts';
 
@@ -55,18 +55,18 @@ function startTransition() {
 // Message Listener for State Updates
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message.type === 'PING') {
-        console.log('TweakBench: PING received');
+        console.log('ThemeBench: PING received');
         sendResponse('PONG');
     }
 
     if (message.type === 'STATE_UPDATED') {
-        console.log('TweakBench: State Updated via messaging (Direct)');
+        console.log('ThemeBench: State Updated via messaging (Direct)');
         // Direct updates from panel/active tab bypass debounce for maximum snappiness
         updateStyles(message.state);
     }
 
     if (message.type === 'SCAN_CSS_VARIABLES') {
-        console.log('TweakBench: Scanning CSS Variables');
+        console.log('ThemeBench: Scanning CSS Variables');
         const variables: Record<string, Record<string, string>> = {};
 
         // Helper to add variable
@@ -119,7 +119,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             scanElement(bodyStyle, 'body');
 
         } catch (e) {
-            console.error('TweakBench: Error scanning variables', e);
+            console.error('ThemeBench: Error scanning variables', e);
         }
 
         sendResponse({ variables });
@@ -297,7 +297,7 @@ function injectOrUpdateHTML(id: string, snippet: any) {
     // Find target
     const target = document.querySelector(selector);
     if (!target) {
-        console.debug(`TweakBench: Target not found for HTML snippet ${id} (${selector}) - This is normal if the element isn't on the page.`);
+        console.debug(`ThemeBench: Target not found for HTML snippet ${id} (${selector}) - This is normal if the element isn't on the page.`);
         return;
     }
 
@@ -373,7 +373,7 @@ function injectOrUpdateHTML(id: string, snippet: any) {
 }
 
 chrome.storage.local.get([STORAGE_KEY], (result) => {
-    console.log('TweakBench: Initial Load', result);
+    console.log('ThemeBench: Initial Load', result);
     const data = result[STORAGE_KEY] as AppState;
     if (data) {
         debouncedUpdate(data);
@@ -382,7 +382,7 @@ chrome.storage.local.get([STORAGE_KEY], (result) => {
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
     if (areaName === 'local' && changes[STORAGE_KEY]) {
-        console.log('TweakBench: Storage Changed', changes[STORAGE_KEY].newValue);
+        console.log('ThemeBench: Storage Changed', changes[STORAGE_KEY].newValue);
         debouncedUpdate(changes[STORAGE_KEY].newValue as AppState);
     }
 });
