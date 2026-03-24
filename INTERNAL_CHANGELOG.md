@@ -1,4 +1,7 @@
-# Internal Changelog
+# INTERNAL CHANGELOG
+
+- Modernized Tooltip system: replaced all native `title` with `Tooltip` component.
+- Standardized UI colors: replaced all `text-slate-500` with `text-slate-400` for icons and labels.
 
 - Created robust `starter_kit.json` with domain groups and HTML injection.
 - Fixed `groupId` remapping during import to ensure collection isolation.
@@ -42,4 +45,5 @@
 - 2026-03-24 09:59:31 UTC - Rebranded ThemeBench/TweakBench to ThemeBench, and updated title from Tweaks to Themes.
 - 2026-03-24 10:20:00 UTC - Prepared extension for Chrome Web Store review: updated manifest version to 0.1.9, verified build configuration (no minification, sourcemaps enabled), and confirmed manifest resources.
 - 2026-03-24 10:12:00 UTC - Added drag-and-drop file import support for themes and backups directly into the UI (`ThemeList`).
-- 2026-03-24 11:30:00 UTC - Added description field to themes, editable in ThemeDetail header and displayed via tooltip in ThemeList.
+- 2026-03-24 11:30:00 UTC - Modernized tooltips with React Portals and dynamic positioning; improved click targets for icon buttons; fixed ContextMenu wrapping.
+- Added theme descriptions and theme list tooltips.hemes, editable in ThemeDetail header and displayed via tooltip in ThemeList.

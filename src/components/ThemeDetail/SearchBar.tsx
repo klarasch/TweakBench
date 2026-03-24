@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { X, ChevronUp, ChevronDown } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { Tooltip } from '../ui/Tooltip';
 
 interface SearchBarProps {
     searchQuery: string;
@@ -60,13 +61,14 @@ export const SearchBar: React.FC<SearchBarProps> = ({
                     className="flex-1 bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 {searchQuery && (
-                    <button
-                        onClick={() => onSearchChange('')}
-                        className="text-slate-400 hover:text-slate-200 transition-colors"
-                        title="Clear search"
-                    >
-                        <X size={14} />
-                    </button>
+                    <Tooltip content="Clear search" delay={300}>
+                        <button
+                            onClick={() => onSearchChange('')}
+                            className="text-slate-400 hover:text-slate-200 transition-colors"
+                        >
+                            <X size={14} />
+                        </button>
+                    </Tooltip>
                 )}
             </div>
 
@@ -76,39 +78,42 @@ export const SearchBar: React.FC<SearchBarProps> = ({
                 </span>
 
                 <div className="flex gap-1">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={onPrevious}
-                        disabled={totalMatches === 0}
-                        className="h-7 w-7 p-0 btn-ghost-muted disabled:opacity-30"
-                        title="Previous match (Shift+Enter)"
-                    >
-                        <ChevronUp size={16} />
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={onNext}
-                        disabled={totalMatches === 0}
-                        className="h-7 w-7 p-0 btn-ghost-muted disabled:opacity-30"
-                        title="Next match (Enter)"
-                    >
-                        <ChevronDown size={16} />
-                    </Button>
+                    <Tooltip content="Previous match (Shift+Enter)" delay={300}>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={onPrevious}
+                            disabled={totalMatches === 0}
+                            className="h-7 w-7 p-0 btn-ghost-muted disabled:opacity-30"
+                        >
+                            <ChevronUp size={16} />
+                        </Button>
+                    </Tooltip>
+                    <Tooltip content="Next match (Enter)" delay={300}>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={onNext}
+                            disabled={totalMatches === 0}
+                            className="h-7 w-7 p-0 btn-ghost-muted disabled:opacity-30"
+                        >
+                            <ChevronDown size={16} />
+                        </Button>
+                    </Tooltip>
                 </div>
 
                 <div className="h-6 w-px bg-slate-700 mx-1"></div>
 
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onClose}
-                    className="h-7 w-7 p-0 btn-ghost-muted"
-                    title="Close search (Esc)"
-                >
-                    <X size={16} />
-                </Button>
+                <Tooltip content="Close search (Esc)" delay={300}>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={onClose}
+                        className="h-7 w-7 p-0 btn-ghost-muted"
+                    >
+                        <X size={16} />
+                    </Button>
+                </Tooltip>
             </div>
         </div>
     );

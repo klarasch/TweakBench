@@ -32,7 +32,7 @@ export const DomainConfigSection: React.FC<DomainConfigSectionProps> = ({
             <div className="bg-slate-800/30 rounded-lg p-4 border border-slate-800 flex items-center justify-between">
                 <div className="flex flex-col gap-1">
                     <span className="text-sm font-semibold text-slate-200">Run everywhere</span>
-                    <span className="text-xs text-slate-500">Inject code into all websites automatically</span>
+                    <span className="text-xs text-slate-400">Inject code into all websites automatically</span>
                 </div>
                 <button
                     onClick={toggleRunEverywhere}
@@ -43,7 +43,7 @@ export const DomainConfigSection: React.FC<DomainConfigSectionProps> = ({
             </div>
 
             {isRunEverywhere ? (
-                <div className="text-sm text-center py-8 text-slate-500 bg-slate-800/20 rounded-lg border border-dashed border-slate-800">
+                <div className="text-sm text-center py-8 text-slate-400 bg-slate-800/20 rounded-lg border border-dashed border-slate-800">
                     {isGroup ? 'This group is' : 'This theme is'} currently active on <span className="font-semibold text-slate-300">all websites</span>.
                 </div>
             ) : (

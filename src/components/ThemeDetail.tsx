@@ -6,6 +6,7 @@ import { StructureSidebar } from './ThemeDetail/StructureSidebar.tsx';
 import { ThemeHeader } from './ThemeDetail/ThemeHeader.tsx';
 import { SearchBar } from './ThemeDetail/SearchBar.tsx';
 import { Button } from './ui/Button';
+import { Tooltip } from './ui/Tooltip';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
 import { Trash2, Plus, Box, Play, Pause, Download, Edit, X, MoreVertical, Unlink, Copy } from 'lucide-react';
 import { useActiveTab } from '../hooks/useActiveTab.ts';
@@ -1048,7 +1049,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
             <div className="flex border-b border-slate-800 bg-slate-900">
                 <button
                     onClick={() => setActiveTab('css')}
-                    className={`flex-1 py-2 text-xs font-semibold uppercase tracking-wider transition-colors relative ${activeTab === 'css' ? 'text-blue-400' : 'text-slate-500 hover:text-slate-300'}`}
+                    className={`flex-1 py-2 text-xs font-semibold uppercase tracking-wider transition-colors relative ${activeTab === 'css' ? 'text-blue-400' : 'text-slate-400 hover:text-slate-300'}`}
                 >
                     CSS
                     {activeTab === 'css' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500"></div>}
@@ -1056,7 +1057,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
                 <div className="w-px bg-slate-800 my-2"></div>
                 <button
                     onClick={() => setActiveTab('html')}
-                    className={`flex-1 py-2 text-xs font-semibold uppercase tracking-wider transition-colors relative ${activeTab === 'html' ? 'text-orange-400' : 'text-slate-500 hover:text-slate-300'}`}
+                    className={`flex-1 py-2 text-xs font-semibold uppercase tracking-wider transition-colors relative ${activeTab === 'html' ? 'text-orange-400' : 'text-slate-400 hover:text-slate-300'}`}
                 >
                     HTML
                     {activeTab === 'html' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-orange-500"></div>}
@@ -1197,7 +1198,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
                                                 }
                                                 setCollapsedItems(next);
                                             }}
-                                            className="text-slate-500 hover:text-white"
+                                            className="text-slate-400 hover:text-white"
                                         >
                                             {isAllCollapsed ? 'Expand all' : 'Collapse all'}
                                         </Button>
@@ -1207,7 +1208,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={() => setIsSelectionMode(true)}
-                                                className="text-slate-500 hover:text-white"
+                                                className="text-slate-400 hover:text-white"
                                             >
                                                 Select
                                             </Button>
@@ -1224,7 +1225,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
                                                             setSelectedSnippetIds(allIds);
                                                         }
                                                     }}
-                                                    className="text-slate-500 hover:text-white"
+                                                    className="text-slate-400 hover:text-white"
                                                 >
                                                     {selectedSnippetIds.size > 0 ? 'Deselect all' : 'Select all'}
                                                 </Button>
@@ -1247,63 +1248,67 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
                         {!isSelectionMode && !isSearchOpen && (
                             <div className="flex gap-2">
                                 {activeTab === 'css' && viewportWidth > 500 && (
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={handleImportVariables}
-                                        className="text-slate-400 hover:text-white border-slate-700 hover:border-slate-500"
-                                        icon={<Download size={14} />}
-                                        title="Import CSS variables from page"
-                                    >
-                                        Import vars
-                                    </Button>
+                                    <Tooltip content="Import CSS variables from page" delay={300}>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={handleImportVariables}
+                                            className="text-slate-400 hover:text-white border-slate-700 hover:border-slate-500"
+                                            icon={<Download size={14} />}
+                                        >
+                                            Import vars
+                                        </Button>
+                                    </Tooltip>
                                 )}
 
                                 {viewportWidth > 500 && (
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="text-slate-400 hover:text-white border-slate-700 hover:border-slate-500"
-                                        onClick={(e) => {
-                                            const rect = e.currentTarget.getBoundingClientRect();
-                                            setQuickAddState({ x: rect.left, y: rect.bottom, type: activeTab });
-                                        }}
-                                        icon={<Plus size={14} />}
-                                        title="Add from library"
-                                    >
-                                        Add from library
-                                    </Button>
+                                    <Tooltip content="Add from library" delay={300}>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="text-slate-400 hover:text-white border-slate-700 hover:border-slate-500"
+                                            onClick={(e) => {
+                                                const rect = e.currentTarget.getBoundingClientRect();
+                                                setQuickAddState({ x: rect.left, y: rect.bottom, type: activeTab });
+                                            }}
+                                            icon={<Plus size={14} />}
+                                        >
+                                            Add from library
+                                        </Button>
+                                    </Tooltip>
                                 )}
 
-                                <Button
-                                    variant="filled"
-                                    size="sm"
-                                    onClick={() => handleCreateLocal(activeTab)}
-                                    className={activeTab === 'css' ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-orange-700 hover:bg-orange-600 text-white font-bold'}
-                                    icon={<Plus size={viewportWidth > 500 ? 10 : 14} />}
-                                    title={`Add ${activeTab.toUpperCase()}`}
-                                >
-                                    {viewportWidth > 500 && `Add ${activeTab === 'css' ? 'CSS' : 'HTML'}`}
-                                </Button>
+                                <Tooltip content={`Add ${activeTab.toUpperCase()}`} delay={300}>
+                                    <Button
+                                        variant="filled"
+                                        size="sm"
+                                        onClick={() => handleCreateLocal(activeTab)}
+                                        className={activeTab === 'css' ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-orange-700 hover:bg-orange-600 text-white font-bold'}
+                                        icon={<Plus size={viewportWidth > 500 ? 10 : 14} />}
+                                    >
+                                        {viewportWidth > 500 && `Add ${activeTab === 'css' ? 'CSS' : 'HTML'}`}
+                                    </Button>
+                                </Tooltip>
 
                                 {viewportWidth <= 500 && (
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="text-slate-400 hover:text-white"
-                                        onClick={(e) => {
-                                            const rect = e.currentTarget.getBoundingClientRect();
-                                            setMenuState({
-                                                x: rect.left,
-                                                y: rect.bottom,
-                                                itemId: 'SUB_HEADER_MENU',
-                                                source: 'stack'
-                                            });
-                                        }}
-                                        title="More actions"
-                                    >
-                                        <MoreVertical size={16} />
-                                    </Button>
+                                    <Tooltip content="More actions" delay={300}>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="text-slate-400 hover:text-white"
+                                            onClick={(e) => {
+                                                const rect = e.currentTarget.getBoundingClientRect();
+                                                setMenuState({
+                                                    x: rect.left,
+                                                    y: rect.bottom,
+                                                    itemId: 'SUB_HEADER_MENU',
+                                                    source: 'stack'
+                                                });
+                                            }}
+                                        >
+                                            <MoreVertical size={16} />
+                                        </Button>
+                                    </Tooltip>
                                 )}
                             </div>
                         )}
@@ -1313,15 +1318,16 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
                     {isSelectionMode && selectedSnippetIds.size > 0 && (
                         <div className="absolute bottom-4 left-4 right-4 bg-slate-800 border border-slate-700 rounded-lg p-2 shadow-2xl flex items-center justify-between z-50 animate-in slide-in-from-bottom-2">
                             <div className="flex items-center gap-2">
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-8 w-8 p-0 rounded-full hover:bg-slate-700 text-slate-400 hover:text-white bg-slate-700/50"
-                                    onClick={() => setSelectedSnippetIds(new Set())}
-                                    title="Deselect all"
-                                >
-                                    <X size={16} />
-                                </Button>
+                                <Tooltip content="Deselect all" delay={300}>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 w-8 p-0 rounded-full hover:bg-slate-700 text-slate-400 hover:text-white bg-slate-700/50"
+                                        onClick={() => setSelectedSnippetIds(new Set())}
+                                    >
+                                        <X size={16} />
+                                    </Button>
+                                </Tooltip>
                                 <div className="text-sm text-slate-300 font-medium">
                                     {selectedSnippetIds.size} selected
                                 </div>
@@ -1331,37 +1337,44 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
                                 <div className="h-6 w-px bg-slate-700 mx-1"></div>
 
                                 <>
-                                    <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(true)} title="Enable selected">
-                                        <Play size={14} className={viewportWidth > 600 ? "mr-1.5 text-green-400" : "text-green-400"} />
-                                        {viewportWidth > 600 && "Enable"}
-                                    </Button>
-                                    <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(false)} title="Disable selected">
-                                        <Pause size={14} className={viewportWidth > 600 ? "mr-1.5 text-slate-400" : "text-slate-400"} />
-                                        {viewportWidth > 600 && "Disable"}
-                                    </Button>
+                                    <Tooltip content="Enable selected" delay={300}>
+                                        <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(true)}>
+                                            <Play size={14} className={viewportWidth > 600 ? "mr-1.5 text-green-400" : "text-green-400"} />
+                                            {viewportWidth > 600 && "Enable"}
+                                        </Button>
+                                    </Tooltip>
+                                    <Tooltip content="Disable selected" delay={300}>
+                                        <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(false)}>
+                                            <Pause size={14} className={viewportWidth > 600 ? "mr-1.5 text-slate-400" : "text-slate-400"} />
+                                            {viewportWidth > 600 && "Disable"}
+                                        </Button>
+                                    </Tooltip>
                                     <div className="h-6 w-px bg-slate-700 mx-1"></div>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            const rect = e.currentTarget.getBoundingClientRect();
-                                            setMenuState({
-                                                x: rect.left,
-                                                y: viewportWidth > 600 ? rect.bottom : rect.top,
-                                                itemId: 'BULK_ACTIONS_MENU',
-                                                source: 'stack'
-                                            });
-                                        }}
-                                        title="More actions"
-                                    >
-                                        <MoreVertical size={16} />
-                                    </Button>
+                                    <Tooltip content="More actions" delay={300}>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                const rect = e.currentTarget.getBoundingClientRect();
+                                                setMenuState({
+                                                    x: rect.left,
+                                                    y: viewportWidth > 600 ? rect.bottom : rect.top,
+                                                    itemId: 'BULK_ACTIONS_MENU',
+                                                    source: 'stack'
+                                                });
+                                            }}
+                                        >
+                                            <MoreVertical size={16} />
+                                        </Button>
+                                    </Tooltip>
                                     <div className="h-6 w-px bg-slate-700 mx-1"></div>
-                                    <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-900/20" onClick={handleBulkDelete} title="Delete selected">
-                                        <Trash2 size={14} className={viewportWidth > 600 ? "mr-1.5" : ""} />
-                                        {viewportWidth > 600 && "Delete"}
-                                    </Button>
+                                    <Tooltip content="Delete selected" delay={300}>
+                                        <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-900/20" onClick={handleBulkDelete}>
+                                            <Trash2 size={14} className={viewportWidth > 600 ? "mr-1.5" : ""} />
+                                            {viewportWidth > 600 && "Delete"}
+                                        </Button>
+                                    </Tooltip>
                                 </>
                             </div>
                         </div>
@@ -1439,7 +1452,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
                             <div className="flex flex-col items-center justify-center h-full text-center p-8">
                                 <Box className="w-12 h-12 text-slate-700 mb-4" strokeWidth={1.5} />
                                 <h3 className="text-slate-400 font-medium mb-2">No {activeTab.toUpperCase()} snippets yet</h3>
-                                <p className="text-slate-500 text-sm max-w-xs mb-6">
+                                <p className="text-slate-400 text-sm max-w-xs mb-6">
                                     Add your first snippet to start customizing this theme.
                                 </p>
                                 <div className="flex gap-3">

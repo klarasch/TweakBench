@@ -5,6 +5,7 @@ import { GripVertical, BookOpen, Trash2, MoreVertical } from 'lucide-react';
 import type { Theme, ThemeItem, Snippet } from '../../types.ts';
 import { useStore } from '../../store.ts';
 import { ConfirmDialog } from '../ui/Dialog';
+import { Tooltip } from '../ui/Tooltip';
 
 interface StructureSidebarProps {
     items: ThemeItem[];
@@ -48,7 +49,7 @@ export const StructureSidebar: React.FC<StructureSidebarProps> = ({
         <div className="flex-1 overflow-y-auto p-4">
             {/* Snippet List (Structure View) */}
             <div className="space-y-2">
-                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Structure ({activeTab})</div>
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Structure ({activeTab})</div>
                 <Reorder.Group axis="y" values={items} onReorder={onReorder} transition={{ type: "spring", stiffness: 600, damping: 30, mass: 1 }}>
                     <div className="space-y-2">
                         {items.map(item => {
@@ -157,11 +158,15 @@ export const StructureSidebar: React.FC<StructureSidebarProps> = ({
                                                         )}
                                                         {s.isLibraryItem !== false && (
                                                             <div className="relative flex items-center justify-center">
-                                                                <span className="text-purple-400" title="Library snippet">
-                                                                    <BookOpen size={12} />
-                                                                </span>
+                                                                <Tooltip content="Library snippet" delay={300}>
+                                                                    <span className="text-purple-400 flex items-center">
+                                                                        <BookOpen size={12} />
+                                                                    </span>
+                                                                </Tooltip>
                                                                 {item.overrides?.content !== undefined && (
-                                                                    <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-yellow-500 rounded-full border border-slate-900" title="Has overrides" />
+                                                                    <Tooltip content="Has overrides" delay={300}>
+                                                                        <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-yellow-500 rounded-full border border-slate-900" />
+                                                                    </Tooltip>
                                                                 )}
                                                             </div>
                                                         )}
@@ -171,37 +176,42 @@ export const StructureSidebar: React.FC<StructureSidebarProps> = ({
                                         </div>
 
                                         <div className="absolute right-2 flex gap-1 items-center opacity-0 group-hover:opacity-100 transition-opacity bg-slate-800/80 backdrop-blur pl-2 rounded">
-                                            <Toggle
-                                                checked={item.isEnabled}
-                                                disabled={!theme.isActive}
-                                                onChange={() => toggleThemeItem(theme.id, item.id)}
-                                                title={!theme.isActive ? "Enable theme to toggle snippets" : "Toggle snippet"}
-                                                size="sm"
-                                            />
-                                            <button
-                                                className="p-1 text-slate-500 hover:text-red-400 rounded hover:bg-slate-700"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setItemToRemove(item.id);
-                                                }}
-                                                title="Remove snippet"
-                                            >
-                                                <Trash2 size={12} />
-                                            </button>
-                                            <button
-                                                className="p-1 text-slate-500 hover:text-white rounded hover:bg-slate-700"
-                                                onClick={(e) => onContextMenu(e, item.id, 'sidebar')}
-                                                title="More options"
-                                            >
-                                                <MoreVertical size={12} />
-                                            </button>
+                                            <Tooltip content={!theme.isActive ? "Enable theme to toggle snippets" : "Toggle snippet"} delay={300}>
+                                                <div className="flex items-center">
+                                                    <Toggle
+                                                        checked={item.isEnabled}
+                                                        disabled={!theme.isActive}
+                                                        onChange={() => toggleThemeItem(theme.id, item.id)}
+                                                        size="sm"
+                                                    />
+                                                </div>
+                                            </Tooltip>
+                                            <Tooltip content="Remove snippet" delay={300}>
+                                                <button
+                                                    className="p-1 text-slate-400 hover:text-red-400 rounded hover:bg-slate-700"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setItemToRemove(item.id);
+                                                    }}
+                                                >
+                                                    <Trash2 size={12} />
+                                                </button>
+                                            </Tooltip>
+                                            <Tooltip content="More options" delay={300}>
+                                                <button
+                                                    className="p-1 text-slate-400 hover:text-white rounded hover:bg-slate-700"
+                                                    onClick={(e) => onContextMenu(e, item.id, 'sidebar')}
+                                                >
+                                                    <MoreVertical size={12} />
+                                                </button>
+                                            </Tooltip>
                                         </div>
                                     </div>
                                 </Reorder.Item>
                             );
                         })}
                         {items.length === 0 && (
-                            <div className="p-4 text-center text-xs text-slate-500">
+                            <div className="p-4 text-center text-xs text-slate-400">
                                 No {activeTab.toUpperCase()} snippets.
                             </div>
                         )}

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Globe, Plus, X, Edit2 } from 'lucide-react';
+import { Tooltip } from './ui/Tooltip';
 
 interface DomainListEditorProps {
     domainPatterns: string[];
@@ -52,7 +53,7 @@ export const DomainListEditor: React.FC<DomainListEditorProps> = ({ domainPatter
     return (
         <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Allowed domains</label>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Allowed domains</label>
                 <div className="flex gap-2">
                     <input
                         className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:border-blue-500 focus:outline-none transition-colors placeholder:text-slate-600"
@@ -70,7 +71,7 @@ export const DomainListEditor: React.FC<DomainListEditorProps> = ({ domainPatter
                         <Plus size={18} />
                     </button>
                 </div>
-                <p className="text-[10px] text-slate-500 px-1">
+                <p className="text-[10px] text-slate-400 px-1">
                     Enter a domain (e.g. <code className="bg-slate-800 px-1 rounded">google.com</code>) or pattern (<code className="bg-slate-800 px-1 rounded">*.gov</code>).
                 </p>
 
@@ -89,7 +90,7 @@ export const DomainListEditor: React.FC<DomainListEditorProps> = ({ domainPatter
 
             <div className="space-y-2 max-h-[240px] overflow-y-auto pr-1">
                 {domainPatterns.length === 0 && (
-                    <div className="text-center py-6 text-slate-500 text-sm border border-dashed border-slate-800 rounded-lg bg-slate-800/20">
+                    <div className="text-center py-6 text-slate-400 text-sm border border-dashed border-slate-800 rounded-lg bg-slate-800/20">
                         No domains configured.<br />
                         <span className="text-xs">The theme will not run anywhere.</span>
                         {currentDomain && (
@@ -108,7 +109,7 @@ export const DomainListEditor: React.FC<DomainListEditorProps> = ({ domainPatter
                 {domainPatterns.map((p, i) => (
                     <div key={i} className="flex items-center justify-between p-3 bg-slate-800/50 hover:bg-slate-800 rounded-lg border border-slate-800/50 group transition-colors min-w-0">
                         <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <Globe size={14} className="text-slate-500 group-hover:text-blue-400 transition-colors shrink-0" />
+                            <Globe size={14} className="text-slate-400 group-hover:text-blue-400 transition-colors shrink-0" />
 
                             {editingIndex === i ? (
                                 <input
@@ -136,13 +137,14 @@ export const DomainListEditor: React.FC<DomainListEditorProps> = ({ domainPatter
                                 </div>
                             )}
                         </div>
-                        <button
-                            onClick={(e) => { e.stopPropagation(); handleRemove(p); }}
-                            className="p-1.5 rounded hover:bg-red-500/20 text-slate-500 hover:text-red-400 transition-colors ml-2 shrink-0"
-                            title="Remove domain"
-                        >
-                            <X size={14} />
-                        </button>
+                        <Tooltip content="Remove domain" delay={300}>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); handleRemove(p); }}
+                                className="p-2 rounded hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors ml-2 shrink-0"
+                            >
+                                <X size={14} />
+                            </button>
+                        </Tooltip>
                     </div>
                 ))}
             </div>

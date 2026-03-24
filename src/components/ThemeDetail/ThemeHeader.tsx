@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Globe, MoreVertical, BookOpen, Link as LinkIcon } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Toggle } from '../ui/Toggle';
+import { Tooltip } from '../ui/Tooltip';
 import { Modal } from '../ui/Modal';
 import type { Theme } from '../../types.ts';
 import { useActiveTab } from '../../hooks/useActiveTab.ts';
@@ -53,15 +54,19 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
 
     return (
         <div className="flex-none flex items-start gap-2 p-2 sm:p-4 border-b border-slate-800 bg-slate-900 z-10 relative">
-            <button onClick={onBack} className="p-1 mt-0.5 rounded hover:bg-slate-800 btn-ghost-muted">
-                <ArrowLeft size={18} />
-            </button>
+            <Tooltip content="Back" delay={300}>
+                <button onClick={onBack} className="p-1 mt-0.5 rounded hover:bg-slate-800 btn-ghost-muted">
+                    <ArrowLeft size={18} />
+                </button>
+            </Tooltip>
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                     {theme.groupId && (
-                        <div className="text-blue-400" title="This theme is part of a domain group">
-                            <LinkIcon size={16} />
-                        </div>
+                        <Tooltip content="This theme is part of a domain group" delay={300}>
+                            <div className="text-blue-400">
+                                <LinkIcon size={16} />
+                            </div>
+                        </Tooltip>
                     )}
                     <input
                         className="bg-transparent font-semibold text-lg outline-none w-full text-white placeholder-slate-600"
@@ -90,49 +95,51 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                 />
                 <div className="flex items-center flex-wrap gap-2 mt-2">
                     {/* Domain Config Button - Interactive */}
-                    <button
-                        className="flex items-center gap-1.5 text-[10px] font-medium text-slate-400 bg-slate-800/50 border border-slate-700/50 px-2 py-1 rounded-md cursor-pointer hover:bg-slate-800 hover:text-slate-200 hover:border-slate-600 transition-all select-none active:scale-95"
-                        onClick={() => setShowDomainSettings(true)}
-                        title="Configure domains"
-                    >
-                        <Globe size={11} />
-                        {theme.domainPatterns && theme.domainPatterns.includes('<all_urls>')
-                            ? "Runs everywhere"
-                            : theme.domainPatterns && theme.domainPatterns.length === 1
-                                ? theme.domainPatterns[0]
-                                : theme.domainPatterns && theme.domainPatterns.length > 1
-                                    ? `${theme.domainPatterns.length} Domains`
-                                    : "No domains"
-                        }
-                    </button>
+                    <Tooltip content="Configure domains" delay={300}>
+                        <button
+                            className="flex items-center gap-1.5 text-[10px] font-medium text-slate-400 bg-slate-800/50 border border-slate-700/50 px-2 py-1 rounded-md cursor-pointer hover:bg-slate-800 hover:text-slate-200 hover:border-slate-600 transition-all select-none active:scale-95"
+                            onClick={() => setShowDomainSettings(true)}
+                        >
+                            <Globe size={11} />
+                            {theme.domainPatterns && theme.domainPatterns.includes('<all_urls>')
+                                ? "Runs everywhere"
+                                : theme.domainPatterns && theme.domainPatterns.length === 1
+                                    ? theme.domainPatterns[0]
+                                    : theme.domainPatterns && theme.domainPatterns.length > 1
+                                        ? `${theme.domainPatterns.length} Domains`
+                                        : "No domains"
+                            }
+                        </button>
+                    </Tooltip>
 
                     {/* Active Match Status - Passive Badge */}
                     {activeUrl && (
-                        <div
-                            className={`flex items-center gap-1.5 text-[10px] font-medium px-2 py-1 rounded-full ${isMatch
+                        <Tooltip content={
+                            isMatch
                                 ? theme.isActive
-                                    ? 'text-green-400/90 bg-green-500/10'
-                                    : 'text-amber-500/90 bg-amber-500/5'
-                                : 'text-slate-500'
-                                }`}
-                            title={
-                                isMatch
+                                    ? "Theme matches this tab and is enabled"
+                                    : theme.groupId
+                                        ? "Theme matches this tab but is disabled because another theme in this group is active"
+                                        : "Theme matches this tab but is currently disabled"
+                                : "Theme does not run on this tab"
+                        } delay={300}>
+                            <div
+                                className={`flex items-center gap-1.5 text-[10px] font-medium px-2 py-1 rounded-full ${isMatch
                                     ? theme.isActive
-                                        ? "Theme matches this tab and is enabled"
-                                        : theme.groupId
-                                            ? "Theme matches this tab but is disabled because another theme in this group is active"
-                                            : "Theme matches this tab but is currently disabled"
-                                    : "Theme does not run on this tab"
-                            }
-                        >
-                            {isMatch
-                                ? theme.isActive
-                                    ? "Active on this tab"
-                                    : (theme.groupId && isOtherInGroupActive)
-                                        ? "Group active"
-                                        : "Inactive"
-                                : "Inactive"}
-                        </div>
+                                        ? 'text-green-400/90 bg-green-500/10'
+                                        : 'text-amber-500/90 bg-amber-500/5'
+                                    : 'text-slate-400'
+                                    }`}
+                            >
+                                {isMatch
+                                    ? theme.isActive
+                                        ? "Active on this tab"
+                                        : (theme.groupId && isOtherInGroupActive)
+                                            ? "Group active"
+                                            : "Inactive"
+                                    : "Inactive"}
+                            </div>
+                        </Tooltip>
                     )}
                 </div>
             </div>
@@ -140,13 +147,14 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
             <div className="flex items-center gap-2 mt-0.5">
                 {/* Global Disabled Warning */}
                 {!globalEnabled && (
-                    <span
-                        className="text-[10px] font-bold text-amber-500 uppercase tracking-wider mr-2 cursor-pointer hover:underline hover:text-amber-400"
-                        onClick={() => setConfirmEnableGlobal(true)}
-                        title="Click to re-enable plugin"
-                    >
-                        All themes disabled
-                    </span>
+                    <Tooltip content="Click to re-enable plugin" delay={300}>
+                        <span
+                            className="text-[10px] font-bold text-amber-500 uppercase tracking-wider mr-2 cursor-pointer hover:underline hover:text-amber-400"
+                            onClick={() => setConfirmEnableGlobal(true)}
+                        >
+                            All themes disabled
+                        </span>
+                    </Tooltip>
                 )}
 
                 {!globalEnabled ? (
@@ -161,26 +169,28 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                     />
                 )}
 
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={onContextMenu}
-                    title="Theme options"
-                >
-                    <MoreVertical size={18} />
-                </Button>
+                <Tooltip content="Theme options" delay={300}>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={onContextMenu}
+                    >
+                        <MoreVertical size={18} />
+                    </Button>
+                </Tooltip>
 
                 <div className="divider-v h-6 mx-1"></div>
 
-                <Button
-                    variant={showLibrary ? "filled" : "outline"}
-                    size="sm"
-                    onClick={() => { setShowLibrary(!showLibrary); setLibraryFilter(null); }}
-                    icon={<BookOpen size={14} />}
-                    title="Toggle snippet library"
-                >
-                    <span className="hidden sm:inline">Library</span>
-                </Button>
+                <Tooltip content="Toggle snippet library" delay={300}>
+                    <Button
+                        variant={showLibrary ? "filled" : "outline"}
+                        size="sm"
+                        onClick={() => { setShowLibrary(!showLibrary); setLibraryFilter(null); }}
+                        icon={<BookOpen size={14} />}
+                    >
+                        <span className="hidden sm:inline">Library</span>
+                    </Button>
+                </Tooltip>
             </div>
 
             <ConfirmDialog
@@ -205,7 +215,7 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                         </div>
                         <div>
                             <h3 className="text-lg font-semibold text-slate-100 tracking-tight">Domain configuration</h3>
-                            <p className="text-xs font-normal text-slate-500">Control where this theme is active</p>
+                            <p className="text-xs font-normal text-slate-400">Control where this theme is active</p>
                         </div>
                     </div>
                 }
@@ -232,7 +242,7 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                 <div className="bg-slate-800/30 rounded-lg p-4 border border-slate-800 flex items-center justify-between mb-4">
                     <div className="flex flex-col gap-1">
                         <span className="text-sm font-semibold text-slate-200">Run everywhere</span>
-                        <span className="text-xs text-slate-500">Inject code into all websites automatically</span>
+                        <span className="text-xs text-slate-400">Inject code into all websites automatically</span>
                     </div>
                     <button
                         onClick={() => {
@@ -248,7 +258,7 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                 </div>
 
                 {theme.domainPatterns?.includes('<all_urls>') ? (
-                    <div className="text-sm text-center py-8 text-slate-500 bg-slate-800/20 rounded-lg border border-dashed border-slate-800">
+                    <div className="text-sm text-center py-8 text-slate-400 bg-slate-800/20 rounded-lg border border-dashed border-slate-800">
                         This theme is currently active on <span className="font-semibold text-slate-300">all websites</span>.
                     </div>
                 ) : (

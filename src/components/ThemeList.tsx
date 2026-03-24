@@ -4,6 +4,7 @@ import { Plus, Trash2, Play, Pause, MoreVertical, Upload, Download, Globe, X, Co
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
 import { getDomainFromUrl } from '../utils/domains.ts';
 import { Button } from './ui/Button';
+import { Tooltip } from './ui/Tooltip';
 import { useToast } from './ui/Toast';
 import type { Theme } from '../types.ts';
 import { ThemeGroup } from './ThemeGroup';
@@ -765,15 +766,16 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                         {!isSelectionMode ? (
                             <>
                                 {groupCount > 1 && (
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={toggleAllGroups}
-                                        className="btn-ghost-muted px-2"
-                                        title={allGroupsCollapsed ? 'Expand all groups' : 'Collapse all groups'}
-                                    >
-                                        {allGroupsCollapsed ? 'Expand all' : 'Collapse all'}
-                                    </Button>
+                                    <Tooltip content={allGroupsCollapsed ? 'Expand all groups' : 'Collapse all groups'} delay={300}>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={toggleAllGroups}
+                                            className="btn-ghost-muted px-2"
+                                        >
+                                            {allGroupsCollapsed ? 'Expand all' : 'Collapse all'}
+                                        </Button>
+                                    </Tooltip>
                                 )}
                                 <Button
                                     variant="ghost"
@@ -788,16 +790,17 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
 
                                 {/* Compact view for narrow screens */}
                                 <div className="md:hidden">
-                                    <button
-                                        onClick={(e) => {
-                                            const rect = e.currentTarget.getBoundingClientRect();
-                                            setMenuState({ x: rect.left, y: rect.bottom, themeId: 'CREATE_MENU' });
-                                        }}
-                                        className="p-1.5 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors"
-                                        title="Create"
-                                    >
-                                        <Plus size={16} />
-                                    </button>
+                                    <Tooltip content="Create" delay={300}>
+                                        <button
+                                            onClick={(e) => {
+                                                const rect = e.currentTarget.getBoundingClientRect();
+                                                setMenuState({ x: rect.left, y: rect.bottom, themeId: 'CREATE_MENU' });
+                                            }}
+                                            className="p-1.5 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                                        >
+                                            <Plus size={16} />
+                                        </button>
+                                    </Tooltip>
                                 </div>
                                 {/* Full view for wider screens */}
                                 <div className="hidden md:flex md:gap-2">
@@ -820,29 +823,31 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                 </div>
                                 <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".js,.json" />
                                 <input type="file" ref={allDataFileInputRef} onChange={handleAllDataFileChange} className="hidden" accept=".json" />
-                                <button
-                                    onClick={(e) => {
-                                        const rect = e.currentTarget.getBoundingClientRect();
-                                        setMenuState({ x: rect.left, y: rect.bottom, themeId: 'HEADER_MENU' });
-                                    }}
-                                    className="icon-button"
-                                    title="More options"
-                                >
-                                    <MoreVertical size={16} />
-                                </button>
+                                <Tooltip content="More options" delay={300}>
+                                    <button
+                                        onClick={(e) => {
+                                            const rect = e.currentTarget.getBoundingClientRect();
+                                            setMenuState({ x: rect.left, y: rect.bottom, themeId: 'HEADER_MENU' });
+                                        }}
+                                        className="icon-button"
+                                    >
+                                        <MoreVertical size={16} />
+                                    </button>
+                                </Tooltip>
                             </>
                         ) : (
                             <>
                                 {groupCount > 1 && (
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={toggleAllGroups}
-                                        className="btn-ghost-muted px-2"
-                                        title={allGroupsCollapsed ? 'Expand all groups' : 'Collapse all groups'}
-                                    >
-                                        {allGroupsCollapsed ? 'Expand all' : 'Collapse all'}
-                                    </Button>
+                                    <Tooltip content={allGroupsCollapsed ? 'Expand all groups' : 'Collapse all groups'} delay={300}>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={toggleAllGroups}
+                                            className="btn-ghost-muted px-2"
+                                        >
+                                            {allGroupsCollapsed ? 'Expand all' : 'Collapse all'}
+                                        </Button>
+                                    </Tooltip>
                                 )}
                                 <Button
                                     variant="ghost"
@@ -861,17 +866,18 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                 </Button>
 
                                 {selectedThemeIds.size > 0 && (
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            const rect = e.currentTarget.getBoundingClientRect();
-                                            setMenuState({ x: rect.left, y: rect.bottom, themeId: 'BULK_ACTIONS_MENU' });
-                                        }}
-                                        className="p-1 rounded hover:bg-slate-700 text-slate-300 mx-1"
-                                        title="Bulk actions"
-                                    >
-                                        <MoreVertical size={20} />
-                                    </button>
+                                    <Tooltip content="Bulk actions" delay={300}>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                const rect = e.currentTarget.getBoundingClientRect();
+                                                setMenuState({ x: rect.left, y: rect.bottom, themeId: 'BULK_ACTIONS_MENU' });
+                                            }}
+                                            className="p-1 rounded hover:bg-slate-700 text-slate-300 mx-1"
+                                        >
+                                            <MoreVertical size={20} />
+                                        </button>
+                                    </Tooltip>
                                 )}
 
                                 <div className="h-6 w-px bg-slate-800 mx-1"></div>
@@ -942,7 +948,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
 
                 <div className="flex flex-col gap-2">
                     {themes.length === 0 && !isCreating && (
-                        <div className="text-center p-8 border border-dashed border-slate-800 rounded-lg text-slate-500 flex flex-col items-center gap-2">
+                        <div className="text-center p-8 border border-dashed border-slate-800 rounded-lg text-slate-400 flex flex-col items-center gap-2">
                             <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-2">
                                 <Plus size={24} className="opacity-50" />
                             </div>
@@ -1076,15 +1082,16 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                 {isSelectionMode && selectedThemeIds.size > 0 && (
                     <div className="fixed bottom-4 left-4 right-4 bg-slate-800 border border-slate-700 rounded-lg p-2 shadow-2xl flex items-center justify-between z-20 animate-in slide-in-from-bottom-2">
                         <div className="flex items-center gap-2">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0 rounded-full hover:bg-slate-700 text-slate-400 hover:text-white bg-slate-700/50" // Made bigger and slightly distinct
-                                onClick={() => setSelectedThemeIds(new Set())}
-                                title="Deselect all"
-                            >
-                                <X size={16} />
-                            </Button>
+                            <Tooltip content="Deselect all" delay={300}>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 rounded-full hover:bg-slate-700 text-slate-400 hover:text-white bg-slate-700/50" // Made bigger and slightly distinct
+                                    onClick={() => setSelectedThemeIds(new Set())}
+                                >
+                                    <X size={16} />
+                                </Button>
+                            </Tooltip>
                             <div className="text-sm text-slate-300 font-medium">
                                 {selectedThemeIds.size} selected
                             </div>
@@ -1094,36 +1101,43 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                             <div className="h-6 w-px bg-slate-700 mx-1"></div>
 
                             <>
-                                <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(true)} title="Enable selected">
-                                    <Play size={14} className={viewportWidth > 600 ? "mr-1.5 text-green-400" : "text-green-400"} />
-                                    {viewportWidth > 600 && "Enable"}
-                                </Button>
-                                <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(false)} title="Disable selected">
-                                    <Pause size={14} className={viewportWidth > 600 ? "mr-1.5 text-slate-400" : "text-slate-400"} />
-                                    {viewportWidth > 600 && "Disable"}
-                                </Button>
+                                <Tooltip content="Enable selected" delay={300}>
+                                    <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(true)}>
+                                        <Play size={14} className={viewportWidth > 600 ? "mr-1.5 text-green-400" : "text-green-400"} />
+                                        {viewportWidth > 600 && "Enable"}
+                                    </Button>
+                                </Tooltip>
+                                <Tooltip content="Disable selected" delay={300}>
+                                    <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(false)}>
+                                        <Pause size={14} className={viewportWidth > 600 ? "mr-1.5 text-slate-400" : "text-slate-400"} />
+                                        {viewportWidth > 600 && "Disable"}
+                                    </Button>
+                                </Tooltip>
                                 <div className="h-6 w-px bg-slate-700 mx-1"></div>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        const rect = e.currentTarget.getBoundingClientRect();
-                                        setMenuState({
-                                            x: rect.left,
-                                            y: viewportWidth > 600 ? rect.bottom : rect.top,
-                                            themeId: 'BULK_ACTIONS_MENU'
-                                        });
-                                    }}
-                                    title="More actions"
-                                >
-                                    <MoreVertical size={16} />
-                                </Button>
+                                <Tooltip content="More actions" delay={300}>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            const rect = e.currentTarget.getBoundingClientRect();
+                                            setMenuState({
+                                                x: rect.left,
+                                                y: viewportWidth > 600 ? rect.bottom : rect.top,
+                                                themeId: 'BULK_ACTIONS_MENU'
+                                            });
+                                        }}
+                                    >
+                                        <MoreVertical size={16} />
+                                    </Button>
+                                </Tooltip>
                                 <div className="h-6 w-px bg-slate-700 mx-1"></div>
-                                <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-900/20" onClick={handleBulkDelete} title="Delete selected">
-                                    <Trash2 size={14} className={viewportWidth > 600 ? "mr-1.5" : ""} />
-                                    {viewportWidth > 600 && "Delete"}
-                                </Button>
+                                <Tooltip content="Delete selected" delay={300}>
+                                    <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-900/20" onClick={handleBulkDelete}>
+                                        <Trash2 size={14} className={viewportWidth > 600 ? "mr-1.5" : ""} />
+                                        {viewportWidth > 600 && "Delete"}
+                                    </Button>
+                                </Tooltip>
                             </>
                         </div>
                     </div>
@@ -1235,7 +1249,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
             {/* Sticky Footer */}
             <div className="fixed bottom-0 text-[10px] text-slate-600 px-4 py-5 w-full bg-slate-900/95 backdrop-blur-sm border-t border-slate-800/60 text-center z-10 transition-colors shadow-[0_-10px_20px_rgba(0,0,0,0.1)]">
                 <p>
-                    vibe coded by <a href="https://github.com/klarasch" target="_blank" rel="noopener noreferrer" className="text-slate-500 decoration-dotted underline-offset-2 font-medium hover:text-slate-300 transition-colors">Klára</a> using <a href="https://antigravity.google/" target="_blank" rel="noopener noreferrer" className="decoration-dotted underline-offset-2 font-medium text-slate-500 hover:text-slate-300 transition-colors">Antigravity</a>
+                    vibe coded by <a href="https://github.com/klarasch" target="_blank" rel="noopener noreferrer" className="text-slate-400 decoration-dotted underline-offset-2 font-medium hover:text-slate-300 transition-colors">Klára</a> using <a href="https://antigravity.google/" target="_blank" rel="noopener noreferrer" className="decoration-dotted underline-offset-2 font-medium text-slate-400 hover:text-slate-300 transition-colors">Antigravity</a>
                 </p>
                 <p className="mt-1">
                     if you enjoy this, <a href="https://buymeacoffee.com/ksch" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-300 transition-colors font-semibold">buy me a coffee</a>, thanks! &lt;3

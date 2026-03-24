@@ -9,6 +9,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ConfirmDialog } from '../ui/Dialog';
 import { Modal } from '../ui/Modal';
+import { Tooltip } from '../ui/Tooltip';
 import { HelpCircle } from 'lucide-react';
 
 interface SnippetStackItemProps {
@@ -188,12 +189,14 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                     </div>
                 )}
 
-                <button className="btn-ghost-muted" onClick={(e) => {
-                    e.stopPropagation(); // prevent triggering selection if just collapsing
-                    onToggleCollapse(item.id);
-                }}>
-                    {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
-                </button>
+                <Tooltip content={isCollapsed ? "Expand" : "Collapse"} delay={300}>
+                    <button className="btn-ghost-muted" onClick={(e) => {
+                        e.stopPropagation(); // prevent triggering selection if just collapsing
+                        onToggleCollapse(item.id);
+                    }}>
+                        {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+                    </button>
+                </Tooltip>
 
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -203,7 +206,9 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                                 {(s.type as string) === 'js' ? <Terminal size={14} className="text-yellow-500" /> : <FileCode size={14} className="text-blue-400" />}
 
                                 {item.overrides?.content && (
-                                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-500 rounded-full border border-slate-900" title="Has Local Override"></div>
+                                    <Tooltip content="Has Local Override" delay={300}>
+                                        <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-500 rounded-full border border-slate-900"></div>
+                                    </Tooltip>
                                 )}
                             </div>
                         )}
@@ -233,16 +238,17 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                                 onBlur={() => onSetEditing(item.id, false)}
                             />
                         ) : (
-                            <span
-                                className={`text-xs font-semibold truncate cursor-text hover:text-white border border-transparent hover:border-slate-700 px-1.5 py-0.5 rounded -ml-1.5 transition-colors min-w-0 ${isSelected ? 'text-white' : 'text-slate-400 group-hover:text-slate-300'} ${!item.isEnabled ? 'line-through opacity-75' : ''}`}
-                                onClick={(e: React.MouseEvent) => {
-                                    e.stopPropagation();
-                                    onSetEditing(item.id, true);
-                                }}
-                                title="Click to rename"
-                            >
-                                {s.name}
-                            </span>
+                            <Tooltip content="Click to rename" delay={300}>
+                                <span
+                                    className={`text-xs font-semibold truncate cursor-text hover:text-white border border-transparent hover:border-slate-700 px-1.5 py-0.5 rounded -ml-1.5 transition-colors min-w-0 ${isSelected ? 'text-white' : 'text-slate-400 group-hover:text-slate-300'} ${!item.isEnabled ? 'line-through opacity-75' : ''}`}
+                                    onClick={(e: React.MouseEvent) => {
+                                        e.stopPropagation();
+                                        onSetEditing(item.id, true);
+                                    }}
+                                >
+                                    {s.name}
+                                </span>
+                            </Tooltip>
                         )}
 
                         {/* Appended Icons/Badges (Hide when editing) */}
@@ -250,9 +256,11 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                             <>
                                 {/* Library Icon */}
                                 {s.isLibraryItem !== false && (
-                                    <div className="flex items-center text-purple-400 flex-none" title="Library Snippet">
-                                        <BookOpen size={12} />
-                                    </div>
+                                    <Tooltip content="Library Snippet" delay={300}>
+                                        <div className="flex items-center text-purple-400 flex-none">
+                                            <BookOpen size={12} />
+                                        </div>
+                                    </Tooltip>
                                 )}
 
                                 {/* Override Badge */}
@@ -280,62 +288,66 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                     {!isCollapsed && (
                         <div className="flex items-center gap-2">
                             {(s.isLibraryItem === false) ? (
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setConfirmSave(true);
-                                    }}
-                                    className="h-5 text-[10px] px-2 border-slate-700 text-slate-400 hover:text-purple-300 hover:border-purple-500/50"
-                                    title="Publish to library"
-                                >
-                                    Publish
-                                </Button>
+                                <Tooltip content="Publish to library" delay={300}>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setConfirmSave(true);
+                                        }}
+                                        className="h-5 text-[10px] px-2 border-slate-700 text-slate-400 hover:text-purple-300 hover:border-purple-500/50"
+                                    >
+                                        Publish
+                                    </Button>
+                                </Tooltip>
                             ) : (
                                 item.overrides?.content !== undefined && (
                                     <>
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            onClick={handlePushClick}
-                                            className="h-5 text-[10px] px-1.5 border-purple-500/30 text-purple-300 hover:bg-purple-500/10 hover:border-purple-500/60 mr-1"
-                                            title="Update library snippet"
-                                            icon={<Upload size={10} />}
-                                        >
-                                            Push
-                                        </Button>
+                                        <Tooltip content="Update library snippet" delay={300}>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={handlePushClick}
+                                                className="h-5 text-[10px] px-1.5 border-purple-500/30 text-purple-300 hover:bg-purple-500/10 hover:border-purple-500/60 mr-1"
+                                                icon={<Upload size={10} />}
+                                            >
+                                                Push
+                                            </Button>
+                                        </Tooltip>
 
-                                        <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setConfirmRevert(true);
-                                            }}
-                                            className="h-5 text-[10px] px-1.5 text-slate-500 hover:text-yellow-400"
-                                            title="Revert to library version"
-                                        >
-                                            Reset
-                                        </Button>
+                                        <Tooltip content="Revert to library version" delay={300}>
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setConfirmRevert(true);
+                                                }}
+                                                className="h-5 text-[10px] px-1.5 text-slate-400 hover:text-yellow-400"
+                                            >
+                                                Reset
+                                            </Button>
+                                        </Tooltip>
                                     </>
                                 )
                             )}
 
                             {/* Allow Reset for Non-Library Imported Snippets too */}
                             {s.isLibraryItem === false && s.originalContent && s.content !== s.originalContent && (
-                                <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setConfirmReset(true);
-                                    }}
-                                    className="h-5 text-[10px] px-1.5 text-slate-500 hover:text-yellow-400"
-                                    title="Reset to original import"
-                                >
-                                    Reset
-                                </Button>
+                                <Tooltip content="Reset to original import" delay={300}>
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setConfirmReset(true);
+                                        }}
+                                        className="h-5 text-[10px] px-1.5 text-slate-400 hover:text-yellow-400"
+                                    >
+                                        Reset
+                                    </Button>
+                                </Tooltip>
                             )}
                         </div>
                     )}
@@ -343,31 +355,36 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                     <div className="divider-v"></div>
 
                     {/* Toggle Switch */}
-                    <Toggle
-                        checked={item.isEnabled}
-                        isActive={isThemeActive && item.isEnabled && isMatch}
-                        onChange={() => useStore.getState().toggleThemeItem(themeId, item.id)}
-                        size="sm"
-                        title={
-                            !item.isEnabled
-                                ? "Snippet disabled"
-                                : !isThemeActive
-                                    ? "Enabled but inactive (Theme is OFF)"
-                                    : !isMatch
-                                        ? "Enabled but inactive (No domain match for this tab)"
-                                        : "Enabled and active on this tab"
-                        }
-                    />
+                    <Tooltip content={
+                        !item.isEnabled
+                            ? "Snippet disabled"
+                            : !isThemeActive
+                                ? "Enabled but inactive (Theme is OFF)"
+                                : !isMatch
+                                    ? "Enabled but inactive (No domain match for this tab)"
+                                    : "Enabled and active on this tab"
+                    } delay={300}>
+                        <div className="flex items-center">
+                            <Toggle
+                                checked={item.isEnabled}
+                                isActive={isThemeActive && item.isEnabled && isMatch}
+                                onChange={() => useStore.getState().toggleThemeItem(themeId, item.id)}
+                                size="sm"
+                            />
+                        </div>
+                    </Tooltip>
 
                     {/* Kebab Menu */}
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 text-slate-600 hover:text-slate-200"
-                        onClick={(e) => onKebabClick(e, item.id)}
-                    >
-                        <MoreVertical size={14} />
-                    </Button>
+                    <Tooltip content="Snippet options" delay={300}>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-slate-400 hover:text-slate-200"
+                            onClick={(e) => onKebabClick(e, item.id)}
+                        >
+                            <MoreVertical size={14} />
+                        </Button>
+                    </Tooltip>
                 </div>
             </div>
 
@@ -376,32 +393,34 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                 s.type === 'html' && hasBeenExpanded && (
                     <div className={`bg-slate-950/30 px-3 pb-3 pt-3 flex gap-2 items-center border-b border-slate-800/50 ${isCollapsed ? 'hidden' : ''}`} onClick={e => e.stopPropagation()}>
                         <div className="flex-1 flex gap-2 items-center bg-slate-900 border border-slate-800 rounded px-2 py-1">
-                            <span className="text-[10px] text-slate-500 font-mono uppercase">Target</span>
-                            <input
-                                className="bg-transparent text-slate-300 text-sm font-mono w-full outline-none placeholder:text-slate-700"
-                                placeholder="CSS selector (e.g. .container)"
-                                value={item.overrides?.selector ?? s.selector ?? ''}
-                                onChange={(e) => useStore.getState().updateThemeItem(themeId, item.id, {
-                                    overrides: { ...item.overrides, selector: e.target.value }
-                                })}
-                                title="CSS selector target"
-                            />
+                            <span className="text-[10px] text-slate-400 font-mono uppercase">Target</span>
+                            <Tooltip content="CSS selector target" delay={300}>
+                                <input
+                                    className="bg-transparent text-slate-300 text-sm font-mono w-full outline-none placeholder:text-slate-700"
+                                    placeholder="CSS selector (e.g. .container)"
+                                    value={item.overrides?.selector ?? s.selector ?? ''}
+                                    onChange={(e) => useStore.getState().updateThemeItem(themeId, item.id, {
+                                        overrides: { ...item.overrides, selector: e.target.value }
+                                    })}
+                                />
+                            </Tooltip>
                         </div>
                         <div className="w-[120px] flex gap-2 items-center bg-slate-900 border border-slate-800 rounded px-2 py-1">
-                            <span className="text-[10px] text-slate-500 font-mono uppercase">Pos</span>
-                            <select
-                                className="bg-transparent text-slate-300 text-sm w-full outline-none cursor-pointer"
-                                value={item.overrides?.position ?? s.position ?? 'beforeend'}
-                                onChange={(e) => useStore.getState().updateThemeItem(themeId, item.id, {
-                                    overrides: { ...item.overrides, position: e.target.value as any }
-                                })}
-                                title="Injection position"
-                            >
-                                <option value="append">Append</option>
-                                <option value="prepend">Prepend</option>
-                                <option value="before">Before</option>
-                                <option value="after">After</option>
-                            </select>
+                            <span className="text-[10px] text-slate-400 font-mono uppercase">Pos</span>
+                            <Tooltip content="Injection position" delay={300}>
+                                <select
+                                    className="bg-transparent text-slate-300 text-sm w-full outline-none cursor-pointer"
+                                    value={item.overrides?.position ?? s.position ?? 'beforeend'}
+                                    onChange={(e) => useStore.getState().updateThemeItem(themeId, item.id, {
+                                        overrides: { ...item.overrides, position: e.target.value as any }
+                                    })}
+                                >
+                                    <option value="append">Append</option>
+                                    <option value="prepend">Prepend</option>
+                                    <option value="before">Before</option>
+                                    <option value="after">After</option>
+                                </select>
+                            </Tooltip>
                         </div>
                     </div>
                 )

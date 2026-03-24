@@ -240,7 +240,7 @@ export const ThemeListModals: React.FC<ThemeListModalsProps> = ({
                                         <span className={`text-sm font-semibold ${isSelected && isReplace ? 'text-red-400' : 'text-slate-200'}`}>
                                             {mode === 'skip-duplicates' ? 'Skip duplicates' : mode.charAt(0).toUpperCase() + mode.slice(1)}
                                         </span>
-                                        <span className="text-xs text-slate-500">
+                                        <span className="text-xs text-slate-400">
                                             {mode === 'merge' && 'Add new items and keep existing ones'}
                                             {mode === 'replace' && 'Remove all current data and use imported data'}
                                             {mode === 'skip-duplicates' && 'Only import items that don\'t exist yet'}

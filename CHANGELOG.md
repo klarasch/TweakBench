@@ -29,6 +29,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Build
 - **Readable Builds**: Disabled minification and obfuscation for extension review purposes. Filename hashing is removed, and CSS/JS are now output in a readable format.
 
+## [Unreleased]
+### Added
+- New custom `Tooltip` component using React Portals for better viewport management and z-index handling.
+- Enhanced tooltips with support for custom display modes (`flex`, `block`).
+- Integrated `Tooltip` support directly into the `Toggle` component.
+
+### Changed
+- Improved visibility of all secondary icons and labels (changed `text-slate-500` to `text-slate-400`).
+- **Improved Click Targets:** Increased hit areas for all icon buttons (edit, kebab, plus, etc.) across the app to improve accessibility.
+- Standardized native `title` attributes to use the new `Tooltip` component.
+- Standardized interactive icon and metadata colors to `text-slate-400` across the interface for better visibility and a more premium feel.
+- Improved tooltip delays and consistency for all interactive UI elements.
+
+### Fixed
+- Tooltip clipping issues at the edges of the window.
+- Animation artifacts ("flying in" effect) on tooltips.
+- Context menu layout bug where items with tooltips appeared side-by-side.
+- Tooltip z-index issues in modals and sidebars.
+
 ## [0.1.7] - 2026-02-07
 
 ### Added

@@ -137,20 +137,21 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
                         </div>
                     )}
                     {!theme.groupId && onDomainClick && !isRenaming && (
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onDomainClick(e);
-                            }}
-                            onPointerDown={e => e.stopPropagation()}
-                            className="flex items-center gap-1.5 min-w-0 hover:bg-slate-700/50 px-1.5 py-0.5 rounded transition-colors cursor-pointer"
-                            title="Configure domains"
-                        >
-                            <Globe size={12} className="text-slate-500 shrink-0" />
-                            <span className={`text-xs font-semibold truncate max-w-[150px] ${theme.domainPatterns.length === 0 ? 'text-slate-500 italic' : 'text-slate-300'}`}>
-                                {theme.domainPatterns.length === 0 ? 'No domains configured' : theme.domainPatterns.join(', ')}
-                            </span>
-                        </button>
+                        <Tooltip content="Configure domains" delay={300}>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDomainClick(e);
+                                }}
+                                onPointerDown={e => e.stopPropagation()}
+                                className="flex items-center gap-1.5 min-w-0 hover:bg-slate-700/50 px-1.5 py-0.5 rounded transition-colors cursor-pointer"
+                            >
+                                <Globe size={12} className="text-slate-400 shrink-0" />
+                                <span className={`text-xs font-semibold truncate max-w-[150px] ${theme.domainPatterns.length === 0 ? 'text-slate-400 italic' : 'text-slate-300'}`}>
+                                    {theme.domainPatterns.length === 0 ? 'No domains configured' : theme.domainPatterns.join(', ')}
+                                </span>
+                            </button>
+                        </Tooltip>
                     )}
                 </div>
                 <div className="flex gap-1 items-center">
@@ -159,10 +160,12 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
                             Active on this tab
                         </div>
                     ) : (isMatch && theme.groupId && !theme.isActive && isOtherInGroupActive) ? (
-                        <div className="flex items-center gap-1.5 text-[10px] font-medium px-2 py-1 rounded-full text-amber-500/90 bg-amber-500/5" title="Another theme in this group is active on this tab">
-                            <div className="w-1.2 h-1.2 rounded-full bg-amber-500/50"></div>
-                            Group active
-                        </div>
+                        <Tooltip content="Another theme in this group is active on this tab" delay={300}>
+                            <div className="flex items-center gap-1.5 text-[10px] font-medium px-2 py-1 rounded-full text-amber-500/90 bg-amber-500/5">
+                                <div className="w-1.2 h-1.2 rounded-full bg-amber-500/50"></div>
+                                Group active
+                            </div>
+                        </Tooltip>
                     ) : null}
                     <div className="flex gap-2 items-center ml-2">
                         <Toggle
@@ -174,29 +177,32 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
                         />
                         {!isSelectionMode && (
                             <div className="flex items-center gap-1">
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onSelect();
-                                    }}
-                                    onPointerDown={e => e.stopPropagation()}
-                                    className="p-1 rounded text-slate-500 hover:text-white hover:bg-slate-700"
-                                    title="Edit theme"
-                                    disabled={isRenaming}
-                                >
-                                    <Pencil size={14} />
-                                </button>
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onKebabClick(e);
-                                    }}
-                                    onPointerDown={e => e.stopPropagation()}
-                                    className="p-1 rounded text-slate-500 hover:text-white hover:bg-slate-700"
-                                    disabled={isRenaming}
-                                >
-                                    < MoreVertical size={14} />
-                                </button>
+                                <Tooltip content="Edit theme" delay={300}>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onSelect();
+                                        }}
+                                        onPointerDown={e => e.stopPropagation()}
+                                        className="p-2 rounded text-slate-400 hover:text-white hover:bg-slate-700"
+                                        disabled={isRenaming}
+                                    >
+                                        <Pencil size={14} />
+                                    </button>
+                                </Tooltip>
+                                <Tooltip content="More options" delay={300}>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onKebabClick(e);
+                                        }}
+                                        onPointerDown={e => e.stopPropagation()}
+                                        className="p-2 rounded text-slate-400 hover:text-white hover:bg-slate-700"
+                                        disabled={isRenaming}
+                                    >
+                                        <MoreVertical size={14} />
+                                    </button>
+                                </Tooltip>
                             </div>
                         )}
                     </div>
