@@ -162,6 +162,66 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
     const [listWidth, setListWidth] = useState<number>(0);
     const listRef = useRef<HTMLDivElement>(null);
 
+    // File Drag and Drop State
+    const [isDraggingFile, setIsDraggingFile] = useState(false);
+    const dragCounterRef = useRef(0);
+
+    const handleFileDragEnter = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dragCounterRef.current += 1;
+        if (e.dataTransfer.types && e.dataTransfer.types.includes('Files')) {
+            setIsDraggingFile(true);
+        }
+    }, []);
+
+    const handleFileDragLeave = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dragCounterRef.current -= 1;
+        if (dragCounterRef.current === 0) {
+            setIsDraggingFile(false);
+        }
+    }, []);
+
+    const handleFileDragOver = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+    }, []);
+
+    const handleFileDrop = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dragCounterRef.current = 0;
+        setIsDraggingFile(false);
+
+        const files = e.dataTransfer.files;
+        if (files && files.length > 0) {
+            const file = files[0];
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const content = event.target?.result as string;
+                const result = processImportContent(content);
+
+                if (result.type === 'full') {
+                    if (themes.length === 0) {
+                        importStoreDataAction(result.data, 'replace');
+                        showToast(`Imported ${result.data.themes.length} themes and ${result.data.snippets?.length || 0} snippets`);
+                    } else {
+                        setPendingImportData(result.data);
+                        setIsImportDialogOpen(true);
+                    }
+                } else if (result.type === 'theme') {
+                    const newId = executeThemeImport(result.theme);
+                    onSelectTheme(newId);
+                } else {
+                    showToast("Failed to parse file. Please ensure it's a valid ThemeBench file.", 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+    }, [themes.length, processImportContent, importStoreDataAction, executeThemeImport, onSelectTheme, showToast]);
+
     useLayoutEffect(() => {
         if (listRef.current) {
             setListWidth(listRef.current.offsetWidth);
@@ -682,7 +742,22 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
         <div
             ref={listRef}
             style={{ '--list-width': listWidth > 0 ? `${listWidth}px` : '100%' } as React.CSSProperties}
+            onDragEnter={handleFileDragEnter}
+            onDragLeave={handleFileDragLeave}
+            onDragOver={handleFileDragOver}
+            onDrop={handleFileDrop}
         >
+            {isDraggingFile && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/90 backdrop-blur-sm border-2 border-dashed border-blue-500 rounded-lg m-2 pointer-events-none">
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="w-20 h-20 bg-blue-500/20 text-blue-400 rounded-full flex items-center justify-center">
+                            <Upload size={40} />
+                        </div>
+                        <h3 className="text-xl font-bold text-white">Drop file to import</h3>
+                        <p className="text-slate-400 text-sm">Supports ThemeBench themes (.js, .json) and backups (.json)</p>
+                    </div>
+                </div>
+            )}
             <div className="p-4 flex flex-col gap-4 relative pb-20">
                 <div className="flex justify-between items-center px-1">
                     <h2 className="text-lg font-bold text-slate-100 tracking-tight">Themes</h2>
