@@ -3,6 +3,7 @@ import { useStore } from '../store.ts';
 import { isDomainMatch } from '../utils/domains.ts';
 import { Network, Play, Pause, Globe, Power } from 'lucide-react';
 import { Button } from './ui/Button';
+import { Tooltip } from './ui/Tooltip';
 
 interface StatusBarProps {
     activeUrl: string | null;
@@ -41,12 +42,12 @@ export const StatusBar: React.FC<StatusBarProps> = ({ activeUrl }) => {
         <div className="bg-slate-950 border-b border-slate-800 p-2 text-xs flex items-center justify-between z-50 shrink-0">
             {/* Left Side: Page Context */}
             <div className="flex items-center gap-2 overflow-hidden flex-1 mr-2">
-                <div className={`p-1 rounded shrink-0 ${!globalEnabled ? 'bg-slate-800 text-slate-600' : hasMatchingTheme ? 'bg-green-500/20 text-green-400' : 'bg-slate-800 text-slate-500'}`}>
+                <div className={`p-1 rounded shrink-0 ${!globalEnabled ? 'bg-slate-800 text-slate-600' : hasMatchingTheme ? 'bg-green-500/20 text-green-400' : 'bg-slate-800 text-slate-400'}`}>
                     {isInternal ? <Globe size={12} /> : <Network size={12} />}
                 </div>
                 <div className="flex flex-col min-w-0">
                     <span className={`font-bold truncate ${!globalEnabled ? 'text-slate-600' : 'text-slate-300'}`}>{domainDisplay}</span>
-                    <span className="text-[10px] text-slate-500 truncate">
+                    <span className="text-[10px] text-slate-400 truncate">
                         {!globalEnabled
                             ? "System disabled"
                             : isInternal
@@ -100,16 +101,17 @@ export const StatusBar: React.FC<StatusBarProps> = ({ activeUrl }) => {
 
                     {/* Master Switch - Less Prominent Power Icon */}
                     <div className="flex items-center gap-2">
-                        <button
-                            onClick={toggleGlobal}
-                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all border ${globalEnabled
-                                ? 'bg-slate-900 border-green-500/50 text-green-500 hover:bg-green-500/10 hover:border-green-400'
-                                : 'bg-slate-900 border-slate-700 text-slate-500 hover:text-slate-300 hover:border-slate-500'
-                                }`}
-                            title={globalEnabled ? "Master switch: system on" : "Master switch: system off"}
-                        >
-                            <Power size={14} strokeWidth={2.5} />
-                        </button>
+                        <Tooltip content={globalEnabled ? "Master switch: system on" : "Master switch: system off"} delay={300}>
+                            <button
+                                onClick={toggleGlobal}
+                                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all border ${globalEnabled
+                                    ? 'bg-slate-900 border-green-500/50 text-green-500 hover:bg-green-500/10 hover:border-green-400'
+                                    : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-500'
+                                    }`}
+                            >
+                                <Power size={14} strokeWidth={2.5} />
+                            </button>
+                        </Tooltip>
                     </div>
                 </div>
             </div>

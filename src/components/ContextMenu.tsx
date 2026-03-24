@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { Tooltip } from './ui/Tooltip';
 
 export interface ContextMenuItem {
     label?: string;
@@ -8,6 +9,7 @@ export interface ContextMenuItem {
     danger?: boolean;
     disabled?: boolean;
     separator?: boolean;
+    title?: string;
 }
 
 interface ContextMenuProps {
@@ -107,7 +109,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
                         return <div key={index} className="h-px bg-slate-700 my-1 mx-2" />;
                     }
 
-                    return (
+                    const button = (
                         <button
                             key={index}
                             onClick={() => {
@@ -126,6 +128,12 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
                             <span>{item.label}</span>
                         </button>
                     );
+
+                    return item.title ? (
+                        <Tooltip key={index} content={item.title} delay={300} display="flex">
+                            {button}
+                        </Tooltip>
+                    ) : button;
                 })}
             </motion.div>
         </div>

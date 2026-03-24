@@ -7,6 +7,11 @@ import type { Theme } from '../types';
 interface SortableThemeItemProps extends Omit<ThemeItemProps, 'setNodeRef' | 'style' | 'dragHandleProps' | 'isDragging'> {
     theme: Theme;
     isSelectionMode: boolean;
+    // Rename props
+    isRenaming?: boolean;
+    onRenameStart?: () => void;
+    onRename?: (newName: string) => void;
+    onRenameCancel?: () => void;
 }
 
 export const SortableThemeItem: React.FC<SortableThemeItemProps> = (props) => {

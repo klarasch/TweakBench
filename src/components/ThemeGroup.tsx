@@ -4,6 +4,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Globe, MoreVertical, Link as LinkIcon, CheckSquare, ChevronDown, Plus } from 'lucide-react';
 import { SortableThemeItem } from './SortableThemeItem';
 import { Toggle } from './ui/Toggle';
+import { Tooltip } from './ui/Tooltip';
 import type { Theme } from '../types';
 import { isDomainMatch } from '../utils/domains';
 
@@ -24,6 +25,11 @@ interface ThemeGroupProps {
     onDomainClick: (e: React.MouseEvent) => void;
     isCollapsed: boolean;
     onToggleCollapse: () => void;
+    // Rename props
+    renamingThemeId?: string | null;
+    onRenameStart?: (id: string) => void;
+    onRename?: (id: string, newName: string) => void;
+    onRenameCancel?: () => void;
 }
 
 export const ThemeGroup: React.FC<ThemeGroupProps> = ({
@@ -42,7 +48,11 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
     onDeleteTheme,
     onDomainClick,
     isCollapsed,
-    onToggleCollapse
+    onToggleCollapse,
+    renamingThemeId,
+    onRenameStart,
+    onRename,
+    onRenameCancel
 }) => {
     // Sortable logic for the GROUP container
     const {
@@ -140,66 +150,68 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
                             {isSomeSelected && !isAllSelected && <div className="w-2 h-0.5 bg-blue-400 rounded-full" />}
                         </div>
                     )}
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onToggleCollapse();
-                        }}
-                        className="p-1 rounded hover:bg-slate-700/50 text-slate-400 hover:text-white transition-colors shrink-0"
-                        onPointerDown={e => e.stopPropagation()}
-                        title={isCollapsed ? 'Expand group' : 'Collapse group'}
-                    >
-                        <ChevronDown size={14} className={`transition-transform ${effectivelyCollapsed ? '-rotate-90' : ''}`} />
-                    </button>
+                    <Tooltip content={isCollapsed ? 'Expand group' : 'Collapse group'} delay={300}>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onToggleCollapse();
+                            }}
+                            className="p-2 rounded hover:bg-slate-700/50 text-slate-400 hover:text-white transition-colors shrink-0"
+                            onPointerDown={e => e.stopPropagation()}
+                        >
+                            <ChevronDown size={14} className={`transition-transform ${effectivelyCollapsed ? '-rotate-90' : ''}`} />
+                        </button>
+                    </Tooltip>
 
-                    <div
-                        className="p-1 rounded bg-blue-500/10 text-blue-400"
-                        title="Domain group: only one theme active at a time"
-                    >
-                        <LinkIcon size={12} />
-                    </div>
+                    <Tooltip content="Domain group: only one theme active at a time" delay={300}>
+                        <div className="p-1 rounded bg-blue-500/10 text-blue-400">
+                            <LinkIcon size={12} />
+                        </div>
+                    </Tooltip>
 
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onDomainClick(e);
-                        }}
-                        className="flex items-center gap-1.5 min-w-0 hover:bg-slate-700/50 px-1.5 py-1 rounded transition-colors cursor-pointer"
-                        onPointerDown={e => e.stopPropagation()}
-                        title="Configure domains"
-                    >
-                        <Globe size={12} className="text-slate-500 shrink-0" />
-                        <span className="text-xs font-semibold text-slate-300 truncate">
-                            {domainPatterns.join(', ')}
-                        </span>
-                    </button>
+                    <Tooltip content="Configure domains" delay={300}>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onDomainClick(e);
+                            }}
+                            className="flex items-center gap-1.5 min-w-0 hover:bg-slate-700/50 px-1.5 py-1 rounded transition-colors cursor-pointer"
+                            onPointerDown={e => e.stopPropagation()}
+                        >
+                            <Globe size={12} className="text-slate-400 shrink-0" />
+                            <span className="text-xs font-semibold text-slate-300 truncate">
+                                {domainPatterns.join(', ')}
+                            </span>
+                        </button>
+                    </Tooltip>
 
                     {effectivelyCollapsed && activeTheme && (
                         <div className="flex items-center gap-2 ml-2 min-w-0">
-                            <span className="text-xs text-slate-500">•</span>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onSelectTheme(activeTheme.id);
-                                }}
-                                className="text-xs text-slate-300 hover:text-white truncate"
-                                title={`Active: ${activeTheme.name}`}
-                            >
-                                {activeTheme.name}
-                            </button>
+                            <span className="text-xs text-slate-400">•</span>
+                            <Tooltip content={`Active: ${activeTheme.name}`} delay={300}>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onSelectTheme(activeTheme.id);
+                                    }}
+                                    className="text-xs text-slate-300 hover:text-white truncate"
+                                >
+                                    {activeTheme.name}
+                                </button>
+                            </Tooltip>
                         </div>
                     )}
                     {effectivelyCollapsed && !activeTheme && (
                         <div className="flex items-center gap-2 ml-2 min-w-0">
-                            <span className="text-xs text-slate-500">•</span>
-                            <span className="text-xs text-slate-500 italic">
+                            <span className="text-xs text-slate-400">•</span>
+                            <span className="text-xs text-slate-400 italic">
                                 No theme enabled
                             </span>
                         </div>
                     )}
                 </div>
 
-                <div className="flex items-center gap-1 ml-2">
+                <div className="flex items-center gap-2 ml-2">
                     {!isSelectionMode && (
                         <>
                             {effectivelyCollapsed && activeTheme && (
@@ -219,29 +231,34 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
                                     />
                                 </>
                             )}
-                            {!effectivelyCollapsed && (
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onGroupContextMenu(e, themes[0].groupId!, { x: e.pageX, y: e.pageY, action: 'add-theme' });
-                                    }}
-                                    className="p-1 rounded text-slate-500 hover:text-white hover:bg-slate-700 pointer-events-auto"
-                                    onPointerDown={e => e.stopPropagation()} // Prevent drag
-                                    title="Add theme to group"
-                                >
-                                    <Plus size={14} />
-                                </button>
-                            )}
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onGroupContextMenu(e, themes[0].groupId!, { x: e.pageX, y: e.pageY });
-                                }}
-                                className="p-1 rounded text-slate-500 hover:text-white hover:bg-slate-700 pointer-events-auto"
-                                onPointerDown={e => e.stopPropagation()} // Prevent drag
-                            >
-                                <MoreVertical size={14} />
-                            </button>
+                            <div className="flex items-center gap-1">
+                                {!effectivelyCollapsed && (
+                                    <Tooltip content="Add theme to group" delay={300}>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onGroupContextMenu(e, themes[0].groupId!, { x: e.pageX, y: e.pageY, action: 'add-theme' });
+                                            }}
+                                            className="p-2 rounded text-slate-400 hover:text-white hover:bg-slate-700 pointer-events-auto"
+                                            onPointerDown={e => e.stopPropagation()} // Prevent drag
+                                        >
+                                            <Plus size={14} />
+                                        </button>
+                                    </Tooltip>
+                                )}
+                                <Tooltip content="More options" delay={300}>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onGroupContextMenu(e, themes[0].groupId!, { x: e.pageX, y: e.pageY });
+                                        }}
+                                        className="p-2 rounded text-slate-400 hover:text-white hover:bg-slate-700 pointer-events-auto"
+                                        onPointerDown={e => e.stopPropagation()} // Prevent drag
+                                    >
+                                        <MoreVertical size={14} />
+                                    </button>
+                                </Tooltip>
+                            </div>
                         </>
                     )}
                 </div>
@@ -275,6 +292,10 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
                                         onDeleteClick={(e) => onDeleteTheme(e, theme.id)}
                                         isOtherInGroupActive={themes.some(t => t.isActive && t.id !== theme.id)}
                                         isNested={true}
+                                        isRenaming={renamingThemeId === theme.id}
+                                        onRenameStart={() => onRenameStart?.(theme.id)}
+                                        onRename={(newName) => onRename?.(theme.id, newName)}
+                                        onRenameCancel={onRenameCancel}
                                     />
                                 </div>
                             );

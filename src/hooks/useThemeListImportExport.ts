@@ -1,7 +1,7 @@
 import { useStore } from '../store.ts';
 import { useToast } from '../components/ui/Toast';
 import {
-    exportThemeToJS,
+    exportThemeToJSON,
     exportThemeToCSS,
     parseThemeFromJS,
     exportAllData,
@@ -13,19 +13,19 @@ export const useThemeListImportExport = () => {
     const { themes, snippets, globalEnabled, activeThemeId, addTheme, addSnippet, addSnippetToTheme, importAllData: importStoreData } = useStore();
     const { showToast } = useToast();
 
-    const handleExport = (themeId: string, type: 'js' | 'css') => {
+    const handleExport = (themeId: string, type: 'json' | 'css') => {
         const theme = themes.find(t => t.id === themeId);
         if (!theme) return;
         let content = '';
         let extension = '';
-        if (type === 'js') {
-            content = exportThemeToJS(theme, snippets);
-            extension = 'tb.js';
+        if (type === 'json') {
+            content = exportThemeToJSON(theme, snippets);
+            extension = 'json';
         } else {
             content = exportThemeToCSS(theme, snippets);
             extension = 'css';
         }
-        const blob = new Blob([content], { type: type === 'js' ? 'text/javascript' : 'text/css' });
+        const blob = new Blob([content], { type: type === 'json' ? 'application/json' : 'text/css' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -42,7 +42,7 @@ export const useThemeListImportExport = () => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `TweakBench_Group_${groupName.replace(/[*.]/g, '_')}.json`;
+        a.download = `ThemeBench_Group_${groupName.replace(/[*.]/g, '_')}.json`;
         a.click();
         URL.revokeObjectURL(url);
         showToast('Group exported');
@@ -54,7 +54,7 @@ export const useThemeListImportExport = () => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `TweakBench_Backup_${new Date().toISOString().split('T')[0]}.json`;
+        a.download = `ThemeBench_Backup_${new Date().toISOString().split('T')[0]}.json`;
         a.click();
         URL.revokeObjectURL(url);
     };

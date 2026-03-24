@@ -5,6 +5,7 @@ import type { Snippet } from '../types.ts';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
 import { ConfirmDialog } from './ui/Dialog';
 import { Button } from './ui/Button';
+import { Tooltip } from './ui/Tooltip';
 import {
     DndContext,
     closestCenter,
@@ -121,42 +122,45 @@ const SortableSnippetItem: React.FC<SortableSnippetItemProps> = ({
                             className="bg-slate-950 text-white text-sm rounded outline-none w-full border border-blue-500 px-1"
                         />
                     ) : (
-                        <span
-                            className="text-slate-300 text-sm truncate hover:text-white cursor-text border border-transparent hover:border-slate-700 px-1.5 py-0.5 rounded -ml-1.5 transition-colors min-w-0"
-                            onClick={(e) => handleStartRename(e, snippet)}
-                            title="Click to rename"
-                        >{snippet.name}</span>
+                        <Tooltip content="Click to rename" delay={300}>
+                            <span
+                                className="text-slate-300 text-sm truncate hover:text-white cursor-text border border-transparent hover:border-slate-700 px-1.5 py-0.5 rounded -ml-1.5 transition-colors min-w-0"
+                                onClick={(e) => handleStartRename(e, snippet)}
+                            >{snippet.name}</span>
+                        </Tooltip>
                     )}
-                    {usageCount > 0 && !isEditing && <span className="text-[10px] text-slate-500">Used in {usageCount} theme{usageCount !== 1 ? 's' : ''}</span>}
+                    {usageCount > 0 && !isEditing && <span className="text-[10px] text-slate-400">Used in {usageCount} theme{usageCount !== 1 ? 's' : ''}</span>}
                 </div>
             </div>
             {!isEditing && !isSelectionMode && (
                 <div className="flex gap-1 items-center">
                     {/* Shortcuts */}
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                            className="p-1 hover:bg-red-900/50 rounded text-slate-600 hover:text-red-400"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setSnippetToDelete(snippet.id);
-                            }}
-                            onPointerDown={e => e.stopPropagation()}
-                            title="Delete"
-                        >
-                            <Trash2 size={12} />
-                        </button>
-                        <button
-                            className="icon-button h-6 w-6"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                if (onSelect) onSelect(snippet);
-                                else if (onSelectSnippet) onSelectSnippet(snippet.id);
-                            }}
-                            onPointerDown={e => e.stopPropagation()}
-                            title="Add to theme"
-                        >
-                            <Plus size={14} />
-                        </button>
+                        <Tooltip content="Delete" delay={300}>
+                            <button
+                                className="p-2 hover:bg-red-900/50 rounded text-slate-400 hover:text-red-400"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSnippetToDelete(snippet.id);
+                                }}
+                                onPointerDown={e => e.stopPropagation()}
+                            >
+                                <Trash2 size={12} />
+                            </button>
+                        </Tooltip>
+                        <Tooltip content="Add to theme" delay={300}>
+                            <button
+                                className="icon-button h-6 w-6 text-slate-400"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (onSelect) onSelect(snippet);
+                                    else if (onSelectSnippet) onSelectSnippet(snippet.id);
+                                }}
+                                onPointerDown={e => e.stopPropagation()}
+                            >
+                                <Plus size={14} />
+                            </button>
+                        </Tooltip>
                     </div>
                     {/* Kebab */}
                     <button
@@ -369,13 +373,14 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
                 <h3 className="font-semibold text-slate-200 text-lg">Library</h3>
                 <div className="flex items-center gap-2">
                     {onClose && (
-                        <button
-                            onClick={onClose}
-                            className="icon-button"
-                            title="Close"
-                        >
-                            <X size={20} />
-                        </button>
+                        <Tooltip content="Close" delay={300}>
+                            <button
+                                onClick={onClose}
+                                className="icon-button"
+                            >
+                                <X size={20} />
+                            </button>
+                        </Tooltip>
                     )}
                 </div>
             </div>
@@ -444,13 +449,13 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
                 )}
                 {filterType && (
                     <div className="mb-2 px-1">
-                        <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">
                             Showing {filterType} snippets
                         </span>
                     </div>
                 )}
                 <div className="bg-slate-800 rounded px-2 py-1 mb-2 relative group focus-within:ring-1 focus-within:ring-blue-500/50 flex items-center">
-                    <Search size={14} className="text-slate-500 mr-2 shrink-0" />
+                    <Search size={14} className="text-slate-400 mr-2 shrink-0" />
                     <input
                         autoFocus
                         className="bg-transparent text-sm text-white outline-none w-full placeholder:text-slate-600"
@@ -470,13 +475,14 @@ export const SnippetLibrary: React.FC<SnippetLibraryProps> = ({ onSelectSnippet,
                         }}
                     />
                     {filter && (
-                        <button
-                            className="text-slate-500 hover:text-white p-0.5"
-                            onClick={() => setFilter('')}
-                            title="Clear search"
-                        >
-                            <X size={14} />
-                        </button>
+                        <Tooltip content="Clear search" delay={300}>
+                            <button
+                                className="text-slate-400 hover:text-white p-0.5"
+                                onClick={() => setFilter('')}
+                            >
+                                <X size={14} />
+                            </button>
+                        </Tooltip>
                     )}
                 </div>
             </div>

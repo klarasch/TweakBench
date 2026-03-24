@@ -13,11 +13,15 @@ export default defineConfig({
       },
       output: {
         entryFileNames: 'src/[name]/index.js',
-        chunkFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: 'assets/[name]-[hash].[ext]',
+        chunkFileNames: 'assets/[name].js',
+        assetFileNames: 'assets/[name].[ext]',
       },
     },
     outDir: 'dist',
     emptyOutDir: true,
+    minify: false,
+    cssMinify: false,
+    sourcemap: true,
+    modulePreload: false,
   },
 })

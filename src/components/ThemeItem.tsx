@@ -1,8 +1,9 @@
 import React from 'react';
-import { MoreVertical, Globe } from 'lucide-react';
+import { MoreVertical, Globe, Pencil, Info } from 'lucide-react';
 import type { Theme } from '../types';
 import { isDomainMatch } from '../utils/domains';
 import { Toggle } from './ui/Toggle';
+import { Tooltip } from './ui/Tooltip';
 
 export interface ThemeItemProps {
     theme: Theme;
@@ -19,6 +20,11 @@ export interface ThemeItemProps {
     onDomainClick?: (e: React.MouseEvent) => void;
     isOtherInGroupActive?: boolean;
     isNested?: boolean;
+    // Rename props
+    isRenaming?: boolean;
+    onRenameStart?: () => void;
+    onRename?: (newName: string) => void;
+    onRenameCancel?: () => void;
     // DnD props passed from parent wrapper
     dragHandleProps?: any;
     isDragging?: boolean;
@@ -40,6 +46,10 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
     onDomainClick,
     isOtherInGroupActive,
     isNested,
+    isRenaming,
+    onRenameStart,
+    onRename,
+    onRenameCancel,
     dragHandleProps,
     isDragging,
     setNodeRef,
@@ -67,10 +77,11 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
                 ${isDragging ? 'shadow-2xl ring-2 ring-blue-500/50 z-50 border-blue-500/50 scale-[1.02] bg-slate-800' : ''}
             `}
             onClick={() => {
+                if (isRenaming) return;
                 if (isSelectionMode) {
                     onToggleSelection();
                 } else {
-                    onSelect();
+                    onUpdateTheme({ isActive: !theme.isActive });
                 }
             }}
             onContextMenu={onContextMenu}
@@ -84,24 +95,63 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
                             </div>
                         </div>
                     )}
-                    <span className={`text-sm font-medium truncate ${isActiveOnTab ? 'text-green-400' : 'text-slate-200'} ${isSelected ? 'text-white' : ''}`}>
-                        {theme.name}
-                    </span>
-                    {!theme.groupId && onDomainClick && (
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onDomainClick(e);
+                    {isRenaming ? (
+                        <input
+                            autoFocus
+                            className="bg-slate-950 text-white text-sm font-medium border border-blue-500 rounded px-1.5 py-0.5 outline-none flex-1 min-w-0 w-full"
+                            defaultValue={theme.name}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.stopPropagation();
+                                    onRename?.(e.currentTarget.value);
+                                } else if (e.key === 'Escape') {
+                                    e.stopPropagation();
+                                    onRenameCancel?.();
+                                }
                             }}
-                            onPointerDown={e => e.stopPropagation()}
-                            className="flex items-center gap-1.5 min-w-0 hover:bg-slate-700/50 px-1.5 py-0.5 rounded transition-colors cursor-pointer"
-                            title="Configure domains"
-                        >
-                            <Globe size={12} className="text-slate-500 shrink-0" />
-                            <span className={`text-xs font-semibold truncate max-w-[150px] ${theme.domainPatterns.length === 0 ? 'text-slate-500 italic' : 'text-slate-300'}`}>
-                                {theme.domainPatterns.length === 0 ? 'No domains configured' : theme.domainPatterns.join(', ')}
+                            onBlur={(e) => {
+                                onRename?.(e.target.value);
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            onPointerDown={(e) => e.stopPropagation()}
+                        />
+                    ) : (
+                        <div className="flex items-center gap-1.5 min-w-0">
+                            <span
+                                className={`text-sm font-medium truncate ${isActiveOnTab ? 'text-green-400' : 'text-slate-200'} ${isSelected ? 'text-white' : ''}`}
+                                onDoubleClick={(e) => {
+                                    if (isSelectionMode) return;
+                                    e.stopPropagation();
+                                    onRenameStart?.();
+                                }}
+                            >
+                                {theme.name}
                             </span>
-                        </button>
+                            {theme.description && (
+                                <Tooltip content={theme.description} delay={0}>
+                                    <div className="text-slate-400 hover:text-slate-200 transition-colors cursor-help shrink-0" onClick={e => e.stopPropagation()}>
+                                        <Info size={14} />
+                                    </div>
+                                </Tooltip>
+                            )}
+                        </div>
+                    )}
+                    {!theme.groupId && onDomainClick && !isRenaming && (
+                        <Tooltip content="Configure domains" delay={300}>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDomainClick(e);
+                                }}
+                                onPointerDown={e => e.stopPropagation()}
+                                className="flex items-center gap-1.5 min-w-0 hover:bg-slate-700/50 px-1.5 py-0.5 rounded transition-colors cursor-pointer"
+                            >
+                                <Globe size={12} className="text-slate-400 shrink-0" />
+                                <span className={`text-xs font-semibold truncate max-w-[150px] ${theme.domainPatterns.length === 0 ? 'text-slate-400 italic' : 'text-slate-300'}`}>
+                                    {theme.domainPatterns.length === 0 ? 'No domains configured' : theme.domainPatterns.join(', ')}
+                                </span>
+                            </button>
+                        </Tooltip>
                     )}
                 </div>
                 <div className="flex gap-1 items-center">
@@ -110,28 +160,49 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
                             Active on this tab
                         </div>
                     ) : (isMatch && theme.groupId && !theme.isActive && isOtherInGroupActive) ? (
-                        <div className="flex items-center gap-1.5 text-[10px] font-medium px-2 py-1 rounded-full text-amber-500/90 bg-amber-500/5" title="Another theme in this group is active on this tab">
-                            <div className="w-1.2 h-1.2 rounded-full bg-amber-500/50"></div>
-                            Group active
-                        </div>
+                        <Tooltip content="Another theme in this group is active on this tab" delay={300}>
+                            <div className="flex items-center gap-1.5 text-[10px] font-medium px-2 py-1 rounded-full text-amber-500/90 bg-amber-500/5">
+                                <div className="w-1.2 h-1.2 rounded-full bg-amber-500/50"></div>
+                                Group active
+                            </div>
+                        </Tooltip>
                     ) : null}
-                    <div className="flex gap-1 items-center ml-2">
+                    <div className="flex gap-2 items-center ml-2">
                         <Toggle
                             checked={theme.isActive}
                             isActive={isActiveOnTab}
                             onChange={(checked) => onUpdateTheme({ isActive: checked })}
-                            disabled={!globalEnabled}
+                            disabled={!globalEnabled || isRenaming}
                             size="sm"
                         />
                         {!isSelectionMode && (
                             <div className="flex items-center gap-1">
-                                <button
-                                    onClick={onKebabClick}
-                                    onPointerDown={e => e.stopPropagation()}
-                                    className="p-1 rounded text-slate-500 hover:text-white hover:bg-slate-700"
-                                >
-                                    <MoreVertical size={16} />
-                                </button>
+                                <Tooltip content="Edit theme" delay={300}>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onSelect();
+                                        }}
+                                        onPointerDown={e => e.stopPropagation()}
+                                        className="p-2 rounded text-slate-400 hover:text-white hover:bg-slate-700"
+                                        disabled={isRenaming}
+                                    >
+                                        <Pencil size={14} />
+                                    </button>
+                                </Tooltip>
+                                <Tooltip content="More options" delay={300}>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onKebabClick(e);
+                                        }}
+                                        onPointerDown={e => e.stopPropagation()}
+                                        className="p-2 rounded text-slate-400 hover:text-white hover:bg-slate-700"
+                                        disabled={isRenaming}
+                                    >
+                                        <MoreVertical size={14} />
+                                    </button>
+                                </Tooltip>
                             </div>
                         )}
                     </div>

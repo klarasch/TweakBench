@@ -17,5 +17,8 @@ export default defineConfig({
             },
         },
         outDir: 'dist',
+        minify: false,
+        cssMinify: false,
+        sourcemap: true,
     },
 })

@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
-    "name": "TweakBench",
-    "version": "0.1.7",
+    "name": "ThemeBench",
+    "version": "0.1.9",
     "description": "Inject CSS and HTML into pages with reusable themes and snippets.",
     "permissions": [
         "activeTab",
@@ -45,7 +45,7 @@
         }
     ],
     "action": {
-        "default_title": "Open TweakBench",
+        "default_title": "Open ThemeBench",
         "default_icon": "icons/icon128.png"
     },
     "icons": {

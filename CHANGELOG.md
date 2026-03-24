@@ -5,10 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.9] - 2026-03-09
+
+### Changed
+- **Rebranding**: App renamed to ThemeBench. Main page title changed from "Tweaks" to "Themes".
+- **Export Format**: Transitioned the single-theme export format from JavaScript (`.js`) to JSON (`.json`) for better reliability, smaller file sizes, and unified import logic.
+
+### Added
+- **Theme Descriptions**: Added the ability to define descriptions for themes. They can be edited under the theme title and appear as a tooltip on the theme list.
+- **Drag and Drop Import**: Added support for dragging and dropping ThemeBench export files directly into the UI.
+- **Export Group**: Added "Export group" option to the domain group overflow (kebab) menu, allowing users to export all themes and snippets within a group as a single JSON file.
+- **Inline Renaming**: Double-clicking a theme name in the list now triggers an inline rename mode, allowing for faster editing without opening the full theme detail.
+- **Rename Action**: Added a "Rename" option to the theme overflow (kebab) and context menus.
+
 ## [0.1.8] - 2026-02-08
+
+### Changed
+- **Theme Listing UX**: The primary action when clicking a theme tile in the list now enables/disables the theme directly, rather than entering the edit mode. To edit a theme, a new hover-triggered pencil icon button has been added to the tiles, and an "Edit theme" option has been added to the theme's overflow (kebab) menu.
 
 ### Fixed
 - **Theme Creation**: New themes now correctly start with an empty state (no default snippet added). This fix resolves a regression from previous versions.
+
+### Build
+- **Readable Builds**: Disabled minification and obfuscation for extension review purposes. Filename hashing is removed, and CSS/JS are now output in a readable format.
+
+## [Unreleased]
+### Added
+- New custom `Tooltip` component using React Portals for better viewport management and z-index handling.
+- Enhanced tooltips with support for custom display modes (`flex`, `block`).
+- Integrated `Tooltip` support directly into the `Toggle` component.
+
+### Changed
+- Improved visibility of all secondary icons and labels (changed `text-slate-500` to `text-slate-400`).
+- **Improved Click Targets:** Increased hit areas for all icon buttons (edit, kebab, plus, etc.) across the app to improve accessibility.
+- Standardized native `title` attributes to use the new `Tooltip` component.
+- Standardized interactive icon and metadata colors to `text-slate-400` across the interface for better visibility and a more premium feel.
+- Improved tooltip delays and consistency for all interactive UI elements.
+
+### Fixed
+- Tooltip clipping issues at the edges of the window.
+- Animation artifacts ("flying in" effect) on tooltips.
+- Context menu layout bug where items with tooltips appeared side-by-side.
+- Tooltip z-index issues in modals and sidebars.
 
 ## [0.1.7] - 2026-02-07
 
@@ -60,3 +98,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Domain Groups (formerly Switch Groups) for mutual exclusivity and shared rules.
 - Drag and drop reordering for themes and groups.
 - Snippet duplication and detachment.
+- **Rebranding:** App renamed from TweakBench to ThemeBench. Updated all user-facing names, manifest, exported files, internal logs, and project metadata.

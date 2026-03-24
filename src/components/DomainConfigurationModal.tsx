@@ -89,7 +89,7 @@ export const DomainConfigurationModal: React.FC<DomainConfigurationModalProps> =
                                 : isGroup ? 'Group domain configuration' : 'Domain configuration'
                             }
                         </h3>
-                        <p className="text-xs font-normal text-slate-500">
+                        <p className="text-xs font-normal text-slate-400">
                             {mode === 'create'
                                 ? 'Configure where this group will be active'
                                 : isGroup

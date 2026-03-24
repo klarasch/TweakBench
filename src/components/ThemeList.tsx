@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
 import { useStore } from '../store.ts';
-import { Plus, Trash2, Play, Pause, MoreVertical, Upload, Download, Globe, X, Copy, Link as LinkIcon, Ungroup } from 'lucide-react';
+import { Plus, Trash2, Play, Pause, MoreVertical, Upload, Download, Globe, X, Copy, Link as LinkIcon, Ungroup, Pencil } from 'lucide-react';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
 import { getDomainFromUrl } from '../utils/domains.ts';
 import { Button } from './ui/Button';
+import { Tooltip } from './ui/Tooltip';
 import { useToast } from './ui/Toast';
 import type { Theme } from '../types.ts';
 import { ThemeGroup } from './ThemeGroup';
@@ -67,6 +68,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
 
     const {
         handleExport,
+        handleExportGroup,
         handleExportAllData,
         processImportContent,
         executeThemeImport,
@@ -76,7 +78,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
     // Modals State
     const [themeToDelete, setThemeToDelete] = useState<string | null>(null);
     const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
-    const [confirmBulkExport, setConfirmBulkExport] = useState<'js' | 'css' | null>(null);
+    const [confirmBulkExport, setConfirmBulkExport] = useState<'json' | 'css' | null>(null);
     const [groupToDelete, setGroupToDelete] = useState<string | null>(null);
     const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
     const [importMode, setImportMode] = useState<'merge' | 'replace' | 'skip-duplicates'>('merge');
@@ -153,10 +155,73 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
     // DnD Drag State
     const [activeDragId, setActiveDragId] = useState<string | null>(null);
 
+    // Renaming State
+    const [renamingThemeId, setRenamingThemeId] = useState<string | null>(null);
+
     // Responsive State
     const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
     const [listWidth, setListWidth] = useState<number>(0);
     const listRef = useRef<HTMLDivElement>(null);
+
+    // File Drag and Drop State
+    const [isDraggingFile, setIsDraggingFile] = useState(false);
+    const dragCounterRef = useRef(0);
+
+    const handleFileDragEnter = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dragCounterRef.current += 1;
+        if (e.dataTransfer.types && e.dataTransfer.types.includes('Files')) {
+            setIsDraggingFile(true);
+        }
+    }, []);
+
+    const handleFileDragLeave = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dragCounterRef.current -= 1;
+        if (dragCounterRef.current === 0) {
+            setIsDraggingFile(false);
+        }
+    }, []);
+
+    const handleFileDragOver = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+    }, []);
+
+    const handleFileDrop = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dragCounterRef.current = 0;
+        setIsDraggingFile(false);
+
+        const files = e.dataTransfer.files;
+        if (files && files.length > 0) {
+            const file = files[0];
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const content = event.target?.result as string;
+                const result = processImportContent(content);
+
+                if (result.type === 'full') {
+                    if (themes.length === 0) {
+                        importStoreDataAction(result.data, 'replace');
+                        showToast(`Imported ${result.data.themes.length} themes and ${result.data.snippets?.length || 0} snippets`);
+                    } else {
+                        setPendingImportData(result.data);
+                        setIsImportDialogOpen(true);
+                    }
+                } else if (result.type === 'theme') {
+                    const newId = executeThemeImport(result.theme);
+                    onSelectTheme(newId);
+                } else {
+                    showToast("Failed to parse file. Please ensure it's a valid ThemeBench file.", 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+    }, [themes.length, processImportContent, importStoreDataAction, executeThemeImport, onSelectTheme, showToast]);
 
     useLayoutEffect(() => {
         if (listRef.current) {
@@ -337,7 +402,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                 const newId = executeThemeImport(result.theme);
                 onSelectTheme(newId);
             } else {
-                showToast('Failed to parse file. Please ensure it\'s a valid TweakBench export.', 'error');
+                showToast('Failed to parse file. Please ensure it\'s a valid ThemeBench export.', 'error');
             }
         };
         reader.readAsText(file);
@@ -365,7 +430,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                     setIsImportDialogOpen(true);
                 }
             } else {
-                showToast('Failed to parse import file. Please ensure it\'s a valid TweakBench backup.', 'error');
+                showToast('Failed to parse import file. Please ensure it\'s a valid ThemeBench backup.', 'error');
             }
         };
         reader.readAsText(file);
@@ -418,7 +483,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
         // Optional: Stay in selection mode? Yes.
     };
 
-    const handleBulkExport = (type: 'js' | 'css') => {
+    const handleBulkExport = (type: 'json' | 'css') => {
         if (selectedThemeIds.size > 5) {
             setConfirmBulkExport(type);
         } else {
@@ -426,7 +491,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
         }
     };
 
-    const executeBulkExport = (type: 'js' | 'css') => {
+    const executeBulkExport = (type: 'json' | 'css') => {
         let delay = 0;
         selectedThemeIds.forEach(id => {
             setTimeout(() => {
@@ -510,6 +575,13 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                         showToast('Themes ungrouped');
                     }
                 },
+                { separator: true },
+                {
+                    label: 'Export group',
+                    icon: <Download size={14} />,
+                    onClick: () => handleExportGroup(groupId)
+                },
+                { separator: true },
                 {
                     label: 'Delete group',
                     icon: <Trash2 size={14} />,
@@ -552,9 +624,9 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                 },
                 { separator: true },
                 {
-                    label: 'Export selected',
+                    label: 'Export selected as JSON',
                     icon: <Download size={14} className="text-blue-400" />,
-                    onClick: () => handleBulkExport('js')
+                    onClick: () => handleBulkExport('json')
                 },
                 { separator: true },
                 {
@@ -571,6 +643,16 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
         if (!theme) return [];
 
         const items: ContextMenuItem[] = [
+            {
+                label: 'Edit theme',
+                icon: <Pencil size={14} />,
+                onClick: () => onSelectTheme(targetId)
+            },
+            {
+                label: 'Rename',
+                icon: <Pencil size={14} />,
+                onClick: () => setRenamingThemeId(targetId)
+            },
             {
                 label: theme.isActive ? 'Disable theme' : 'Enable theme',
                 icon: theme.isActive ? <Pause size={14} /> : <Play size={14} />,
@@ -591,13 +673,15 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
 
         items.push({ separator: true });
         items.push({
-            label: 'Export to JS',
+            label: 'Export to JSON',
             icon: <Download size={14} />,
-            onClick: () => handleExport(targetId, 'js')
+            title: 'Export for other ThemeBench users (includes structure, HTML snippets, and CSS)',
+            onClick: () => handleExport(targetId, 'json')
         });
         items.push({
             label: 'Export to CSS only',
             icon: <Download size={14} />,
+            title: 'Export as clean CSS file for use outside ThemeBench',
             onClick: () => handleExport(targetId, 'css')
         });
 
@@ -659,23 +743,39 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
         <div
             ref={listRef}
             style={{ '--list-width': listWidth > 0 ? `${listWidth}px` : '100%' } as React.CSSProperties}
+            onDragEnter={handleFileDragEnter}
+            onDragLeave={handleFileDragLeave}
+            onDragOver={handleFileDragOver}
+            onDrop={handleFileDrop}
         >
+            {isDraggingFile && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/90 backdrop-blur-sm border-2 border-dashed border-blue-500 rounded-lg m-2 pointer-events-none">
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="w-20 h-20 bg-blue-500/20 text-blue-400 rounded-full flex items-center justify-center">
+                            <Upload size={40} />
+                        </div>
+                        <h3 className="text-xl font-bold text-white">Drop file to import</h3>
+                        <p className="text-slate-400 text-sm">Supports ThemeBench themes (.js, .json) and backups (.json)</p>
+                    </div>
+                </div>
+            )}
             <div className="p-4 flex flex-col gap-4 relative pb-20">
                 <div className="flex justify-between items-center px-1">
-                    <h2 className="text-lg font-bold text-slate-100 tracking-tight">Tweaks</h2>
+                    <h2 className="text-lg font-bold text-slate-100 tracking-tight">Themes</h2>
                     <div className="flex items-center gap-1">
                         {!isSelectionMode ? (
                             <>
                                 {groupCount > 1 && (
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={toggleAllGroups}
-                                        className="btn-ghost-muted px-2"
-                                        title={allGroupsCollapsed ? 'Expand all groups' : 'Collapse all groups'}
-                                    >
-                                        {allGroupsCollapsed ? 'Expand all' : 'Collapse all'}
-                                    </Button>
+                                    <Tooltip content={allGroupsCollapsed ? 'Expand all groups' : 'Collapse all groups'} delay={300}>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={toggleAllGroups}
+                                            className="btn-ghost-muted px-2"
+                                        >
+                                            {allGroupsCollapsed ? 'Expand all' : 'Collapse all'}
+                                        </Button>
+                                    </Tooltip>
                                 )}
                                 <Button
                                     variant="ghost"
@@ -690,16 +790,17 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
 
                                 {/* Compact view for narrow screens */}
                                 <div className="md:hidden">
-                                    <button
-                                        onClick={(e) => {
-                                            const rect = e.currentTarget.getBoundingClientRect();
-                                            setMenuState({ x: rect.left, y: rect.bottom, themeId: 'CREATE_MENU' });
-                                        }}
-                                        className="p-1.5 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors"
-                                        title="Create"
-                                    >
-                                        <Plus size={16} />
-                                    </button>
+                                    <Tooltip content="Create" delay={300}>
+                                        <button
+                                            onClick={(e) => {
+                                                const rect = e.currentTarget.getBoundingClientRect();
+                                                setMenuState({ x: rect.left, y: rect.bottom, themeId: 'CREATE_MENU' });
+                                            }}
+                                            className="p-1.5 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                                        >
+                                            <Plus size={16} />
+                                        </button>
+                                    </Tooltip>
                                 </div>
                                 {/* Full view for wider screens */}
                                 <div className="hidden md:flex md:gap-2">
@@ -722,29 +823,31 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                 </div>
                                 <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".js,.json" />
                                 <input type="file" ref={allDataFileInputRef} onChange={handleAllDataFileChange} className="hidden" accept=".json" />
-                                <button
-                                    onClick={(e) => {
-                                        const rect = e.currentTarget.getBoundingClientRect();
-                                        setMenuState({ x: rect.left, y: rect.bottom, themeId: 'HEADER_MENU' });
-                                    }}
-                                    className="icon-button"
-                                    title="More options"
-                                >
-                                    <MoreVertical size={16} />
-                                </button>
+                                <Tooltip content="More options" delay={300}>
+                                    <button
+                                        onClick={(e) => {
+                                            const rect = e.currentTarget.getBoundingClientRect();
+                                            setMenuState({ x: rect.left, y: rect.bottom, themeId: 'HEADER_MENU' });
+                                        }}
+                                        className="icon-button"
+                                    >
+                                        <MoreVertical size={16} />
+                                    </button>
+                                </Tooltip>
                             </>
                         ) : (
                             <>
                                 {groupCount > 1 && (
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={toggleAllGroups}
-                                        className="btn-ghost-muted px-2"
-                                        title={allGroupsCollapsed ? 'Expand all groups' : 'Collapse all groups'}
-                                    >
-                                        {allGroupsCollapsed ? 'Expand all' : 'Collapse all'}
-                                    </Button>
+                                    <Tooltip content={allGroupsCollapsed ? 'Expand all groups' : 'Collapse all groups'} delay={300}>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={toggleAllGroups}
+                                            className="btn-ghost-muted px-2"
+                                        >
+                                            {allGroupsCollapsed ? 'Expand all' : 'Collapse all'}
+                                        </Button>
+                                    </Tooltip>
                                 )}
                                 <Button
                                     variant="ghost"
@@ -763,17 +866,18 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                 </Button>
 
                                 {selectedThemeIds.size > 0 && (
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            const rect = e.currentTarget.getBoundingClientRect();
-                                            setMenuState({ x: rect.left, y: rect.bottom, themeId: 'BULK_ACTIONS_MENU' });
-                                        }}
-                                        className="p-1 rounded hover:bg-slate-700 text-slate-300 mx-1"
-                                        title="Bulk actions"
-                                    >
-                                        <MoreVertical size={20} />
-                                    </button>
+                                    <Tooltip content="Bulk actions" delay={300}>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                const rect = e.currentTarget.getBoundingClientRect();
+                                                setMenuState({ x: rect.left, y: rect.bottom, themeId: 'BULK_ACTIONS_MENU' });
+                                            }}
+                                            className="p-1 rounded hover:bg-slate-700 text-slate-300 mx-1"
+                                        >
+                                            <MoreVertical size={20} />
+                                        </button>
+                                    </Tooltip>
                                 )}
 
                                 <div className="h-6 w-px bg-slate-800 mx-1"></div>
@@ -844,7 +948,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
 
                 <div className="flex flex-col gap-2">
                     {themes.length === 0 && !isCreating && (
-                        <div className="text-center p-8 border border-dashed border-slate-800 rounded-lg text-slate-500 flex flex-col items-center gap-2">
+                        <div className="text-center p-8 border border-dashed border-slate-800 rounded-lg text-slate-400 flex flex-col items-center gap-2">
                             <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-2">
                                 <Plus size={24} className="opacity-50" />
                             </div>
@@ -925,6 +1029,13 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                                                 return next;
                                                             });
                                                         }}
+                                                        renamingThemeId={renamingThemeId}
+                                                        onRenameStart={setRenamingThemeId}
+                                                        onRename={(id, newName) => {
+                                                            updateTheme(id, { name: newName });
+                                                            setRenamingThemeId(null);
+                                                        }}
+                                                        onRenameCancel={() => setRenamingThemeId(null)}
                                                     />
                                                 ) : (
                                                     <SortableThemeItem
@@ -947,6 +1058,13 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                                             e.stopPropagation();
                                                             setEditingDomainTheme(item.id);
                                                         }}
+                                                        isRenaming={renamingThemeId === item.id}
+                                                        onRenameStart={() => setRenamingThemeId(item.id)}
+                                                        onRename={(newName) => {
+                                                            updateTheme(item.id, { name: newName });
+                                                            setRenamingThemeId(null);
+                                                        }}
+                                                        onRenameCancel={() => setRenamingThemeId(null)}
                                                     />
                                                 )}
                                             </div>
@@ -964,15 +1082,16 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                 {isSelectionMode && selectedThemeIds.size > 0 && (
                     <div className="fixed bottom-4 left-4 right-4 bg-slate-800 border border-slate-700 rounded-lg p-2 shadow-2xl flex items-center justify-between z-20 animate-in slide-in-from-bottom-2">
                         <div className="flex items-center gap-2">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0 rounded-full hover:bg-slate-700 text-slate-400 hover:text-white bg-slate-700/50" // Made bigger and slightly distinct
-                                onClick={() => setSelectedThemeIds(new Set())}
-                                title="Deselect all"
-                            >
-                                <X size={16} />
-                            </Button>
+                            <Tooltip content="Deselect all" delay={300}>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 rounded-full hover:bg-slate-700 text-slate-400 hover:text-white bg-slate-700/50" // Made bigger and slightly distinct
+                                    onClick={() => setSelectedThemeIds(new Set())}
+                                >
+                                    <X size={16} />
+                                </Button>
+                            </Tooltip>
                             <div className="text-sm text-slate-300 font-medium">
                                 {selectedThemeIds.size} selected
                             </div>
@@ -982,36 +1101,43 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                             <div className="h-6 w-px bg-slate-700 mx-1"></div>
 
                             <>
-                                <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(true)} title="Enable selected">
-                                    <Play size={14} className={viewportWidth > 600 ? "mr-1.5 text-green-400" : "text-green-400"} />
-                                    {viewportWidth > 600 && "Enable"}
-                                </Button>
-                                <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(false)} title="Disable selected">
-                                    <Pause size={14} className={viewportWidth > 600 ? "mr-1.5 text-slate-400" : "text-slate-400"} />
-                                    {viewportWidth > 600 && "Disable"}
-                                </Button>
+                                <Tooltip content="Enable selected" delay={300}>
+                                    <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(true)}>
+                                        <Play size={14} className={viewportWidth > 600 ? "mr-1.5 text-green-400" : "text-green-400"} />
+                                        {viewportWidth > 600 && "Enable"}
+                                    </Button>
+                                </Tooltip>
+                                <Tooltip content="Disable selected" delay={300}>
+                                    <Button variant="ghost" size="sm" onClick={() => handleBulkEnable(false)}>
+                                        <Pause size={14} className={viewportWidth > 600 ? "mr-1.5 text-slate-400" : "text-slate-400"} />
+                                        {viewportWidth > 600 && "Disable"}
+                                    </Button>
+                                </Tooltip>
                                 <div className="h-6 w-px bg-slate-700 mx-1"></div>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        const rect = e.currentTarget.getBoundingClientRect();
-                                        setMenuState({
-                                            x: rect.left,
-                                            y: viewportWidth > 600 ? rect.bottom : rect.top,
-                                            themeId: 'BULK_ACTIONS_MENU'
-                                        });
-                                    }}
-                                    title="More actions"
-                                >
-                                    <MoreVertical size={16} />
-                                </Button>
+                                <Tooltip content="More actions" delay={300}>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            const rect = e.currentTarget.getBoundingClientRect();
+                                            setMenuState({
+                                                x: rect.left,
+                                                y: viewportWidth > 600 ? rect.bottom : rect.top,
+                                                themeId: 'BULK_ACTIONS_MENU'
+                                            });
+                                        }}
+                                    >
+                                        <MoreVertical size={16} />
+                                    </Button>
+                                </Tooltip>
                                 <div className="h-6 w-px bg-slate-700 mx-1"></div>
-                                <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-900/20" onClick={handleBulkDelete} title="Delete selected">
-                                    <Trash2 size={14} className={viewportWidth > 600 ? "mr-1.5" : ""} />
-                                    {viewportWidth > 600 && "Delete"}
-                                </Button>
+                                <Tooltip content="Delete selected" delay={300}>
+                                    <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-900/20" onClick={handleBulkDelete}>
+                                        <Trash2 size={14} className={viewportWidth > 600 ? "mr-1.5" : ""} />
+                                        {viewportWidth > 600 && "Delete"}
+                                    </Button>
+                                </Tooltip>
                             </>
                         </div>
                     </div>
@@ -1123,7 +1249,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
             {/* Sticky Footer */}
             <div className="fixed bottom-0 text-[10px] text-slate-600 px-4 py-5 w-full bg-slate-900/95 backdrop-blur-sm border-t border-slate-800/60 text-center z-10 transition-colors shadow-[0_-10px_20px_rgba(0,0,0,0.1)]">
                 <p>
-                    vibe coded by <a href="https://github.com/klarasch" target="_blank" rel="noopener noreferrer" className="text-slate-500 decoration-dotted underline-offset-2 font-medium hover:text-slate-300 transition-colors">Klára</a> using <a href="https://antigravity.google/" target="_blank" rel="noopener noreferrer" className="decoration-dotted underline-offset-2 font-medium text-slate-500 hover:text-slate-300 transition-colors">Antigravity</a>
+                    vibe coded by <a href="https://github.com/klarasch" target="_blank" rel="noopener noreferrer" className="text-slate-400 decoration-dotted underline-offset-2 font-medium hover:text-slate-300 transition-colors">Klára</a> using <a href="https://antigravity.google/" target="_blank" rel="noopener noreferrer" className="decoration-dotted underline-offset-2 font-medium text-slate-400 hover:text-slate-300 transition-colors">Antigravity</a>
                 </p>
                 <p className="mt-1">
                     if you enjoy this, <a href="https://buymeacoffee.com/ksch" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-300 transition-colors font-semibold">buy me a coffee</a>, thanks! &lt;3
