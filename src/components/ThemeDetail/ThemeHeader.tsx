@@ -38,6 +38,7 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
 }) => {
     const activeUrl = useActiveTab();
     const [localName, setLocalName] = useState(theme.name);
+    const [localDescription, setLocalDescription] = useState(theme.description || '');
     const [showDomainSettings, setShowDomainSettings] = useState(false);
     const [confirmEnableGlobal, setConfirmEnableGlobal] = useState(false);
 
@@ -45,7 +46,8 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
 
     useEffect(() => {
         setLocalName(theme.name);
-    }, [theme.name]);
+        setLocalDescription(theme.description || '');
+    }, [theme.name, theme.description]);
 
 
 
@@ -71,6 +73,21 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                         placeholder="Theme name"
                     />
                 </div>
+                <textarea
+                    className="bg-transparent text-xs text-slate-400 outline-none w-full resize-none overflow-hidden placeholder-slate-600 mt-1"
+                    value={localDescription}
+                    onChange={(e) => {
+                        setLocalDescription(e.target.value);
+                        updateTheme(theme.id, { description: e.target.value });
+                    }}
+                    placeholder="Add description..."
+                    rows={1}
+                    onInput={(e) => {
+                        const target = e.target as HTMLTextAreaElement;
+                        target.style.height = 'auto';
+                        target.style.height = `${target.scrollHeight}px`;
+                    }}
+                />
                 <div className="flex items-center flex-wrap gap-2 mt-2">
                     {/* Domain Config Button - Interactive */}
                     <button

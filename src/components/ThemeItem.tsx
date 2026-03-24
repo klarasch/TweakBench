@@ -1,8 +1,9 @@
 import React from 'react';
-import { MoreVertical, Globe, Pencil } from 'lucide-react';
+import { MoreVertical, Globe, Pencil, Info } from 'lucide-react';
 import type { Theme } from '../types';
 import { isDomainMatch } from '../utils/domains';
 import { Toggle } from './ui/Toggle';
+import { Tooltip } from './ui/Tooltip';
 
 export interface ThemeItemProps {
     theme: Theme;
@@ -115,16 +116,25 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
                             onPointerDown={(e) => e.stopPropagation()}
                         />
                     ) : (
-                        <span
-                            className={`text-sm font-medium truncate ${isActiveOnTab ? 'text-green-400' : 'text-slate-200'} ${isSelected ? 'text-white' : ''}`}
-                            onDoubleClick={(e) => {
-                                if (isSelectionMode) return;
-                                e.stopPropagation();
-                                onRenameStart?.();
-                            }}
-                        >
-                            {theme.name}
-                        </span>
+                        <div className="flex items-center gap-1.5 min-w-0">
+                            <span
+                                className={`text-sm font-medium truncate ${isActiveOnTab ? 'text-green-400' : 'text-slate-200'} ${isSelected ? 'text-white' : ''}`}
+                                onDoubleClick={(e) => {
+                                    if (isSelectionMode) return;
+                                    e.stopPropagation();
+                                    onRenameStart?.();
+                                }}
+                            >
+                                {theme.name}
+                            </span>
+                            {theme.description && (
+                                <Tooltip content={theme.description} delay={0}>
+                                    <div className="text-slate-400 hover:text-slate-200 transition-colors cursor-help shrink-0" onClick={e => e.stopPropagation()}>
+                                        <Info size={14} />
+                                    </div>
+                                </Tooltip>
+                            )}
+                        </div>
                     )}
                     {!theme.groupId && onDomainClick && !isRenaming && (
                         <button

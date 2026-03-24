@@ -35,6 +35,7 @@ export interface ThemeItem {
 export interface Theme {
     id: string;
     name: string;
+    description?: string;
     domainPatterns: string[]; // e.g. ["*.google.com"]
     items: ThemeItem[]; // Reverted to required
     isActive: boolean;

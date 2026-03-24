@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Export Format**: Transitioned the single-theme export format from JavaScript (`.js`) to JSON (`.json`) for better reliability, smaller file sizes, and unified import logic.
 
 ### Added
+- **Theme Descriptions**: Added the ability to define descriptions for themes. They can be edited under the theme title and appear as a tooltip on the theme list.
 - **Drag and Drop Import**: Added support for dragging and dropping ThemeBench export files directly into the UI.
 - **Export Group**: Added "Export group" option to the domain group overflow (kebab) menu, allowing users to export all themes and snippets within a group as a single JSON file.
 - **Inline Renaming**: Double-clicking a theme name in the list now triggers an inline rename mode, allowing for faster editing without opening the full theme detail.
