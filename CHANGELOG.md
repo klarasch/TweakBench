@@ -30,6 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Readable Builds**: Disabled minification and obfuscation for extension review purposes. Filename hashing is removed, and CSS/JS are now output in a readable format.
 
 ## [Unreleased]
+
+### Fixed
+- **Permissions**: Removed unused "scripting" permission to comply with Chrome Web Store policy.
+
 ### Added
 - New custom `Tooltip` component using React Portals for better viewport management and z-index handling.
 - Enhanced tooltips with support for custom display modes (`flex`, `block`).

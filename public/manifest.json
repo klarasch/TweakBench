@@ -5,7 +5,6 @@
     "description": "Inject CSS and HTML into pages with reusable themes and snippets.",
     "permissions": [
         "activeTab",
-        "scripting",
         "sidePanel",
         "storage",
         "tabs"
