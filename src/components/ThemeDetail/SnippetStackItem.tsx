@@ -278,10 +278,10 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                 <div className={`absolute right-0 top-0 bottom-0 flex items-center transition-opacity z-10 ${!isEditing && (isSelected || isCollapsed) ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto'} ${isEditing ? '!opacity-0 !pointer-events-none' : ''}`}>
                     {/* Background layers: Solid Base -> Header Tint -> Fade Gradient */}
                     <div className="absolute inset-0 bg-slate-900"></div>
-                    <div className={`absolute inset-0 ${isCollapsed ? 'bg-slate-800' : 'bg-slate-800/40'}`}></div>
+                    <div className={`absolute inset-0 ${isCollapsed ? 'group-hover:bg-slate-800' : 'bg-slate-800/30'}`}></div>
                     
                     <div className="absolute -left-12 top-0 bottom-0 w-12 bg-gradient-to-r from-transparent to-slate-900"></div>
-                    <div className={`absolute -left-12 top-0 bottom-0 w-12 bg-gradient-to-r from-transparent ${isCollapsed ? 'to-slate-800' : 'to-slate-800/40'}`}></div>
+                    <div className={`absolute -left-12 top-0 bottom-0 w-12 bg-gradient-to-r from-transparent ${isCollapsed ? 'group-hover:to-slate-800' : 'to-slate-800/30'}`}></div>
 
                     <div className="relative flex items-center gap-2 px-3">
 
