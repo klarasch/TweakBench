@@ -750,6 +750,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
     return (
         <div
             ref={listRef}
+            className="min-h-full flex flex-col relative"
             style={{ '--list-width': listWidth > 0 ? `${listWidth}px` : '100%' } as React.CSSProperties}
             onDragEnter={handleFileDragEnter}
             onDragLeave={handleFileDragLeave}
@@ -767,7 +768,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                     </div>
                 </div>
             )}
-            <div className="p-4 flex flex-col gap-4 relative pb-20">
+            <div className="p-4 flex flex-col gap-4 relative pb-20 flex-1">
                 <div className="flex justify-between items-center px-1">
                     <h2 className="text-lg font-bold text-slate-100 tracking-tight">Themes</h2>
                     <div className="flex items-center gap-1">
@@ -963,30 +964,32 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
 
                 <div className="flex flex-col gap-2">
                     {themes.length === 0 && !isCreating && (
-                        <div className="text-center p-8 border border-dashed border-slate-800 rounded-lg text-slate-400 flex flex-col items-center gap-2">
-                            <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-2">
-                                <Plus size={24} className="opacity-50" />
-                            </div>
-                            <p className="font-medium text-slate-400">No themes yet</p>
-                            <p className="text-xs max-w-[200px] mx-auto">Create a theme or load some examples to start customizing your web experience.</p>
-                            <div className="flex gap-2 mt-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={async () => {
-                                        await useStore.getState().loadExampleData();
-                                        showToast('Starter kit loaded');
-                                    }}
-                                >
-                                    Load starter kit
-                                </Button>
-                                <Button
-                                    variant="filled"
-                                    size="sm"
-                                    onClick={() => setIsCreating(true)}
-                                >
-                                    Create first theme
-                                </Button>
+                        <div className="flex-1 flex flex-col justify-center py-12">
+                            <div className="text-center p-8 border border-dashed border-slate-800 rounded-lg text-slate-400 flex flex-col items-center gap-2">
+                                <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-2">
+                                    <Plus size={24} className="opacity-50" />
+                                </div>
+                                <p className="font-medium text-slate-400">No themes yet</p>
+                                <p className="text-xs max-w-[200px] mx-auto">Create a theme or load some examples to start customizing your web experience.</p>
+                                <div className="flex gap-2 mt-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={async () => {
+                                            await useStore.getState().loadExampleData();
+                                            showToast('Starter kit loaded');
+                                        }}
+                                    >
+                                        Load starter kit
+                                    </Button>
+                                    <Button
+                                        variant="filled"
+                                        size="sm"
+                                        onClick={() => setIsCreating(true)}
+                                    >
+                                        Create first theme
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     )}

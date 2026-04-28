@@ -25,6 +25,7 @@ ThemeBench is a browser extension tool (built with Vite, React, TypeScript) for 
 - "Export group" option in the domain group overflow menu.
 - **Custom Tooltip System**: Standardized on a custom `Tooltip` component (replacing native `title` attributes) for all interactive elements.
 - **Standardized UI Colors**: Standardized interactive icons and metadata text to `text-slate-400` for consistent visibility.
+- **Expanded Drop Zone**: The file drag-and-drop area in the ThemeList now covers the full UI height, especially improved for the zero-state experience.
 
 ## Performance Bottlenecks to Investigate
 - `chrome.storage.onChanged` latency.

@@ -46,6 +46,7 @@
 - 2026-03-24 10:20:00 UTC - Prepared extension for Chrome Web Store review: updated manifest version to 0.1.9, verified build configuration (no minification, sourcemaps enabled), and confirmed manifest resources.
 - 2026-03-24 10:12:00 UTC - Added drag-and-drop file import support for themes and backups directly into the UI (`ThemeList`).
 - 2026-03-24 11:30:00 UTC - Modernized tooltips with React Portals and dynamic positioning; improved click targets for icon buttons; fixed ContextMenu wrapping.
-- Added theme descriptions and theme list tooltips.hemes, editable in ThemeDetail header and displayed via tooltip in ThemeList.
+- Added theme descriptions and theme list tooltips, editable in ThemeDetail header and displayed via tooltip in ThemeList.
 - Fixed a major memory leak caused by logging large state objects to the console and un-cleared timeouts when switching themes.
 - Added "Wipe all data" functionality to the main list header overflow menu with a permanent confirmation dialog.
+- Expanded the drag-and-drop area for data files to cover the full UI height in the ThemeList, and centered the zero-state UI.
