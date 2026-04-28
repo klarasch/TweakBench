@@ -35,6 +35,7 @@ interface Store extends AppState {
     duplicateThemeItem: (themeId: string, itemId: string) => void;
     duplicateThemeGroup: (groupId: string) => void;
     detachThemeFromGroup: (themeId: string) => void;
+    addThemeToGroup: (themeId: string, groupId: string) => void;
 
     createThemeGroup: (themeIds: string[]) => void;
     ungroupThemes: (themeIds: string[]) => void;
@@ -803,6 +804,29 @@ export const useStore = create<Store>((set, get) => ({
                 if (t.id !== themeId) return t;
                 const { groupId, ...rest } = t;
                 return { ...rest, updatedAt: Date.now() };
+            });
+
+            const newState = { ...state, themes: updatedThemes };
+            storageService.save(newState);
+            return newState;
+        });
+    },
+
+    addThemeToGroup: (themeId: string, groupId: string) => {
+        set((state: Store) => {
+            // Find an existing theme in the target group to get domain patterns
+            const groupTheme = state.themes.find(t => t.groupId === groupId);
+            if (!groupTheme) return state;
+
+            const updatedThemes = state.themes.map(t => {
+                if (t.id !== themeId) return t;
+                return {
+                    ...t,
+                    groupId,
+                    domainPatterns: [...groupTheme.domainPatterns],
+                    isActive: false, // Deactivate to avoid two active themes in group
+                    updatedAt: Date.now(),
+                };
             });
 
             const newState = { ...state, themes: updatedThemes };

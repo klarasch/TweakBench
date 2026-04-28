@@ -8,10 +8,14 @@ interface Toast {
     id: string;
     message: string;
     type: ToastType;
+    action?: {
+        label: string;
+        onClick: () => void;
+    };
 }
 
 interface ToastContextType {
-    showToast: (message: string, type?: ToastType) => void;
+    showToast: (message: string, type?: ToastType, action?: { label: string; onClick: () => void }) => void;
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
@@ -27,16 +31,16 @@ export const useToast = () => {
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [toasts, setToasts] = useState<Toast[]>([]);
 
-    const showToast = useCallback((message: string, type: ToastType = 'success') => {
+    const showToast = useCallback((message: string, type: ToastType = 'success', action?: { label: string; onClick: () => void }) => {
         const id = Math.random().toString(36).substring(7);
-        const newToast = { id, message, type };
+        const newToast: Toast = { id, message, type, action };
 
         setToasts(prev => [...prev, newToast]);
 
-        // Auto-dismiss after 3 seconds
+        // Auto-dismiss (longer timeout when action button is present)
         setTimeout(() => {
             setToasts(prev => prev.filter(t => t.id !== id));
-        }, 3000);
+        }, action ? 5000 : 3000);
     }, []);
 
     const dismissToast = useCallback((id: string) => {
@@ -75,8 +79,19 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                                 {toast.type === 'error' && <AlertCircle size={18} />}
                                 {toast.type === 'info' && <Info size={18} />}
                             </div>
-                            <div className="flex-1 text-sm font-medium">
-                                {toast.message}
+                            <div className="flex-1 text-sm font-medium flex items-center gap-2">
+                                <span>{toast.message}</span>
+                                {toast.action && (
+                                    <button
+                                        onClick={() => {
+                                            toast.action!.onClick();
+                                            dismissToast(toast.id);
+                                        }}
+                                        className="text-xs font-semibold underline underline-offset-2 opacity-80 hover:opacity-100 transition-opacity whitespace-nowrap"
+                                    >
+                                        {toast.action.label}
+                                    </button>
+                                )}
                             </div>
                             <button
                                 onClick={() => dismissToast(toast.id)}

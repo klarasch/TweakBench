@@ -17,12 +17,15 @@ import { ThemeListModals } from './ThemeList/ThemeListModals.tsx';
 import {
     DndContext,
     closestCenter,
+    rectIntersection,
     KeyboardSensor,
     PointerSensor,
     useSensor,
     useSensors,
     type DragEndEvent,
     type DragStartEvent,
+    type DragOverEvent,
+    type CollisionDetection,
     DragOverlay,
 } from '@dnd-kit/core';
 
@@ -55,6 +58,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
     const ungroupThemes = useStore(state => state.ungroupThemes);
     const createEmptyGroup = useStore(state => state.createEmptyGroup);
     const detachThemeFromGroup = useStore(state => state.detachThemeFromGroup);
+    const addThemeToGroup = useStore(state => state.addThemeToGroup);
     const wipeAllData = useStore(state => state.wipeAllData);
 
     const { showToast } = useToast();
@@ -155,6 +159,11 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
 
     // DnD Drag State
     const [activeDragId, setActiveDragId] = useState<string | null>(null);
+    const [dragOverGroupId, setDragOverGroupId] = useState<string | null>(null);
+    // When dragging a grouped theme over root level: stores the over-item ID for insertion preview
+    const [detachOverId, setDetachOverId] = useState<string | null>(null);
+    // Snapshot of themes before a DnD mutation, used for undo
+    const dndSnapshotRef = useRef<Theme[] | null>(null);
 
     // Renaming State
     const [renamingThemeId, setRenamingThemeId] = useState<string | null>(null);
@@ -241,27 +250,110 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
         })
     );
 
+    /**
+     * Custom collision detection: uses closestCenter for reliable sorting,
+     * but requires rectIntersection (actual overlap) before considering a
+     * theme inside a foreign group as a valid target. This prevents
+     * accidental "add to group" when dragging near group boundaries.
+     */
+    const customCollisionDetection: CollisionDetection = useCallback((args) => {
+        const activeData = args.active?.data?.current;
+        const activeGroupId = activeData?.groupId;
+
+        const centerCollisions = closestCenter(args);
+
+        // If active is a group container, just use closestCenter
+        if (activeData?.type === 'group') return centerCollisions;
+
+        // Get all items that actually have rect overlap with the dragged item
+        const intersections = rectIntersection(args);
+        const intersectionIds = new Set(intersections.map(c => c.id));
+
+        // Filter: for foreign-group themes, require actual rect intersection
+        const filtered = centerCollisions.filter(c => {
+            const data = c.data?.droppableContainer?.data?.current;
+            if (data?.type === 'theme' && data?.groupId && data?.groupId !== activeGroupId) {
+                return intersectionIds.has(c.id);
+            }
+            return true;
+        });
+
+        return filtered.length > 0 ? filtered : centerCollisions;
+    }, []);
+
     const handleDragStart = (event: DragStartEvent) => {
         const activeId = event.active.id as string;
         setActiveDragId(activeId);
+        setDragOverGroupId(null);
+        setDetachOverId(null);
 
         // Save current collapse state
         preDragCollapsedGroupsRef.current = new Set(collapsedGroups);
 
-        // Collapse all groups for root-level reordering stability
-        // (Only if it's a group header or a root-level theme)
-        const activeTheme = themes.find(t => t.id === activeId);
-        if (!activeTheme || !activeTheme.groupId) {
+        // Only collapse groups when dragging a group container
+        // (for root-level reordering stability)
+        const isGroupContainer = displayItems.some(i => i.id === activeId && i.type === 'group');
+        if (isGroupContainer) {
             const allGroupIds = displayItems
                 .filter(i => i.type === 'group')
                 .map(g => g.id);
             setCollapsedGroups(new Set(allGroupIds));
         }
+        // For grouped themes and standalone themes: don't collapse any groups
     };
 
+    /** Track which group the dragged item is hovering over (for visual feedback) */
+    const handleDragOver = useCallback((event: DragOverEvent) => {
+        const { active, over } = event;
+        if (!over) {
+            setDragOverGroupId(null);
+            return;
+        }
+
+        const activeId = active.id as string;
+        const overData = over.data?.current;
+
+        // Don't highlight if dragging a group container
+        const isGroupContainer = displayItems.some(i => i.id === activeId && i.type === 'group');
+        if (isGroupContainer) {
+            setDragOverGroupId(null);
+            return;
+        }
+
+        const activeTheme = themes.find(t => t.id === activeId);
+
+        // Only highlight when hovering over a THEME inside a foreign group
+        // (hovering over the group header = root-level reorder, not add-to-group)
+        let targetGroupId: string | null = null;
+        if (overData?.type === 'theme' && overData?.groupId) {
+            targetGroupId = overData.groupId;
+        }
+
+        // Don't highlight if the dragged theme is already in this group (same-group reorder)
+        if (targetGroupId && activeTheme?.groupId === targetGroupId) {
+            setDragOverGroupId(null);
+            setDetachOverId(null);
+            return;
+        }
+
+        // Track "detach intent" — grouped theme hovering over root-level item
+        if (activeTheme?.groupId && !targetGroupId) {
+            const overId = over.id as string;
+            const overTheme = themes.find(t => t.id === overId);
+            const overIsRoot = (overTheme && !overTheme.groupId) ||
+                displayItems.some(i => i.id === overId && i.type === 'group');
+            setDetachOverId(overIsRoot ? overId : null);
+        } else {
+            setDetachOverId(null);
+        }
+
+        setDragOverGroupId(targetGroupId);
+    }, [themes, displayItems]);
 
     const handleDragEnd = useCallback((event: DragEndEvent) => {
         setActiveDragId(null);
+        setDragOverGroupId(null);
+        setDetachOverId(null);
 
         if (expansionTimerRef.current) {
             window.clearTimeout(expansionTimerRef.current);
@@ -280,6 +372,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
 
         const activeId = active.id as string;
         const overId = over.id as string;
+        const overData = over.data?.current;
 
         const activeTheme = themes.find(t => t.id === activeId);
         const overTheme = themes.find(t => t.id === overId);
@@ -292,23 +385,79 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
             const newIdx = groupThemes.findIndex(t => t.id === overId);
             if (oldIdx !== -1 && newIdx !== -1) {
                 const moved = arrayMove(groupThemes, oldIdx, newIdx);
+                // Use a sequential counter to assign themes in the new order
+                let groupIdx = 0;
                 const updatedThemes = themes.map(t => {
                     if (t.groupId === activeTheme.groupId) {
-                        const newPos = moved.findIndex(mt => mt.id === t.id);
-                        return moved[newPos];
+                        return moved[groupIdx++];
                     }
                     return t;
                 });
-                // We need to maintain the relative order in the main list
-                // For simplicity, let's assume reorderThemes handles the internal order correctly
-                // and we just need to pass the IDs in the new order.
+                dndSnapshotRef.current = [...themes];
                 reorderThemes(updatedThemes);
+                showToast('Reordered', 'info', {
+                    label: 'Undo',
+                    onClick: () => {
+                        if (dndSnapshotRef.current) {
+                            reorderThemes(dndSnapshotRef.current);
+                            dndSnapshotRef.current = null;
+                        }
+                    },
+                });
             }
             return;
         }
 
-        // CASE 2: Reordering root-level items (standalone themes and groups)
-        const activeIsRoot = !activeTheme || !activeTheme.groupId || activeGroupItem;
+        // CASE 2: Dragging a theme INTO a group
+        // Only triggered when over target is a theme inside a foreign group
+        // (hovering over the group header triggers root-level reorder, not add-to-group)
+        if (
+            activeTheme &&
+            !activeGroupItem &&
+            overData?.type === 'theme' &&
+            overData?.groupId &&
+            activeTheme.groupId !== overData.groupId
+        ) {
+            dndSnapshotRef.current = [...themes];
+            if (activeTheme.groupId) {
+                detachThemeFromGroup(activeId);
+            }
+            addThemeToGroup(activeId, overData.groupId);
+            showToast('Theme added to group', 'success', {
+                label: 'Undo',
+                onClick: () => {
+                    if (dndSnapshotRef.current) {
+                        reorderThemes(dndSnapshotRef.current);
+                        dndSnapshotRef.current = null;
+                    }
+                },
+            });
+            return;
+        }
+
+        // CASE 3: Dragging a grouped theme OUT to root level
+        if (activeTheme?.groupId && !activeGroupItem) {
+            const overIsRootTheme = overTheme && !overTheme.groupId;
+            const overIsGroupContainer = displayItems.some(i => i.id === overId && i.type === 'group');
+
+            if (overIsRootTheme || overIsGroupContainer) {
+                dndSnapshotRef.current = [...themes];
+                detachThemeFromGroup(activeId);
+                showToast('Theme detached from group', 'success', {
+                    label: 'Undo',
+                    onClick: () => {
+                        if (dndSnapshotRef.current) {
+                            reorderThemes(dndSnapshotRef.current);
+                            dndSnapshotRef.current = null;
+                        }
+                    },
+                });
+                return;
+            }
+        }
+
+        // CASE 4: Reordering root-level items (standalone themes and groups)
+        const activeIsRoot = !activeTheme || !activeTheme.groupId || !!activeGroupItem;
         const overItem = displayItems.find(i => i.id === overId);
         const overIsRoot = overItem && (overItem.type === 'group' || !themes.find(t => t.id === overId)?.groupId);
 
@@ -326,10 +475,20 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                         finalThemes.push(...themes.filter(t => t.groupId === item.id));
                     }
                 });
+                dndSnapshotRef.current = [...themes];
                 reorderThemes(finalThemes);
+                showToast('Reordered', 'info', {
+                    label: 'Undo',
+                    onClick: () => {
+                        if (dndSnapshotRef.current) {
+                            reorderThemes(dndSnapshotRef.current);
+                            dndSnapshotRef.current = null;
+                        }
+                    },
+                });
             }
         }
-    }, [themes, displayItems, reorderThemes]);
+    }, [themes, displayItems, reorderThemes, detachThemeFromGroup, addThemeToGroup, showToast]);
 
     useEffect(() => {
         const handleResize = () => setViewportWidth(window.innerWidth);
@@ -1000,8 +1159,9 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
 
                     <DndContext
                         sensors={sensors}
-                        collisionDetection={closestCenter}
+                        collisionDetection={customCollisionDetection}
                         onDragStart={handleDragStart}
+                        onDragOver={handleDragOver}
                         onDragEnd={handleDragEnd}
                         modifiers={[restrictToVerticalAxis]}
                     >
@@ -1014,8 +1174,9 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                     const isGroup = item.type === 'group';
 
                                     return (
-                                        <div key={item.id} className="relative">
-                                            <div className={`${!isGroup ? 'my-1' : 'my-2'}`}>
+                                        <React.Fragment key={item.id}>
+                                            <div className="relative">
+                                                <div className={`${!isGroup ? 'my-1' : 'my-2'}`}>
                                                 {item.type === 'group' ? (
                                                     <ThemeGroup
                                                         id={item.id}
@@ -1054,6 +1215,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                                             setRenamingThemeId(null);
                                                         }}
                                                         onRenameCancel={() => setRenamingThemeId(null)}
+                                                        isDropTarget={dragOverGroupId === item.id}
                                                     />
                                                 ) : (
                                                     <SortableThemeItem
@@ -1085,9 +1247,16 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                                         onRenameCancel={() => setRenamingThemeId(null)}
                                                     />
                                                 )}
+                                                </div>
                                             </div>
 
-                                        </div>
+                                            {/* Manual placeholder for detach preview (so we don't confuse SortableContext) */}
+                                            {detachOverId === item.id && activeDragId && (
+                                                <div className="h-[68px] my-1 rounded-lg border-2 border-emerald-400 border-dashed bg-emerald-400/5 transition-all duration-200 flex items-center justify-center">
+                                                    <span className="text-emerald-500/50 text-sm font-medium">Drop to detach from group</span>
+                                                </div>
+                                            )}
+                                        </React.Fragment>
                                     );
                                 })}
                             </SortableContext>
@@ -1167,8 +1336,15 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                         const activeGroup = displayItems.find(i => i.id === activeDragId && i.type === 'group');
 
                         if (activeTheme) {
+                            const isDetaching = activeTheme.groupId && !!detachOverId;
                             return (
-                                <div style={{ width: listWidth > 0 ? `${listWidth}px` : '300px' }} className="opacity-90 scale-[1.02] pointer-events-none transition-all duration-200">
+                                <div
+                                    style={{ width: listWidth > 0 ? `${listWidth}px` : '300px' }}
+                                    className={`
+                                        opacity-90 scale-[1.02] pointer-events-none transition-all duration-200
+                                        ${isDetaching ? 'ring-2 ring-emerald-400/70 rounded-lg shadow-[0_0_16px_-4px_rgba(52,211,153,0.3)]' : ''}
+                                    `}
+                                >
                                     <ThemeItem
                                         theme={activeTheme}
                                         activeUrl={activeUrl}

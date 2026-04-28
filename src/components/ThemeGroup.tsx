@@ -30,6 +30,8 @@ interface ThemeGroupProps {
     onRenameStart?: (id: string) => void;
     onRename?: (id: string, newName: string) => void;
     onRenameCancel?: () => void;
+    // Drop target highlight
+    isDropTarget?: boolean;
 }
 
 export const ThemeGroup: React.FC<ThemeGroupProps> = ({
@@ -52,7 +54,8 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
     renamingThemeId,
     onRenameStart,
     onRename,
-    onRenameCancel
+    onRenameCancel,
+    isDropTarget
 }) => {
     // Sortable logic for the GROUP container
     const {
@@ -62,7 +65,14 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
         transform,
         transition,
         isDragging
-    } = useSortable({ id: id, disabled: isSelectionMode });
+    } = useSortable({
+        id: id,
+        disabled: isSelectionMode,
+        data: {
+            type: 'group',
+            groupId: id,
+        },
+    });
 
     const style = {
         transform: CSS.Translate.toString(transform),
@@ -122,6 +132,7 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
                 }
                 ${effectivelyCollapsed ? 'bg-slate-800/40' : ''}
                 ${isDragging ? 'opacity-50 ring-2 ring-blue-500/50 z-50 border-blue-500/50 shadow-2xl scale-[1.02]' : ''}
+                ${isDropTarget ? 'ring-2 ring-blue-400/70 border-blue-400/50 bg-blue-900/10 shadow-[0_0_20px_-4px_rgba(96,165,250,0.2)]' : ''}
             `}
         >
             {/* Group Header - Drag handle is now here only */}

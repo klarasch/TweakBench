@@ -22,7 +22,14 @@ export const SortableThemeItem: React.FC<SortableThemeItemProps> = (props) => {
         transform,
         transition,
         isDragging
-    } = useSortable({ id: props.theme.id, disabled: props.isSelectionMode });
+    } = useSortable({
+        id: props.theme.id,
+        disabled: props.isSelectionMode,
+        data: {
+            type: 'theme',
+            groupId: props.theme.groupId || null,
+        },
+    });
 
     const style = {
         transform: CSS.Translate.toString(transform),

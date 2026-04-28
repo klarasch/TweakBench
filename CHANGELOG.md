@@ -38,6 +38,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced tooltips with support for custom display modes (`flex`, `block`).
 - Integrated `Tooltip` support directly into the `Toggle` component.
 
+### Improved
+- **Drag and Drop Reordering**: Overhauled theme list drag-and-drop to support reordering within groups, dragging themes out of groups (detach), and dragging themes into groups (attach). Groups now highlight with a blue ring when receiving a theme drop. Visual feedback clearly distinguishes between "add to group" and "reorder at root level" intentions.
+
 ### Changed
 - **Theme Detail**: Made the expand/collapse animation immediate instead of gradual, and made the collapsed state persistent across sessions and navigation for each theme.
 - **Responsive Layout**: Improved responsiveness by adding `min-w-[10ch]` to labels and wrapping long theme and domain names (`line-clamp-2`) instead of truncating at low breakpoints.
