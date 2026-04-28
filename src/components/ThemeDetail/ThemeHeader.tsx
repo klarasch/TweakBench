@@ -35,7 +35,7 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
     globalEnabled,
     toggleGlobal,
     onContextMenu,
-    isOtherInGroupActive
+    isOtherInGroupActive: _isOtherInGroupActive
 }) => {
     const activeUrl = useActiveTab();
     const [localName, setLocalName] = useState(theme.name);

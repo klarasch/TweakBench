@@ -86,7 +86,7 @@ export const CodeEditor = React.memo(React.forwardRef<CodeEditorRef, CodeEditorP
                 selection: { anchor: from, head: to }
             });
         },
-        scrollToMatch: (from: number, to: number) => {
+        scrollToMatch: (from: number, _to: number) => {
             const view = editorRef.current?.view;
             if (!view) return;
             view.dispatch({

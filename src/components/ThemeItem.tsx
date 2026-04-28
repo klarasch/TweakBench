@@ -44,7 +44,7 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
     onKebabClick,
     onUpdateTheme,
     onDomainClick,
-    isOtherInGroupActive,
+    isOtherInGroupActive: _isOtherInGroupActive,
     isNested,
     isRenaming,
     onRenameStart,
@@ -57,7 +57,7 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
 }) => {
     const isMatch = activeUrl ? isDomainMatch(theme.domainPatterns, activeUrl) : false;
     const isActiveOnTab = theme.isActive && globalEnabled && isMatch;
-    const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         return () => {

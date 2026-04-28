@@ -50,6 +50,7 @@ interface ThemeListModalsProps {
     isCreatingGroup: boolean;
     setIsCreatingGroup: (value: boolean) => void;
     newGroupName: string;
+    handleCreateGroup: () => void;
     newThemeGroupId?: string | null;
 
     // Wipe All Data
