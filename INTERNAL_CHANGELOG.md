@@ -47,3 +47,4 @@
 - 2026-03-24 10:12:00 UTC - Added drag-and-drop file import support for themes and backups directly into the UI (`ThemeList`).
 - 2026-03-24 11:30:00 UTC - Modernized tooltips with React Portals and dynamic positioning; improved click targets for icon buttons; fixed ContextMenu wrapping.
 - Added theme descriptions and theme list tooltips.hemes, editable in ThemeDetail header and displayed via tooltip in ThemeList.
+- Fixed a major memory leak caused by logging large state objects to the console and un-cleared timeouts when switching themes.

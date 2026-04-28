@@ -43,6 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved tooltip delays and consistency for all interactive UI elements.
 
 ### Fixed
+- Fixed a major memory leak caused by DevTools retaining large state objects logged to the console during theme switching.
+- Fixed an un-cleared internal timeout in the transition manager that could accumulate when toggling themes rapidly.
 - Tooltip clipping issues at the edges of the window.
 - Animation artifacts ("flying in" effect) on tooltips.
 - Context menu layout bug where items with tooltips appeared side-by-side.

@@ -12,6 +12,7 @@ let lastActiveThemeIds = new Set<string>();
 
 let updateTimeout: any = null;
 let transitionTimeout: any = null;
+let transitionInnerTimeout: any = null;
 const TRANSITION_DURATION = 120; // ms
 const TRANSITION_STYLE_ID = 'tb-transition-manager';
 
@@ -39,6 +40,7 @@ function startTransition() {
     html.classList.add('tb-switching');
 
     if (transitionTimeout) clearTimeout(transitionTimeout);
+    if (transitionInnerTimeout) clearTimeout(transitionInnerTimeout);
 
     // We remove the switching class quickly to trigger the fade back in
     // This creates a subtle "dip" in opacity that masks the content change
@@ -46,7 +48,7 @@ function startTransition() {
         html.classList.remove('tb-switching');
 
         // Remove the transition property after the fade-in is complete
-        setTimeout(() => {
+        transitionInnerTimeout = setTimeout(() => {
             html.classList.remove('tb-transition-active');
         }, TRANSITION_DURATION);
     }, TRANSITION_DURATION / 2);
@@ -373,7 +375,8 @@ function injectOrUpdateHTML(id: string, snippet: any) {
 }
 
 chrome.storage.local.get([STORAGE_KEY], (result) => {
-    console.log('ThemeBench: Initial Load', result);
+    // console.log('ThemeBench: Initial Load', result); // Commented out to prevent memory leak from large state objects
+
     const data = result[STORAGE_KEY] as AppState;
     if (data) {
         debouncedUpdate(data);
@@ -382,7 +385,7 @@ chrome.storage.local.get([STORAGE_KEY], (result) => {
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
     if (areaName === 'local' && changes[STORAGE_KEY]) {
-        console.log('ThemeBench: Storage Changed', changes[STORAGE_KEY].newValue);
+        // console.log('ThemeBench: Storage Changed', changes[STORAGE_KEY].newValue); // Commented out to prevent memory leak from large state objects
         debouncedUpdate(changes[STORAGE_KEY].newValue as AppState);
     }
 });
