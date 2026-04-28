@@ -148,32 +148,7 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                     </Tooltip>
 
                     {/* Active Match Status - Passive Badge */}
-                    {activeUrl && (
-                        <Tooltip content={
-                            isMatch
-                                ? theme.isActive
-                                    ? "Theme matches this tab and is enabled"
-                                    : theme.groupId
-                                        ? "Theme matches this tab but is disabled because another theme in this group is active"
-                                        : "Theme matches this tab but is currently disabled"
-                                : "Theme does not run on this tab"
-                        } delay={300}>
-                            <div
-                                className={`flex items-center gap-1.5 text-[10px] font-medium px-2 py-1 rounded-full ${isMatch
-                                    ? theme.isActive
-                                        ? 'text-green-400/90 bg-green-500/10'
-                                        : 'text-amber-500/90 bg-amber-500/5'
-                                    : 'text-slate-400'
-                                    }`}
-                            >
-                                {isMatch
-                                    ? theme.isActive
-                                        ? "Active on this tab"
-                                        : "Inactive"
-                                    : "Inactive"}
-                            </div>
-                        </Tooltip>
-                    )}
+
                 </div>
             </div>
 

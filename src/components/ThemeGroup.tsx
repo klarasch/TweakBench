@@ -228,12 +228,7 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
                         <>
                             {effectivelyCollapsed && activeTheme && (
                                 <>
-                                    {isActiveOnTab && (
-                                        <div className="flex items-center gap-1.5 text-[10px] font-medium px-2 py-1 rounded-full text-green-400/90 bg-green-500/5">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]"></div>
-                                            Active on this tab
-                                        </div>
-                                    )}
+
                                     <Toggle
                                         checked={activeTheme.isActive}
                                         isActive={isActiveOnTab}

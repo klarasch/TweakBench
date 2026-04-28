@@ -191,11 +191,7 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
                     )}
                 </div>
                 <div className="flex gap-1 items-center">
-                    {isActiveOnTab && (
-                        <div className="flex items-center gap-1.5 text-[10px] font-medium px-2 py-1 rounded-full text-green-400/90 bg-green-500/10">
-                            Active on this tab
-                        </div>
-                    )}
+
                     <div className="flex gap-2 items-center ml-2">
                         <Toggle
                             checked={theme.isActive}

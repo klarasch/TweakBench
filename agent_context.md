@@ -30,6 +30,8 @@ ThemeBench is a browser extension tool (built with Vite, React, TypeScript) for 
 - **Standardized UI Colors**: Standardized interactive icons and metadata text to `text-slate-400` for consistent visibility.
 - **Expanded Drop Zone**: The file drag-and-drop area in the ThemeList now covers the full UI height, especially improved for the zero-state experience.
 - **System Off Confirmation Modal**: When the global system is off, enabling a theme prompts a modal asking whether to re-enable the entire system or only that specific theme.
+- **UI Simplification**: Removed the "Active on this tab" text label from the UI to reduce clutter, relying on pulsing dots and green border indicators for match feedback.
+
 
 ## Performance Bottlenecks to Investigate
 - `chrome.storage.onChanged` latency.
