@@ -122,10 +122,11 @@ const SortableSnippetItem: React.FC<SortableSnippetItemProps> = ({
                             className="bg-slate-950 text-white text-sm rounded outline-none w-full border border-blue-500 px-1"
                         />
                     ) : (
-                        <Tooltip content="Click to rename" delay={300}>
+                        <Tooltip content="Double-click to rename" delay={300}>
                             <span
                                 className="text-slate-300 text-sm truncate hover:text-white cursor-text border border-transparent hover:border-slate-700 px-1.5 py-0.5 rounded -ml-1.5 transition-colors min-w-0"
-                                onClick={(e) => handleStartRename(e, snippet)}
+                                onClick={(e) => e.stopPropagation()}
+                                onDoubleClick={(e) => handleStartRename(e, snippet)}
                             >{snippet.name}</span>
                         </Tooltip>
                     )}

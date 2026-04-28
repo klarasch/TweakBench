@@ -6,71 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.1.10] - 2026-04-28
+
 ### Added
 - **System Off Confirmation Modal**: A new interaction that prevents users from accidentally enabling themes while the global system is off.
-- The modal offers two choices: "Re-enable system" (keeping other active themes) or "Enable this theme only" (deactivating others).
-- Added `bulkUpdateThemes` action to the store for efficient multi-theme state changes.
-
-## [0.1.9] - 2026-03-09
-
-### Changed
-- **Rebranding**: App renamed to ThemeBench. Main page title changed from "Tweaks" to "Themes".
-- **Export Format**: Transitioned the single-theme export format from JavaScript (`.js`) to JSON (`.json`) for better reliability, smaller file sizes, and unified import logic.
-
-### Added
-- **Theme Descriptions**: Added the ability to define descriptions for themes. They can be edited under the theme title and appear as a tooltip on the theme list.
-- **Drag and Drop Import**: Added support for dragging and dropping ThemeBench export files directly into the UI.
-- **Export Group**: Added "Export group" option to the domain group overflow (kebab) menu, allowing users to export all themes and snippets within a group as a single JSON file.
-- **Inline Renaming**: Double-clicking a theme name in the list now triggers an inline rename mode, allowing for faster editing without opening the full theme detail.
-- **Rename Action**: Added a "Rename" option to the theme overflow (kebab) and context menus.
-
-## [0.1.8] - 2026-02-08
-
-### Changed
-- **Theme Listing UX**: The primary action when clicking a theme tile in the list now enables/disables the theme directly, rather than entering the edit mode. To edit a theme, a new hover-triggered pencil icon button has been added to the tiles, and an "Edit theme" option has been added to the theme's overflow (kebab) menu.
-
-### Fixed
-- **Theme Creation**: New themes now correctly start with an empty state (no default snippet added). This fix resolves a regression from previous versions.
-
-### Build
-- **Readable Builds**: Disabled minification and obfuscation for extension review purposes. Filename hashing is removed, and CSS/JS are now output in a readable format.
-
-## [Unreleased]
-### Added
+- **Undo Support**: All drag-and-drop operations now show an "Undo" toast that allows users to instantly revert changes.
 - **Panel State Persistence**: The plugin now remembers which view (list or theme detail) was open when the side panel is closed, and restores it when reopened.
 - **Wipe All Data**: Added an option to completely wipe all themes and snippets via the main screen overflow menu, protected by a confirmation dialog.
-- Expanded the drag-and-drop area for data files to cover the full UI height in the ThemeList, and centered the zero-state UI.
-- New custom `Tooltip` component using React Portals for better viewport management and z-index handling.
-- Enhanced tooltips with support for custom display modes (`flex`, `block`).
-- Integrated `Tooltip` support directly into the `Toggle` component.
+- **New Tooltip System**: Custom `Tooltip` component using React Portals for better viewport management and z-index handling. Integrated into toggles and all interactive elements.
+- **Expanded Drop Zone**: The file drag-and-drop area in the ThemeList now covers the full UI height, especially improved for the zero-state experience.
 
 ### Improved
-- **Drag and Drop Reordering**: Overhauled theme list drag-and-drop to support reordering within groups, dragging themes out of groups (detach), and dragging themes into groups (attach). Groups now highlight with a blue ring when receiving a theme drop. Visual feedback clearly distinguishes between "add to group" and "reorder at root level" intentions.
-
-### Changed
-- **Theme Detail**: Made the expand/collapse animation immediate instead of gradual, and made the collapsed state persistent across sessions and navigation for each theme.
-- **Responsive Layout**: Improved responsiveness by adding `min-w-[10ch]` to labels and wrapping long theme and domain names (`line-clamp-2`) instead of truncating at low breakpoints.
-- **Header Fixes**: Overhauled the theme detail header layout to ensure perfect vertical alignment between the name and controls. Removed the redundant "All themes disabled" warning and enabled proper text truncation for long theme names.
-- **Snippet Rename UX**: Hidden header controls during snippet name editing to prevent the cursor and text from being obscured.
-- **Snippet Headers**: Refined snippet card headers by replacing the floating control box with a seamless gradient mask. This allows long names to take the full width while controls gracefully overlay with a smooth fade-out effect.
-- **UI Clean-up**: Removed redundant "Group active" labels from domain groups and theme items to reduce clutter.
-- Improved visibility of all secondary icons and labels (changed `text-slate-500` to `text-slate-400`).
-- **Improved Click Targets:** Increased hit areas for all icon buttons (edit, kebab, plus, etc.) across the app to improve accessibility.
-- Standardized native `title` attributes to use the new `Tooltip` component.
-- Standardized interactive icon and metadata colors to `text-slate-400` across the interface for better visibility and a more premium feel.
-- Improved tooltip delays and consistency for all interactive UI elements.
+- **Drag and Drop Reordering**: Overhauled theme list drag-and-drop to support reordering within groups, dragging themes out of groups (detach), and dragging themes into groups (attach).
+- **Visual Feedback**: Groups now highlight with a blue ring when receiving a theme drop. Detaching a theme shows a green ring indicator.
+- **Snappier Toggles**: Adjusted click-delay for theme names to 150ms for faster activation feedback.
+- **Library UX**: Changed snippet renaming in the library to double-click for consistency with the theme list.
+- **Theme Detail Navigation**: Made expand/collapse animations immediate and persistent per-theme.
 
 ### Fixed
 - Fixed a conflict where double-clicking a theme name to rename it would also toggle the theme's enabled state.
-- Fixed an issue where pressing the spacebar while renaming a theme would toggle the theme or trigger dragging instead of typing a space.
-- Fixed a major memory leak caused by DevTools retaining large state objects logged to the console during theme switching.
-- Fixed an un-cleared internal timeout in the transition manager that could accumulate when toggling themes rapidly.
-- Tooltip clipping issues at the edges of the window.
-- Animation artifacts ("flying in" effect) on tooltips.
-- Context menu layout bug where items with tooltips appeared side-by-side.
-- Tooltip z-index issues in modals and sidebars.
+- Fixed an issue where pressing the spacebar while renaming a theme would trigger unwanted behaviors.
+- Resolved a major memory leak caused by large state logging and un-cleared internal timeouts.
+- Fixed tooltip clipping and animation artifacts.
+- Fixed vertical alignment and name truncation in the theme header.
 
-## [0.1.7] - 2026-02-07
+## [0.1.9] - 2026-03-09
 
 ### Added
 - **Starter Kit Expansion**: Added more library snippets for popular fonts (Roboto, Montserrat, Playfair Display) and simplified the "Scroll to top" utility.
