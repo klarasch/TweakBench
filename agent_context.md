@@ -18,6 +18,9 @@ ThemeBench is a browser extension tool (built with Vite, React, TypeScript) for 
 - A previous optimization (50da8b0e-e7c8-4143-9f60-4be2d1506d0a) addressed theme application latency.
 
 ## Recent Features & UX Improvements
+- 2026-04-28: Implemented theme detaching from group to root level with dynamic insertion preview.
+- 2026-04-28: Implemented System Off Confirmation Modal for theme activation.
+- 2026-04-28: Added `bulkUpdateThemes` to the store.
 - Theme tiles in the main list now toggle active state on click.
 - Hover-triggered pencil icon and context menu option for editing themes.
 - **Double-click to rename** for themes in the main list (with event propagation fix to avoid accidental toggling).
@@ -26,6 +29,7 @@ ThemeBench is a browser extension tool (built with Vite, React, TypeScript) for 
 - **Custom Tooltip System**: Standardized on a custom `Tooltip` component (replacing native `title` attributes) for all interactive elements.
 - **Standardized UI Colors**: Standardized interactive icons and metadata text to `text-slate-400` for consistent visibility.
 - **Expanded Drop Zone**: The file drag-and-drop area in the ThemeList now covers the full UI height, especially improved for the zero-state experience.
+- **System Off Confirmation Modal**: When the global system is off, enabling a theme prompts a modal asking whether to re-enable the entire system or only that specific theme.
 
 ## Performance Bottlenecks to Investigate
 - `chrome.storage.onChanged` latency.

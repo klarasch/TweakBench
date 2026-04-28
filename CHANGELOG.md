@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.10] - 2026-04-28
+### Added
+- **System Off Confirmation Modal**: A new interaction that prevents users from accidentally enabling themes while the global system is off.
+- The modal offers two choices: "Re-enable system" (keeping other active themes) or "Enable this theme only" (deactivating others).
+- Added `bulkUpdateThemes` action to the store for efficient multi-theme state changes.
+
 ## [0.1.9] - 2026-03-09
 
 ### Changed

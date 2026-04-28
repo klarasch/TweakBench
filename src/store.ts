@@ -14,6 +14,7 @@ interface Store extends AppState {
 
     addTheme: (themeData: Omit<Theme, 'id' | 'createdAt' | 'updatedAt'>) => string;
     updateTheme: (id: string, updates: Partial<Theme>) => void;
+    bulkUpdateThemes: (updates: { id: string, updates: Partial<Theme> }[]) => void;
     deleteTheme: (id: string) => void;
 
     addSnippetToTheme: (themeId: string, snippetId: string, afterItemId?: string) => string;
@@ -218,6 +219,21 @@ export const useStore = create<Store>((set, get) => ({
             const isImmediate = updates.isActive !== undefined || updates.domainPatterns !== undefined;
             storageService.save(newState, { immediate: isImmediate });
             if (isImmediate) broadcastStateUpdate(newState);
+            return newState;
+        });
+    },
+    bulkUpdateThemes: (updates: { id: string, updates: Partial<Theme> }[]) => {
+        set((state: Store) => {
+            const updatedThemes = state.themes.map(t => {
+                const update = updates.find(u => u.id === t.id);
+                return update ? { ...t, ...update.updates, updatedAt: Date.now() } : t;
+            });
+            const newState = {
+                ...state,
+                themes: updatedThemes,
+            };
+            storageService.save(newState, { immediate: true });
+            broadcastStateUpdate(newState);
             return newState;
         });
     },

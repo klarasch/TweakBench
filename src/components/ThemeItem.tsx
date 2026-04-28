@@ -201,7 +201,7 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
                             checked={theme.isActive}
                             isActive={isActiveOnTab}
                             onChange={(checked) => onUpdateTheme({ isActive: checked })}
-                            disabled={!globalEnabled || isRenaming}
+                            disabled={isRenaming}
                             size="sm"
                         />
                         {!isSelectionMode && (

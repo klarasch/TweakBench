@@ -88,6 +88,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
     const [importMode, setImportMode] = useState<'merge' | 'replace' | 'skip-duplicates'>('merge');
     const [pendingImportData, setPendingImportData] = useState<any>(null);
     const [confirmWipeData, setConfirmWipeData] = useState(false);
+    const [systemOffTheme, setSystemOffTheme] = useState<{ id: string, name: string } | null>(null);
 
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const allDataFileInputRef = React.useRef<HTMLInputElement>(null);
@@ -516,6 +517,37 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
             setSelectedThemeIds(new Set());
         }
     }, [isSelectionMode]);
+
+    const handleUpdateTheme = useCallback((id: string, updates: Partial<Theme>) => {
+        if (!globalEnabled && updates.isActive === true) {
+            const theme = themes.find(t => t.id === id);
+            if (theme) {
+                setSystemOffTheme({ id: theme.id, name: theme.name });
+            }
+            return;
+        }
+        updateTheme(id, updates);
+    }, [globalEnabled, themes, updateTheme]);
+
+    const handleReenableSystem = useCallback((themeId: string) => {
+        useStore.getState().toggleGlobal();
+        updateTheme(themeId, { isActive: true });
+        showToast('System re-enabled');
+    }, [updateTheme, showToast]);
+
+    const handleEnableOnlyThis = useCallback((themeId: string) => {
+        // Turn system on
+        useStore.getState().toggleGlobal();
+
+        // Prepare bulk updates
+        const updates = themes.map(t => ({
+            id: t.id,
+            updates: { isActive: t.id === themeId }
+        }));
+
+        useStore.getState().bulkUpdateThemes(updates);
+        showToast(`System enabled with "${themes.find(t => t.id === themeId)?.name}" only`);
+    }, [themes, showToast]);
 
     const handleCreate = () => {
         if (!newThemeName.trim()) return;
@@ -1118,6 +1150,10 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                         setConfirmWipeData(false);
                         showToast('All data wiped');
                     }}
+                    systemOffTheme={systemOffTheme}
+                    setSystemOffTheme={setSystemOffTheme}
+                    handleReenableSystem={handleReenableSystem}
+                    handleEnableOnlyThis={handleEnableOnlyThis}
                 />
 
 
@@ -1190,7 +1226,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                                         onToggleSelection={handleToggleSelection}
                                                         onContextMenu={handleContextMenu}
                                                         onGroupContextMenu={handleGroupContextMenu}
-                                                        onUpdateTheme={updateTheme}
+                                                        onUpdateTheme={handleUpdateTheme}
                                                         onDeleteTheme={(e: React.MouseEvent, id: string) => { e.stopPropagation(); setThemeToDelete(id); }}
                                                         onDomainClick={(e: React.MouseEvent) => {
                                                             e.stopPropagation();
@@ -1229,7 +1265,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                                         onToggleSelection={() => handleToggleSelection(item.id)}
                                                         onContextMenu={(e: React.MouseEvent) => handleContextMenu(e, item.id)}
                                                         onKebabClick={(e: React.MouseEvent) => handleKebabClick(e, item.id)}
-                                                        onUpdateTheme={(updates: Partial<Theme>) => updateTheme(item.id, updates)}
+                                                        onUpdateTheme={(updates: Partial<Theme>) => handleUpdateTheme(item.id, updates)}
                                                         onDeleteClick={(e: React.MouseEvent) => {
                                                             e.stopPropagation();
                                                             setThemeToDelete(item.id);

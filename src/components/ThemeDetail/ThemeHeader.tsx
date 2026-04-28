@@ -82,17 +82,13 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
 
                     {/* Theme Toggle & Menu */}
                     <div className="flex items-center gap-2 flex-none">
-                        {!globalEnabled ? (
-                            <Toggle checked={false} onChange={() => { }} disabled labelOff="OFF" />
-                        ) : (
-                            <Toggle
-                                checked={theme.isActive}
-                                isActive={isMatch}
-                                onChange={() => updateTheme(theme.id, { isActive: !theme.isActive })}
-                                labelOn="ON"
-                                labelOff="OFF"
-                            />
-                        )}
+                        <Toggle
+                            checked={theme.isActive}
+                            isActive={isMatch}
+                            onChange={() => updateTheme(theme.id, { isActive: !theme.isActive })}
+                            labelOn="ON"
+                            labelOff="OFF"
+                        />
 
                         <Tooltip content="Theme options" delay={300}>
                             <Button

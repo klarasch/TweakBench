@@ -238,7 +238,6 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
                                         checked={activeTheme.isActive}
                                         isActive={isActiveOnTab}
                                         onChange={(checked) => onUpdateTheme(activeTheme.id, { isActive: checked })}
-                                        disabled={!globalEnabled}
                                         size="sm"
                                     />
                                 </>

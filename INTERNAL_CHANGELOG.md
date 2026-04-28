@@ -61,5 +61,8 @@
 - 2026-04-28 17:18:00 UTC - Adjusted click-delay to 150ms for snappier toggle feedback on theme names.
 - 2026-04-28 17:38:00 UTC - Persisted panel UI state (panelView, selectedThemeId) to storage so the plugin restores its view when closed and reopened.
 - 2026-04-28 17:49:00 UTC - Overhauled drag-and-drop in ThemeList: switched collision detection to pointerWithin, added onDragOver handler for visual group-drop feedback, rewrote handleDragEnd to support 4 cases (same-group reorder, add-to-group, detach-from-group, root reorder). Added addThemeToGroup store action. Groups now highlight with blue ring when receiving a theme. Source group stays expanded when dragging its items.
+- 2026-04-28: Implemented theme detaching from group to root level with dynamic insertion preview.
+- 2026-04-28: Implemented System Off Confirmation Modal for theme activation.
+- 2026-04-28: Added `bulkUpdateThemes` to the store.
 - 2026-04-28 18:12:00 UTC - Fixed intra-group reorder bug (themes.map preserved original order; switched to sequential counter). Removed useDroppable from ThemeGroup to prevent collision detection interference. Added undo support: Toast component now supports action buttons, all DnD operations show "Undo" toast that restores pre-mutation snapshot.
 - 2026-04-28 18:17:00 UTC - DnD refinements: (1) Don't collapse groups when reordering inside a group. (2) Custom collision detection requiring rectIntersection overlap for foreign-group themes — prevents accidental add-to-group near boundaries. (3) DragOverlay shows green ring when detaching a theme from a group. (4) Verified exports/imports unaffected by DnD changes.

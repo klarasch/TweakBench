@@ -27,7 +27,15 @@ interface ThemeDetailModalsProps {
     importCandidates: { variables: Record<string, Record<string, string>>; domain: string } | null;
     setImportCandidates: (candidates: any) => void;
     handleConfirmImport: (selectedScopes: string[]) => void;
+
+    // System Off Confirmation
+    isSystemOffModalOpen: boolean;
+    setSystemOffModalOpen: (open: boolean) => void;
+    handleReenableSystem: () => void;
+    handleEnableOnlyThis: () => void;
 }
+
+import { SystemOffConfirmModal } from '../SystemOffConfirmModal';
 
 export const ThemeDetailModals: React.FC<ThemeDetailModalsProps> = ({
     themeId,
@@ -44,10 +52,28 @@ export const ThemeDetailModals: React.FC<ThemeDetailModalsProps> = ({
     setThemeToDelete,
     importCandidates,
     setImportCandidates,
-    handleConfirmImport
+    handleConfirmImport,
+    isSystemOffModalOpen,
+    setSystemOffModalOpen,
+    handleReenableSystem,
+    handleEnableOnlyThis
 }) => {
     return (
         <>
+            {/* System Off Confirmation Modal */}
+            <SystemOffConfirmModal
+                isOpen={isSystemOffModalOpen}
+                onClose={() => setSystemOffModalOpen(false)}
+                themeName={themeName}
+                onReenableSystem={() => {
+                    handleReenableSystem();
+                    setSystemOffModalOpen(false);
+                }}
+                onEnableOnlyThis={() => {
+                    handleEnableOnlyThis();
+                    setSystemOffModalOpen(false);
+                }}
+            />
             {/* Import Variables Modal */}
             {importCandidates && (
                 <ImportVariablesModal

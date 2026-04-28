@@ -57,7 +57,15 @@ interface ThemeListModalsProps {
     confirmWipeData: boolean;
     setConfirmWipeData: (value: boolean) => void;
     confirmWipeDataAction: () => void;
+
+    // System Off Confirmation
+    systemOffTheme: { id: string, name: string } | null;
+    setSystemOffTheme: (theme: { id: string, name: string } | null) => void;
+    handleReenableSystem: (themeId: string) => void;
+    handleEnableOnlyThis: (themeId: string) => void;
 }
+
+import { SystemOffConfirmModal } from '../SystemOffConfirmModal';
 
 export const ThemeListModals: React.FC<ThemeListModalsProps> = ({
     isCreating,
@@ -103,7 +111,12 @@ export const ThemeListModals: React.FC<ThemeListModalsProps> = ({
 
     confirmWipeData,
     setConfirmWipeData,
-    confirmWipeDataAction
+    confirmWipeDataAction,
+
+    systemOffTheme,
+    setSystemOffTheme,
+    handleReenableSystem,
+    handleEnableOnlyThis
 }) => {
     const [confirmReplaceImport, setConfirmReplaceImport] = React.useState(false);
 
@@ -116,6 +129,20 @@ export const ThemeListModals: React.FC<ThemeListModalsProps> = ({
     };
     return (
         <>
+            {/* System Off Confirmation Modal */}
+            <SystemOffConfirmModal
+                isOpen={!!systemOffTheme}
+                onClose={() => setSystemOffTheme(null)}
+                themeName={systemOffTheme?.name || ''}
+                onReenableSystem={() => {
+                    if (systemOffTheme) handleReenableSystem(systemOffTheme.id);
+                    setSystemOffTheme(null);
+                }}
+                onEnableOnlyThis={() => {
+                    if (systemOffTheme) handleEnableOnlyThis(systemOffTheme.id);
+                    setSystemOffTheme(null);
+                }}
+            />
             {/* Create Theme Modal */}
             <Modal
                 isOpen={isCreating}

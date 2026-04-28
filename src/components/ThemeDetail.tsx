@@ -163,6 +163,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
 
     // Quick Add State
     const [quickAddState, setQuickAddState] = useState<{ x: number; y: number; type: 'css' | 'html' } | null>(null);
+    const [isSystemOffModalOpen, setIsSystemOffModalOpen] = useState(false);
 
     // DnD Sensors
     const sensors = useSensors(
@@ -640,6 +641,35 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
 
     const [themeToDelete, setThemeToDelete] = useState(false);
 
+    const handleUpdateTheme = useCallback((id: string, updates: Partial<import('../types.ts').Theme>) => {
+        if (!globalEnabled && updates.isActive === true) {
+            setIsSystemOffModalOpen(true);
+            return;
+        }
+        updateTheme(id, updates);
+    }, [globalEnabled, updateTheme]);
+
+    const handleReenableSystem = useCallback(() => {
+        toggleGlobal();
+        updateTheme(themeId, { isActive: true });
+        showToast('System re-enabled');
+    }, [themeId, toggleGlobal, updateTheme, showToast]);
+
+    const handleEnableOnlyThis = useCallback(() => {
+        // Turn system on
+        toggleGlobal();
+
+        // Prepare bulk updates
+        const allThemes = useStore.getState().themes;
+        const updates = allThemes.map(t => ({
+            id: t.id,
+            updates: { isActive: t.id === themeId }
+        }));
+
+        useStore.getState().bulkUpdateThemes(updates);
+        showToast(`System enabled with "${theme?.name}" only`);
+    }, [themeId, toggleGlobal, theme?.name, showToast]);
+
     const getMenuItems = (itemId: string): ContextMenuItem[] => {
         const { clipboardSnippet } = useStore.getState();
 
@@ -1027,7 +1057,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
             <ThemeHeader
                 theme={theme}
                 onBack={onBack}
-                updateTheme={updateTheme}
+                updateTheme={handleUpdateTheme}
                 showLibrary={showLibrary}
                 setShowLibrary={setShowLibrary}
                 libraryFilter={libraryFilter}
@@ -1522,6 +1552,10 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
                         importCandidates={importCandidates}
                         setImportCandidates={setImportCandidates}
                         handleConfirmImport={handleConfirmImport}
+                        isSystemOffModalOpen={isSystemOffModalOpen}
+                        setSystemOffModalOpen={setIsSystemOffModalOpen}
+                        handleReenableSystem={handleReenableSystem}
+                        handleEnableOnlyThis={handleEnableOnlyThis}
                     />
                 </div>
             </div>
