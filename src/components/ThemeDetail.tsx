@@ -1062,7 +1062,6 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
                 setShowLibrary={setShowLibrary}
                 libraryFilter={libraryFilter}
                 setLibraryFilter={setLibraryFilter}
-                globalEnabled={globalEnabled}
                 toggleGlobal={toggleGlobal}
                 isOtherInGroupActive={isOtherInGroupActive}
                 onContextMenu={(e) => {

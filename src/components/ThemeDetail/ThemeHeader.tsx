@@ -18,7 +18,6 @@ interface ThemeHeaderProps {
     setShowLibrary: (show: boolean) => void;
     libraryFilter: string | null;
     setLibraryFilter: (filter: 'css' | 'html' | null) => void;
-    globalEnabled: boolean;
     toggleGlobal: () => void;
     onContextMenu: (e: React.MouseEvent) => void;
     isOtherInGroupActive?: boolean;
@@ -32,7 +31,6 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
     setShowLibrary,
     // libraryFilter,
     setLibraryFilter,
-    globalEnabled,
     toggleGlobal,
     onContextMenu,
     isOtherInGroupActive: _isOtherInGroupActive
