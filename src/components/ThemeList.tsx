@@ -55,7 +55,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
     const ungroupThemes = useStore(state => state.ungroupThemes);
     const createEmptyGroup = useStore(state => state.createEmptyGroup);
     const detachThemeFromGroup = useStore(state => state.detachThemeFromGroup);
-
+    const wipeAllData = useStore(state => state.wipeAllData);
 
     const { showToast } = useToast();
 
@@ -83,6 +83,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
     const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
     const [importMode, setImportMode] = useState<'merge' | 'replace' | 'skip-duplicates'>('merge');
     const [pendingImportData, setPendingImportData] = useState<any>(null);
+    const [confirmWipeData, setConfirmWipeData] = useState(false);
 
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const allDataFileInputRef = React.useRef<HTMLInputElement>(null);
@@ -723,6 +724,13 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
             label: 'Import all data',
             icon: <Upload size={14} className="text-green-400" />,
             onClick: handleImportAllDataClick
+        },
+        { separator: true },
+        {
+            label: 'Wipe all data',
+            icon: <Trash2 size={14} />,
+            danger: true,
+            onClick: () => setConfirmWipeData(true)
         }
     ];
 
@@ -943,6 +951,13 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                         showToast('Domain group created');
                     }}
                     newThemeGroupId={newThemeGroupId}
+                    confirmWipeData={confirmWipeData}
+                    setConfirmWipeData={setConfirmWipeData}
+                    confirmWipeDataAction={() => {
+                        wipeAllData();
+                        setConfirmWipeData(false);
+                        showToast('All data wiped');
+                    }}
                 />
 
 

@@ -50,9 +50,12 @@ interface ThemeListModalsProps {
     isCreatingGroup: boolean;
     setIsCreatingGroup: (value: boolean) => void;
     newGroupName: string;
-    handleCreateGroup: () => void;
-
     newThemeGroupId?: string | null;
+
+    // Wipe All Data
+    confirmWipeData: boolean;
+    setConfirmWipeData: (value: boolean) => void;
+    confirmWipeDataAction: () => void;
 }
 
 export const ThemeListModals: React.FC<ThemeListModalsProps> = ({
@@ -95,7 +98,11 @@ export const ThemeListModals: React.FC<ThemeListModalsProps> = ({
     setIsCreatingGroup,
     newGroupName,
     handleCreateGroup,
-    newThemeGroupId
+    newThemeGroupId,
+
+    confirmWipeData,
+    setConfirmWipeData,
+    confirmWipeDataAction
 }) => {
     const [confirmReplaceImport, setConfirmReplaceImport] = React.useState(false);
 
@@ -322,6 +329,17 @@ export const ThemeListModals: React.FC<ThemeListModalsProps> = ({
                 title="Delete domain group?"
                 message="Are you sure you want to delete this group? All themes inside the group will be DELETED."
                 confirmLabel="Delete group and themes"
+                isDangerous
+            />
+
+            {/* Wipe Data Confirmation */}
+            <ConfirmDialog
+                isOpen={confirmWipeData}
+                onClose={() => setConfirmWipeData(false)}
+                onConfirm={confirmWipeDataAction}
+                title="Wipe ALL data?"
+                message="Are you absolutely sure you want to completely wipe all themes and snippets? This action is permanent and CANNOT be undone."
+                confirmLabel="Wipe all data"
                 isDangerous
             />
         </>

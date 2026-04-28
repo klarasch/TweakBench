@@ -40,6 +40,7 @@ interface Store extends AppState {
     ungroupThemes: (themeIds: string[]) => void;
     createEmptyGroup: (domainPatterns: string[]) => string;
     loadExampleData: () => Promise<void>;
+    wipeAllData: () => void;
 }
 
 export const useStore = create<Store>((set, get) => ({
@@ -806,5 +807,18 @@ export const useStore = create<Store>((set, get) => ({
         } catch (e) {
             console.error('Failed to load starter kit:', e);
         }
+    },
+
+    wipeAllData: () => {
+        set((state: Store) => {
+            const newState = {
+                ...state,
+                themes: [],
+                snippets: [],
+                activeThemeId: null,
+            };
+            storageService.save(newState, { immediate: true });
+            return newState;
+        });
     },
 }));

@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- **Wipe All Data**: Added an option to completely wipe all themes and snippets via the main screen overflow menu, protected by a confirmation dialog.
 - New custom `Tooltip` component using React Portals for better viewport management and z-index handling.
 - Enhanced tooltips with support for custom display modes (`flex`, `block`).
 - Integrated `Tooltip` support directly into the `Toggle` component.
