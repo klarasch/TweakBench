@@ -26,8 +26,8 @@ export const QuickAddMenu: React.FC<QuickAddMenuProps> = ({ x, y, type, onClose,
         .filter(s => s.type === type && s.isLibraryItem !== false)
         // Sort by usage count (descending) then name
         .sort((a, b) => {
-            const usageA = themes.reduce((acc, t) => acc + t.items.filter(i => i.snippetId === a.id).length, 0);
-            const usageB = themes.reduce((acc, t) => acc + t.items.filter(i => i.snippetId === b.id).length, 0);
+            const usageA = themes.filter(t => t.items.some(i => i.snippetId === a.id)).length;
+            const usageB = themes.filter(t => t.items.some(i => i.snippetId === b.id)).length;
             if (usageA !== usageB) return usageB - usageA;
             return a.name.localeCompare(b.name);
         })
@@ -95,7 +95,7 @@ export const QuickAddMenu: React.FC<QuickAddMenuProps> = ({ x, y, type, onClose,
                 <div className="max-h-[300px] overflow-y-auto p-1">
                     {quickSnippets.length > 0 ? (
                         quickSnippets.map(snippet => {
-                            const usageCount = themes.reduce((acc, t) => acc + t.items.filter(i => i.snippetId === snippet.id).length, 0);
+                            const usageCount = themes.filter(t => t.items.some(i => i.snippetId === snippet.id)).length;
                             return (
                                 <button
                                     key={snippet.id}

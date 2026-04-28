@@ -116,9 +116,10 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
                             onPointerDown={(e) => e.stopPropagation()}
                         />
                     ) : (
-                        <div className="flex items-center gap-1.5 min-w-0">
+                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
                             <span
-                                className={`text-sm font-medium truncate ${isActiveOnTab ? 'text-green-400' : 'text-slate-200'} ${isSelected ? 'text-white' : ''}`}
+                                className={`text-sm font-medium line-clamp-2 min-w-[10ch] ${isActiveOnTab ? 'text-green-400' : 'text-slate-200'} ${isSelected ? 'text-white' : ''}`}
+                                style={{ wordBreak: 'break-word' }}
                                 onDoubleClick={(e) => {
                                     if (isSelectionMode) return;
                                     e.stopPropagation();
@@ -144,10 +145,13 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
                                     onDomainClick(e);
                                 }}
                                 onPointerDown={e => e.stopPropagation()}
-                                className="flex items-center gap-1.5 min-w-0 hover:bg-slate-700/50 px-1.5 py-0.5 rounded transition-colors cursor-pointer"
+                                className="flex items-start gap-1.5 min-w-0 hover:bg-slate-700/50 px-1.5 py-0.5 rounded transition-colors cursor-pointer text-left"
                             >
-                                <Globe size={12} className="text-slate-400 shrink-0" />
-                                <span className={`text-xs font-semibold truncate max-w-[150px] ${theme.domainPatterns.length === 0 ? 'text-slate-400 italic' : 'text-slate-300'}`}>
+                                <Globe size={12} className="text-slate-400 shrink-0 mt-0.5" />
+                                <span 
+                                    className={`text-xs font-semibold line-clamp-2 min-w-[10ch] max-w-[150px] ${theme.domainPatterns.length === 0 ? 'text-slate-400 italic' : 'text-slate-300'}`}
+                                    style={{ wordBreak: 'break-word' }}
+                                >
                                     {theme.domainPatterns.length === 0 ? 'No domains configured' : theme.domainPatterns.join(', ')}
                                 </span>
                             </button>
@@ -155,18 +159,11 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
                     )}
                 </div>
                 <div className="flex gap-1 items-center">
-                    {isActiveOnTab ? (
+                    {isActiveOnTab && (
                         <div className="flex items-center gap-1.5 text-[10px] font-medium px-2 py-1 rounded-full text-green-400/90 bg-green-500/10">
                             Active on this tab
                         </div>
-                    ) : (isMatch && theme.groupId && !theme.isActive && isOtherInGroupActive) ? (
-                        <Tooltip content="Another theme in this group is active on this tab" delay={300}>
-                            <div className="flex items-center gap-1.5 text-[10px] font-medium px-2 py-1 rounded-full text-amber-500/90 bg-amber-500/5">
-                                <div className="w-1.2 h-1.2 rounded-full bg-amber-500/50"></div>
-                                Group active
-                            </div>
-                        </Tooltip>
-                    ) : null}
+                    )}
                     <div className="flex gap-2 items-center ml-2">
                         <Toggle
                             checked={theme.isActive}

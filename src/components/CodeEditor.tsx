@@ -33,6 +33,7 @@ export interface CodeEditorRef {
     format: () => Promise<void>;
     getCursorPosition: () => { from: number; to: number } | null;
     setCursorPosition: (from: number, to: number) => void;
+    scrollToMatch: (from: number, to: number) => void;
 }
 
 export const CodeEditor = React.memo(React.forwardRef<CodeEditorRef, CodeEditorProps>((props, ref) => {
@@ -83,6 +84,13 @@ export const CodeEditor = React.memo(React.forwardRef<CodeEditorRef, CodeEditorP
             if (!view) return;
             view.dispatch({
                 selection: { anchor: from, head: to }
+            });
+        },
+        scrollToMatch: (from: number, to: number) => {
+            const view = editorRef.current?.view;
+            if (!view) return;
+            view.dispatch({
+                effects: EditorView.scrollIntoView(from, { y: "center" })
             });
         }
     }));
@@ -285,6 +293,7 @@ export const CodeEditor = React.memo(React.forwardRef<CodeEditorRef, CodeEditorP
                     foldGutter: true,
                     highlightActiveLine: true,
                     autocompletion: true,
+                    searchKeymap: false,
                 }}
             />
         </div>

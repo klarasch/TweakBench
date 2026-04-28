@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import type { ThemeItem, Snippet } from '../types.ts';
 import type { VirtuosoHandle } from 'react-virtuoso';
 
@@ -11,6 +11,7 @@ export const useThemeDetailSearch = (
     filteredItems: ThemeItem[],
     snippets: Snippet[],
     virtuosoRef: React.RefObject<VirtuosoHandle | null>,
+    editorRefs: React.MutableRefObject<Record<string, any>>,
     setSelectedItemId: (id: string | null) => void,
     setCollapsedItems: (updater: (prev: Set<string>) => Set<string>) => void
 ) => {
@@ -70,12 +71,7 @@ export const useThemeDetailSearch = (
         return searchResults.reduce((sum, result) => sum + result.matches.length, 0);
     }, [searchResults]);
 
-    const displayedItems = useMemo(() => {
-        if (!searchQuery || searchQuery.trim() === '') return filteredItems;
-        return filteredItems.filter(item =>
-            searchResults.some(result => result.itemId === item.id)
-        );
-    }, [searchQuery, filteredItems, searchResults]);
+    const displayedItems = filteredItems;
 
     const currentMatch = useMemo(() => {
         if (totalMatches === 0 || currentMatchIndex >= totalMatches) return null;
@@ -111,8 +107,22 @@ export const useThemeDetailSearch = (
     }, []);
 
     // Auto-expand and scroll
+    // Use a ref to track which (query, index) we last scrolled for, so we don't steal focus/scroll on content edits
+    const lastScrolledRef = useRef({ query: '', index: -1 });
+
     useEffect(() => {
         if (!currentMatch) return;
+
+        // If the query and index haven't changed, this re-render was likely caused by content editing.
+        // In that case, do NOT scroll again, to avoid jumping.
+        if (
+            lastScrolledRef.current.query === searchQuery &&
+            lastScrolledRef.current.index === currentMatchIndex
+        ) {
+            return;
+        }
+
+        lastScrolledRef.current = { query: searchQuery, index: currentMatchIndex };
 
         setCollapsedItems(prev => {
             if (!prev.has(currentMatch.itemId)) return prev;
@@ -125,11 +135,15 @@ export const useThemeDetailSearch = (
         if (index !== -1) {
             setTimeout(() => {
                 virtuosoRef.current?.scrollToIndex({ index, align: 'center', behavior: 'smooth' });
+                // Scroll CodeMirror inside the item
+                if (editorRefs.current[currentMatch.itemId]) {
+                    editorRefs.current[currentMatch.itemId]?.scrollToMatch?.(currentMatch.match.from, currentMatch.match.to);
+                }
             }, 100);
         }
 
         setSelectedItemId(currentMatch.itemId);
-    }, [currentMatch, displayedItems, setCollapsedItems, virtuosoRef, setSelectedItemId]);
+    }, [currentMatch, displayedItems, setCollapsedItems, virtuosoRef, editorRefs, setSelectedItemId, searchQuery, currentMatchIndex]);
 
     // Reset index on query change
     useEffect(() => {

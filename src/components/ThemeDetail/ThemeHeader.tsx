@@ -55,29 +55,70 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
     return (
         <div className="flex-none flex items-start gap-2 p-2 sm:p-4 border-b border-slate-800 bg-slate-900 z-10 relative">
             <Tooltip content="Back" delay={300}>
-                <button onClick={onBack} className="p-1 mt-0.5 rounded hover:bg-slate-800 btn-ghost-muted">
+                <button onClick={onBack} className="p-1 mt-1 rounded hover:bg-slate-800 btn-ghost-muted flex-none">
                     <ArrowLeft size={18} />
                 </button>
             </Tooltip>
             <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                    {theme.groupId && (
-                        <Tooltip content="This theme is part of a domain group" delay={300}>
-                            <div className="text-blue-400">
-                                <LinkIcon size={16} />
-                            </div>
+                <div className="flex items-center justify-between gap-4">
+                    <div className="flex-1 min-w-0 flex items-center gap-2">
+                        {theme.groupId && (
+                            <Tooltip content="This theme is part of a domain group" delay={300}>
+                                <div className="text-blue-400 flex-none">
+                                    <LinkIcon size={16} />
+                                </div>
+                            </Tooltip>
+                        )}
+                        <input
+                            className="bg-transparent font-semibold text-lg outline-none flex-1 min-w-0 text-white placeholder-slate-600 truncate"
+                            value={localName}
+                            onChange={(e) => {
+                                setLocalName(e.target.value);
+                                updateTheme(theme.id, { name: e.target.value });
+                            }}
+                            placeholder="Theme name"
+                        />
+                    </div>
+
+                    {/* Theme Toggle & Menu */}
+                    <div className="flex items-center gap-2 flex-none">
+                        {!globalEnabled ? (
+                            <Toggle checked={false} onChange={() => { }} disabled labelOff="OFF" />
+                        ) : (
+                            <Toggle
+                                checked={theme.isActive}
+                                isActive={isMatch}
+                                onChange={() => updateTheme(theme.id, { isActive: !theme.isActive })}
+                                labelOn="ON"
+                                labelOff="OFF"
+                            />
+                        )}
+
+                        <Tooltip content="Theme options" delay={300}>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={onContextMenu}
+                            >
+                                <MoreVertical size={18} />
+                            </Button>
                         </Tooltip>
-                    )}
-                    <input
-                        className="bg-transparent font-semibold text-lg outline-none w-full text-white placeholder-slate-600"
-                        value={localName}
-                        onChange={(e) => {
-                            setLocalName(e.target.value);
-                            updateTheme(theme.id, { name: e.target.value });
-                        }}
-                        placeholder="Theme name"
-                    />
+
+                        <div className="divider-v h-6 mx-1"></div>
+
+                        <Tooltip content="Toggle snippet library" delay={300}>
+                            <Button
+                                variant={showLibrary ? "filled" : "outline"}
+                                size="sm"
+                                onClick={() => { setShowLibrary(!showLibrary); setLibraryFilter(null); }}
+                                icon={<BookOpen size={14} />}
+                            >
+                                <span className="hidden sm:inline">Library</span>
+                            </Button>
+                        </Tooltip>
+                    </div>
                 </div>
+
                 <textarea
                     className="bg-transparent text-xs text-slate-400 outline-none w-full resize-none overflow-hidden placeholder-slate-600 mt-1"
                     value={localDescription}
@@ -134,63 +175,12 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                                 {isMatch
                                     ? theme.isActive
                                         ? "Active on this tab"
-                                        : (theme.groupId && isOtherInGroupActive)
-                                            ? "Group active"
-                                            : "Inactive"
+                                        : "Inactive"
                                     : "Inactive"}
                             </div>
                         </Tooltip>
                     )}
                 </div>
-            </div>
-            {/* Theme Toggle & Menu */}
-            <div className="flex items-center gap-2 mt-0.5">
-                {/* Global Disabled Warning */}
-                {!globalEnabled && (
-                    <Tooltip content="Click to re-enable plugin" delay={300}>
-                        <span
-                            className="text-[10px] font-bold text-amber-500 uppercase tracking-wider mr-2 cursor-pointer hover:underline hover:text-amber-400"
-                            onClick={() => setConfirmEnableGlobal(true)}
-                        >
-                            All themes disabled
-                        </span>
-                    </Tooltip>
-                )}
-
-                {!globalEnabled ? (
-                    <Toggle checked={false} onChange={() => { }} disabled labelOff="OFF" />
-                ) : (
-                    <Toggle
-                        checked={theme.isActive}
-                        isActive={isMatch}
-                        onChange={() => updateTheme(theme.id, { isActive: !theme.isActive })}
-                        labelOn="ON"
-                        labelOff="OFF"
-                    />
-                )}
-
-                <Tooltip content="Theme options" delay={300}>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={onContextMenu}
-                    >
-                        <MoreVertical size={18} />
-                    </Button>
-                </Tooltip>
-
-                <div className="divider-v h-6 mx-1"></div>
-
-                <Tooltip content="Toggle snippet library" delay={300}>
-                    <Button
-                        variant={showLibrary ? "filled" : "outline"}
-                        size="sm"
-                        onClick={() => { setShowLibrary(!showLibrary); setLibraryFilter(null); }}
-                        icon={<BookOpen size={14} />}
-                    >
-                        <span className="hidden sm:inline">Library</span>
-                    </Button>
-                </Tooltip>
             </div>
 
             <ConfirmDialog

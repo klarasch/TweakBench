@@ -143,7 +143,7 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
             style={style}
             {...attributes}
             className={`
-                group relative border transition-all rounded-lg mb-4 overflow-hidden shrink-0 scroll-mt-14 cursor-default
+                group relative border transition rounded-lg mb-4 overflow-hidden shrink-0 scroll-mt-14 cursor-default
                 ${isSelected && !isOverlay
                     ? 'bg-slate-900 border-blue-500/50 shadow-[0_0_15px_-3px_rgba(59,130,246,0.15)] ring-1 ring-blue-500/20'
                     : item.isEnabled
@@ -162,7 +162,7 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
             <div
                 {...listeners}
                 className={`
-                    flex items-center gap-3 px-3 py-2 select-none transition-colors outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset
+                    relative flex items-center gap-3 px-3 py-2 select-none transition-colors outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset
                     ${isCollapsed ? 'hover:bg-slate-800' : 'bg-slate-800/30 border-b border-slate-800/50'}
                     ${isDragging ? 'cursor-grabbing' : ''}
                 `}
@@ -240,7 +240,7 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                         ) : (
                             <Tooltip content="Click to rename" delay={300}>
                                 <span
-                                    className={`text-xs font-semibold truncate cursor-text hover:text-white border border-transparent hover:border-slate-700 px-1.5 py-0.5 rounded -ml-1.5 transition-colors min-w-0 ${isSelected ? 'text-white' : 'text-slate-400 group-hover:text-slate-300'} ${!item.isEnabled ? 'line-through opacity-75' : ''}`}
+                                    className={`text-xs font-semibold truncate cursor-text hover:text-white border border-transparent hover:border-slate-700 px-1.5 py-0.5 rounded -ml-1.5 transition-colors min-w-[10ch] ${isSelected ? 'text-white' : 'text-slate-400 group-hover:text-slate-300'} ${!item.isEnabled ? 'line-through opacity-75' : ''}`}
                                     onClick={(e: React.MouseEvent) => {
                                         e.stopPropagation();
                                         onSetEditing(item.id, true);
@@ -274,8 +274,16 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                     </div>
                 </div>
 
-                {/* Controls - Visible on Hover OR when Selected/Focused */}
-                <div className={`flex items-center gap-2 transition-opacity ${isSelected || isCollapsed ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                {/* Controls - Visible on Hover OR when Selected/Focused (Hidden when editing) */}
+                <div className={`absolute right-0 top-0 bottom-0 flex items-center transition-opacity z-10 ${!isEditing && (isSelected || isCollapsed) ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto'} ${isEditing ? '!opacity-0 !pointer-events-none' : ''}`}>
+                    {/* Background layers: Solid Base -> Header Tint -> Fade Gradient */}
+                    <div className="absolute inset-0 bg-slate-900"></div>
+                    <div className={`absolute inset-0 ${isCollapsed ? 'bg-slate-800' : 'bg-slate-800/40'}`}></div>
+                    
+                    <div className="absolute -left-12 top-0 bottom-0 w-12 bg-gradient-to-r from-transparent to-slate-900"></div>
+                    <div className={`absolute -left-12 top-0 bottom-0 w-12 bg-gradient-to-r from-transparent ${isCollapsed ? 'to-slate-800' : 'to-slate-800/40'}`}></div>
+
+                    <div className="relative flex items-center gap-2 px-3">
 
                     {/* Collapsed Actions (Save, Reset) - Only show if collapsed or forced? Actually usually controls are always visible in header if extended? 
                         Wait, this header is arguably ALWAYS visible. 
@@ -387,6 +395,7 @@ export const SnippetStackItem = React.memo<SnippetStackItemProps>(({
                     </Tooltip>
                 </div>
             </div>
+        </div>
 
             {/* HTML Controls Row (Expanded Only) */}
             {

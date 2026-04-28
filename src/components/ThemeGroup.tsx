@@ -134,7 +134,7 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
                 {...attributes}
                 {...listeners}
             >
-                <div className="flex items-center gap-2 min-w-0">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
                     {isSelectionMode && (
                         <div
                             onClick={(e) => { e.stopPropagation(); handleGroupSelect(); }}
@@ -175,26 +175,27 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
                                 e.stopPropagation();
                                 onDomainClick(e);
                             }}
-                            className="flex items-center gap-1.5 min-w-0 hover:bg-slate-700/50 px-1.5 py-1 rounded transition-colors cursor-pointer"
+                            className="flex items-start gap-1.5 min-w-0 hover:bg-slate-700/50 px-1.5 py-1 rounded transition-colors cursor-pointer text-left"
                             onPointerDown={e => e.stopPropagation()}
                         >
-                            <Globe size={12} className="text-slate-400 shrink-0" />
-                            <span className="text-xs font-semibold text-slate-300 truncate">
+                            <Globe size={12} className="text-slate-400 shrink-0 mt-0.5" />
+                            <span className="text-xs font-semibold text-slate-300 line-clamp-2 min-w-[10ch]" style={{ wordBreak: 'break-word' }}>
                                 {domainPatterns.join(', ')}
                             </span>
                         </button>
                     </Tooltip>
 
                     {effectivelyCollapsed && activeTheme && (
-                        <div className="flex items-center gap-2 ml-2 min-w-0">
-                            <span className="text-xs text-slate-400">•</span>
+                        <div className="flex items-start gap-2 ml-2 min-w-0">
+                            <span className="text-xs text-slate-400 mt-0.5">•</span>
                             <Tooltip content={`Active: ${activeTheme.name}`} delay={300}>
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         onSelectTheme(activeTheme.id);
                                     }}
-                                    className="text-xs text-slate-300 hover:text-white truncate"
+                                    className="text-xs text-slate-300 hover:text-white line-clamp-2 min-w-[10ch] text-left"
+                                    style={{ wordBreak: 'break-word' }}
                                 >
                                     {activeTheme.name}
                                 </button>

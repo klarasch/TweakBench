@@ -8,7 +8,7 @@ import { SearchBar } from './ThemeDetail/SearchBar.tsx';
 import { Button } from './ui/Button';
 import { Tooltip } from './ui/Tooltip';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu.tsx';
-import { Trash2, Plus, Box, Play, Pause, Download, Edit, X, MoreVertical, Unlink, Copy } from 'lucide-react';
+import { Trash2, Plus, Box, Play, Pause, Download, Edit, X, MoreVertical, Unlink, Copy, Search } from 'lucide-react';
 import { useActiveTab } from '../hooks/useActiveTab.ts';
 import { isDomainMatch } from '../utils/domains.ts';
 import { useToast } from './ui/Toast';
@@ -84,7 +84,19 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
         domain: string;
     } | null>(null);
 
-    const [collapsedItems, setCollapsedItems] = useState<Set<string>>(new Set());
+    const [collapsedItems, setCollapsedItems] = useState<Set<string>>(() => {
+        try {
+            const saved = localStorage.getItem(`ThemeBench_collapsed_${themeId}`);
+            if (saved) return new Set(JSON.parse(saved));
+        } catch (e) {
+            console.error('Error loading collapsed state', e);
+        }
+        return new Set();
+    });
+
+    useEffect(() => {
+        localStorage.setItem(`ThemeBench_collapsed_${themeId}`, JSON.stringify(Array.from(collapsedItems)));
+    }, [collapsedItems, themeId]);
 
     const handleSetCollapsedItems = useCallback((updater: (prev: Set<string>) => Set<string>) => {
         setCollapsedItems(prev => updater(prev));
@@ -182,11 +194,13 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
         currentMatch,
         handleNextMatch,
         handlePreviousMatch,
-        handleCloseSearch
+        handleCloseSearch,
+        setIsSearchOpen
     } = useThemeDetailSearch(
         filteredItems,
         snippets,
         virtuosoRef,
+        editorRefs,
         setSelectedItemId,
         handleSetCollapsedItems
     );
@@ -1046,7 +1060,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
             )}
 
             {/* Tab Bar (New) */}
-            <div className="flex border-b border-slate-800 bg-slate-900">
+            <div className="flex border-b border-slate-800 bg-slate-900 items-center">
                 <button
                     onClick={() => setActiveTab('css')}
                     className={`flex-1 py-2 text-xs font-semibold uppercase tracking-wider transition-colors relative ${activeTab === 'css' ? 'text-blue-400' : 'text-slate-400 hover:text-slate-300'}`}
@@ -1054,7 +1068,7 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
                     CSS
                     {activeTab === 'css' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500"></div>}
                 </button>
-                <div className="w-px bg-slate-800 my-2"></div>
+                <div className="w-px bg-slate-800 my-2 h-6"></div>
                 <button
                     onClick={() => setActiveTab('html')}
                     className={`flex-1 py-2 text-xs font-semibold uppercase tracking-wider transition-colors relative ${activeTab === 'html' ? 'text-orange-400' : 'text-slate-400 hover:text-slate-300'}`}
@@ -1062,6 +1076,18 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
                     HTML
                     {activeTab === 'html' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-orange-500"></div>}
                 </button>
+                <div className="pr-2 pl-1">
+                    <Tooltip content="Search (Cmd+F)" delay={300}>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className={`h-8 w-8 p-0 rounded-md transition-colors ${isSearchOpen ? 'bg-slate-800 text-blue-400' : 'text-slate-400 hover:text-white'}`}
+                            onClick={() => setIsSearchOpen(!isSearchOpen)}
+                        >
+                            <Search size={14} />
+                        </Button>
+                    </Tooltip>
+                </div>
             </div>
 
             <div className="flex-1 flex overflow-hidden relative">

@@ -38,6 +38,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Integrated `Tooltip` support directly into the `Toggle` component.
 
 ### Changed
+- **Theme Detail**: Made the expand/collapse animation immediate instead of gradual, and made the collapsed state persistent across sessions and navigation for each theme.
+- **Responsive Layout**: Improved responsiveness by adding `min-w-[10ch]` to labels and wrapping long theme and domain names (`line-clamp-2`) instead of truncating at low breakpoints.
+- **Header Fixes**: Overhauled the theme detail header layout to ensure perfect vertical alignment between the name and controls. Removed the redundant "All themes disabled" warning and enabled proper text truncation for long theme names.
+- **Snippet Rename UX**: Hidden header controls during snippet name editing to prevent the cursor and text from being obscured.
+- **Snippet Headers**: Refined snippet card headers by replacing the floating control box with a seamless gradient mask. This allows long names to take the full width while controls gracefully overlay with a smooth fade-out effect.
+- **UI Clean-up**: Removed redundant "Group active" labels from domain groups and theme items to reduce clutter.
 - Improved visibility of all secondary icons and labels (changed `text-slate-500` to `text-slate-400`).
 - **Improved Click Targets:** Increased hit areas for all icon buttons (edit, kebab, plus, etc.) across the app to improve accessibility.
 - Standardized native `title` attributes to use the new `Tooltip` component.

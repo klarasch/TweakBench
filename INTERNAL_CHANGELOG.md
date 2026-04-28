@@ -50,3 +50,11 @@
 - Fixed a major memory leak caused by logging large state objects to the console and un-cleared timeouts when switching themes.
 - Added "Wipe all data" functionality to the main list header overflow menu with a permanent confirmation dialog.
 - Expanded the drag-and-drop area for data files to cover the full UI height in the ThemeList, and centered the zero-state UI.
+- Made expand/collapse animation immediate and persistent per-theme in ThemeDetail.
+- Fixed responsive layout issues: wrapped long theme and domain names (min-w-10ch, line-clamp-2), removed redundant 'Group active' labels, and overlayed snippet controls on hover.
+- Fixed search scroll jumping by not scrolling on content edits, preserved search scroll state by avoiding list filtering during search, added automatic CodeMirror scrolling to exact matches, and added an explicit Search icon button to the ThemeDetail tab header.
+- Fixed snippet rename UX: hidden controls when editing snippet name to prevent cursor occlusion.
+- Fixed ThemeHeader alignment and truncation: ensured name input is constrained and controls are fixed-width.
+- Refined ThemeHeader: removed global disabled warning, fixed vertical alignment of name vs controls, and enabled truncation.
+- Improved snippet header controls: replaced the floating box style with a seamless gradient mask (bg-gradient-to-l from-slate-900) to blend perfectly with the header.
+- Refined snippet header overlay: used a dual-layer approach (solid base + header color overlay) with a gradient fadeout to perfectly hide text behind controls.
