@@ -41,6 +41,10 @@ interface Store extends AppState {
     createEmptyGroup: (domainPatterns: string[]) => string;
     loadExampleData: () => Promise<void>;
     wipeAllData: () => void;
+
+    // UI state persistence
+    setPanelView: (view: 'list' | 'detail') => void;
+    setSelectedThemeId: (id: string | null) => void;
 }
 
 export const useStore = create<Store>((set, get) => ({
@@ -49,14 +53,22 @@ export const useStore = create<Store>((set, get) => ({
     activeThemeId: null,
     globalEnabled: true,
     clipboardSnippet: null,
+    panelView: 'list',
+    selectedThemeId: null,
 
     loadFromStorage: async () => {
         const data = await storageService.load();
+        // Validate that the persisted selectedThemeId still refers to an existing theme
+        const themes = data.themes || [];
+        const selectedThemeId = data.selectedThemeId ?? null;
+        const isSelectedThemeValid = selectedThemeId && themes.some(t => t.id === selectedThemeId);
         set({
-            themes: data.themes || [],
+            themes,
             snippets: data.snippets || [],
             activeThemeId: data.activeThemeId || null,
             globalEnabled: data.globalEnabled ?? true,
+            panelView: isSelectedThemeValid ? (data.panelView || 'list') : 'list',
+            selectedThemeId: isSelectedThemeValid ? selectedThemeId : null,
         });
     },
 
@@ -816,8 +828,27 @@ export const useStore = create<Store>((set, get) => ({
                 themes: [],
                 snippets: [],
                 activeThemeId: null,
+                panelView: 'list' as const,
+                selectedThemeId: null,
             };
             storageService.save(newState, { immediate: true });
+            return newState;
+        });
+    },
+
+    // UI state persistence — debounced save (not immediate) since these are non-critical
+    setPanelView: (view: 'list' | 'detail') => {
+        set((state: Store) => {
+            const newState = { ...state, panelView: view };
+            storageService.save(newState);
+            return newState;
+        });
+    },
+
+    setSelectedThemeId: (id: string | null) => {
+        set((state: Store) => {
+            const newState = { ...state, selectedThemeId: id };
+            storageService.save(newState);
             return newState;
         });
     },

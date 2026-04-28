@@ -8,10 +8,8 @@ import { AlertTriangle } from 'lucide-react';
 import { ToastProvider } from '../components/ui/Toast.tsx';
 
 const Panel: React.FC = () => {
-    const { loadFromStorage, globalEnabled } = useStore();
+    const { loadFromStorage, globalEnabled, panelView, selectedThemeId, setPanelView, setSelectedThemeId } = useStore();
     const activeUrl = useActiveTab();
-    const [view, setView] = useState<'list' | 'detail'>('list');
-    const [selectedThemeId, setSelectedThemeId] = useState<string | null>(null);
     const [isConnected, setIsConnected] = useState(true);
 
     useEffect(() => {
@@ -45,13 +43,15 @@ const Panel: React.FC = () => {
 
     const handleSelectTheme = (id: string) => {
         setSelectedThemeId(id);
-        setView('detail');
+        setPanelView('detail');
     };
 
     const handleBack = () => {
-        setView('list');
+        setPanelView('list');
         setSelectedThemeId(null);
     };
+
+    const view = panelView || 'list';
 
     return (
         <ToastProvider>

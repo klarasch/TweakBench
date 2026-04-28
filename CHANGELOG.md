@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- **Panel State Persistence**: The plugin now remembers which view (list or theme detail) was open when the side panel is closed, and restores it when reopened.
 - **Wipe All Data**: Added an option to completely wipe all themes and snippets via the main screen overflow menu, protected by a confirmation dialog.
 - Expanded the drag-and-drop area for data files to cover the full UI height in the ThemeList, and centered the zero-state UI.
 - New custom `Tooltip` component using React Portals for better viewport management and z-index handling.
