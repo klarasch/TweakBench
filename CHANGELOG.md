@@ -51,6 +51,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved tooltip delays and consistency for all interactive UI elements.
 
 ### Fixed
+- Fixed a conflict where double-clicking a theme name to rename it would also toggle the theme's enabled state.
+- Fixed an issue where pressing the spacebar while renaming a theme would toggle the theme or trigger dragging instead of typing a space.
 - Fixed a major memory leak caused by DevTools retaining large state objects logged to the console during theme switching.
 - Fixed an un-cleared internal timeout in the transition manager that could accumulate when toggling themes rapidly.
 - Tooltip clipping issues at the edges of the window.

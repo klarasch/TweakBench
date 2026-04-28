@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { MoreVertical, Globe, Pencil, Info } from 'lucide-react';
 import type { Theme } from '../types';
 import { isDomainMatch } from '../utils/domains';
@@ -57,6 +57,36 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
 }) => {
     const isMatch = activeUrl ? isDomainMatch(theme.domainPatterns, activeUrl) : false;
     const isActiveOnTab = theme.isActive && globalEnabled && isMatch;
+    const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    useEffect(() => {
+        return () => {
+            if (clickTimeoutRef.current) {
+                clearTimeout(clickTimeoutRef.current);
+            }
+        };
+    }, []);
+
+    const handleNameClick = (e: React.MouseEvent) => {
+        // Prevent toggling when clicking the name
+        e.stopPropagation();
+        if (isRenaming) return;
+
+        if (clickTimeoutRef.current) {
+            clearTimeout(clickTimeoutRef.current);
+            clickTimeoutRef.current = null;
+            return;
+        }
+
+        clickTimeoutRef.current = setTimeout(() => {
+            if (isSelectionMode) {
+                onToggleSelection();
+            } else {
+                onUpdateTheme({ isActive: !theme.isActive });
+            }
+            clickTimeoutRef.current = null;
+        }, 150);
+    };
 
     return (
         <div
@@ -101,14 +131,15 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
                             className="bg-slate-950 text-white text-sm font-medium border border-blue-500 rounded px-1.5 py-0.5 outline-none flex-1 min-w-0 w-full"
                             defaultValue={theme.name}
                             onKeyDown={(e) => {
+                                e.stopPropagation();
                                 if (e.key === 'Enter') {
-                                    e.stopPropagation();
                                     onRename?.(e.currentTarget.value);
                                 } else if (e.key === 'Escape') {
-                                    e.stopPropagation();
                                     onRenameCancel?.();
                                 }
                             }}
+                            onKeyUp={(e) => e.stopPropagation()}
+                            onKeyPress={(e) => e.stopPropagation()}
                             onBlur={(e) => {
                                 onRename?.(e.target.value);
                             }}
@@ -120,6 +151,7 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
                             <span
                                 className={`text-sm font-medium line-clamp-2 min-w-[10ch] ${isActiveOnTab ? 'text-green-400' : 'text-slate-200'} ${isSelected ? 'text-white' : ''}`}
                                 style={{ wordBreak: 'break-word' }}
+                                onClick={handleNameClick}
                                 onDoubleClick={(e) => {
                                     if (isSelectionMode) return;
                                     e.stopPropagation();

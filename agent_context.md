@@ -20,7 +20,7 @@ ThemeBench is a browser extension tool (built with Vite, React, TypeScript) for 
 ## Recent Features & UX Improvements
 - Theme tiles in the main list now toggle active state on click.
 - Hover-triggered pencil icon and context menu option for editing themes.
-- **Double-click to rename** for themes in the main list.
+- **Double-click to rename** for themes in the main list (with event propagation fix to avoid accidental toggling).
 - Versatile "Rename" option in kebab and context menus.
 - "Export group" option in the domain group overflow menu.
 - **Custom Tooltip System**: Standardized on a custom `Tooltip` component (replacing native `title` attributes) for all interactive elements.

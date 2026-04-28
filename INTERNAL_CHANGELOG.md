@@ -58,3 +58,4 @@
 - Refined ThemeHeader: removed global disabled warning, fixed vertical alignment of name vs controls, and enabled truncation.
 - Improved snippet header controls: replaced the floating box style with a seamless gradient mask (bg-gradient-to-l from-slate-900) to blend perfectly with the header.
 - Refined snippet header overlay: used a dual-layer approach (solid base + header color overlay) with a gradient fadeout to perfectly hide text behind controls.
+- 2026-04-28 17:18:00 UTC - Adjusted click-delay to 150ms for snappier toggle feedback on theme names.
