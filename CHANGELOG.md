@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **UI Simplification**: Removed the "Active on this tab" text label from the UI to reduce clutter, relying on pulsing dots and green border indicators for match feedback.
 - **Responsive Theme/Domain Layout**: Optimized for long names; themes now take priority, and domain lists switch to a compact count label (e.g., "3 Domains") when space is limited. Full domain lists are accessible via tooltips.
+- **Consistent Toggle Width**: Standardized the `Toggle` component width using a grid-stack technique to ensure consistent alignment in lists regardless of its state (ON/OFF).
 
 ## [0.1.10] - 2026-04-28
 

@@ -69,3 +69,4 @@
 - 2026-04-28 18:43:00 UTC - Removed "Active on this tab" text label from `ThemeItem`, `ThemeGroup`, and `ThemeHeader` to reduce UI clutter. Retained visual pulsing indicators and green highlights for active matches.
 - 2026-05-09 09:00:00 UTC - Fixed version mismatch: updated `public/manifest.json` to `0.1.11` to match `package.json`.
 - 2026-05-09 09:07:00 UTC - Fixed responsiveness for long theme and domain names. Implemented prioritized name layout and compact domain count labels with full-list tooltips in `ThemeItem`, `ThemeGroup`, and `ThemeHeader`.
+- 2026-05-09 10:28:00 UTC - Standardized `Toggle` width using a grid-stack technique (invisible labels + centered visible label) to ensure consistent alignment in lists regardless of ON/OFF state.

@@ -64,9 +64,13 @@ export const Toggle: React.FC<ToggleProps> = ({
                             : 'bg-slate-500'
                     }
                 `}></div>
-                <span className={`font-bold uppercase ${isSm ? 'text-[9px]' : 'text-[10px]'}`}>
-                    {checked ? labelOn : labelOff}
-                </span>
+                <div className={`grid grid-cols-1 grid-rows-1 font-bold uppercase ${isSm ? 'text-[9px]' : 'text-[10px]'} min-w-[2.5ch]`}>
+                    <span className="col-start-1 row-start-1 invisible" aria-hidden="true">{labelOn}</span>
+                    <span className="col-start-1 row-start-1 invisible" aria-hidden="true">{labelOff}</span>
+                    <span className="col-start-1 row-start-1 text-center">
+                        {checked ? labelOn : labelOff}
+                    </span>
+                </div>
             </button>
         </Tooltip>
     );
