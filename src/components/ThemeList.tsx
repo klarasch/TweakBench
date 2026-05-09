@@ -959,8 +959,8 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                     </div>
                 </div>
             )}
-            <div className="p-4 flex flex-col gap-4 relative pb-20 flex-1">
-                <div className="flex justify-between items-center px-1">
+            <div className="flex flex-col flex-1 relative min-h-0 p-4 pt-0">
+                <div className="sticky top-0 bg-slate-900/95 backdrop-blur-md z-30 py-4 -mx-4 px-4 border-b border-slate-800/60 flex justify-between items-center shadow-sm mb-4">
                     <h2 className="text-lg font-bold text-slate-100 tracking-tight">Themes</h2>
                     <div className="flex items-center gap-1">
                         {!isSelectionMode ? (
@@ -985,8 +985,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                 >
                                     Select
                                 </Button>
-
-                                <div className="divider-v" />
+                                <div className="divider-v h-4 mx-1" />
 
                                 {/* Compact view for narrow screens */}
                                 <div className="md:hidden">

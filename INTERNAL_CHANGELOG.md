@@ -67,4 +67,5 @@
 - 2026-04-28 18:12:00 UTC - Fixed intra-group reorder bug (themes.map preserved original order; switched to sequential counter). Removed useDroppable from ThemeGroup to prevent collision detection interference. Added undo support: Toast component now supports action buttons, all DnD operations show "Undo" toast that restores pre-mutation snapshot.
 - 2026-04-28 18:17:00 UTC - DnD refinements: (1) Don't collapse groups when reordering inside a group. (2) Custom collision detection requiring rectIntersection overlap for foreign-group themes — prevents accidental add-to-group near boundaries. (3) DragOverlay shows green ring when detaching a theme from a group. (4) Verified exports/imports unaffected by DnD changes.
 - 2026-04-28 18:43:00 UTC - Removed "Active on this tab" text label from `ThemeItem`, `ThemeGroup`, and `ThemeHeader` to reduce UI clutter. Retained visual pulsing indicators and green highlights for active matches.
-
+- 2026-05-09 09:00:00 UTC - Fixed version mismatch: updated `public/manifest.json` to `0.1.11` to match `package.json`.
+- 2026-05-09 09:07:00 UTC - Fixed responsiveness for long theme and domain names. Implemented prioritized name layout and compact domain count labels with full-list tooltips in `ThemeItem`, `ThemeGroup`, and `ThemeHeader`.

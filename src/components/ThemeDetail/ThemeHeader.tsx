@@ -130,20 +130,41 @@ export const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                 />
                 <div className="flex items-center flex-wrap gap-2 mt-2">
                     {/* Domain Config Button - Interactive */}
-                    <Tooltip content="Configure domains" delay={300}>
+                    <Tooltip 
+                        content={
+                            <div className="flex flex-col gap-1">
+                                <div className="font-semibold border-b border-slate-700 pb-1 mb-1">Configured domains</div>
+                                {theme.domainPatterns && theme.domainPatterns.length === 0 ? (
+                                    <div className="text-slate-400 italic">No domains configured</div>
+                                ) : (
+                                    <div className="flex flex-col gap-0.5">
+                                        {theme.domainPatterns && theme.domainPatterns.map((p, i) => (
+                                            <div key={i} className="flex items-center gap-1.5">
+                                                <Globe size={10} className="text-slate-500" />
+                                                <span>{p === '<all_urls>' ? 'All websites' : p}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        } 
+                        delay={300}
+                    >
                         <button
-                            className="flex items-center gap-1.5 text-[10px] font-medium text-slate-400 bg-slate-800/50 border border-slate-700/50 px-2 py-1 rounded-md cursor-pointer hover:bg-slate-800 hover:text-slate-200 hover:border-slate-600 transition-all select-none active:scale-95"
+                            className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-tight text-slate-400 bg-slate-800/50 border border-slate-700/50 px-2 py-1 rounded-md cursor-pointer hover:bg-slate-800 hover:text-slate-200 hover:border-slate-600 transition-all select-none active:scale-95 max-w-[150px] min-w-0"
                             onClick={() => setShowDomainSettings(true)}
                         >
-                            <Globe size={11} />
-                            {theme.domainPatterns && theme.domainPatterns.includes('<all_urls>')
-                                ? "Runs everywhere"
-                                : theme.domainPatterns && theme.domainPatterns.length === 1
-                                    ? theme.domainPatterns[0]
-                                    : theme.domainPatterns && theme.domainPatterns.length > 1
-                                        ? `${theme.domainPatterns.length} Domains`
-                                        : "No domains"
-                            }
+                            <Globe size={11} className="shrink-0" />
+                            <span className="truncate">
+                                {theme.domainPatterns && theme.domainPatterns.includes('<all_urls>')
+                                    ? "Runs everywhere"
+                                    : theme.domainPatterns && theme.domainPatterns.length === 1
+                                        ? theme.domainPatterns[0]
+                                        : theme.domainPatterns && theme.domainPatterns.length > 1
+                                            ? `${theme.domainPatterns.length} Domains`
+                                            : "No domains"
+                                }
+                            </span>
                         </button>
                     </Tooltip>
 

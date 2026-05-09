@@ -180,50 +180,78 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
                         </div>
                     </Tooltip>
 
-                    <Tooltip content="Configure domains" delay={300}>
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onDomainClick(e);
-                            }}
-                            className="flex items-start gap-1.5 min-w-0 hover:bg-slate-700/50 px-1.5 py-1 rounded transition-colors cursor-pointer text-left"
-                            onPointerDown={e => e.stopPropagation()}
+                    <div className="grid grid-cols-[auto_1fr] items-center gap-2 min-w-0 flex-1">
+                        <Tooltip 
+                            content={
+                                <div className="flex flex-col gap-1">
+                                    <div className="font-semibold border-b border-slate-700 pb-1 mb-1">Group domains</div>
+                                    {domainPatterns.length === 0 ? (
+                                        <div className="text-slate-400 italic">No domains configured</div>
+                                    ) : (
+                                        <div className="flex flex-col gap-0.5">
+                                            {domainPatterns.map((p, i) => (
+                                                <div key={i} className="flex items-center gap-1.5">
+                                                    <Globe size={10} className="text-slate-500" />
+                                                    <span>{p === '<all_urls>' ? 'All websites' : p}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            } 
+                            delay={300}
                         >
-                            <Globe size={12} className="text-slate-400 shrink-0 mt-0.5" />
-                            <span className="text-xs font-semibold text-slate-300 line-clamp-2 min-w-[10ch]" style={{ wordBreak: 'break-word' }}>
-                                {domainPatterns.join(', ')}
-                            </span>
-                        </button>
-                    </Tooltip>
-
-                    {effectivelyCollapsed && activeTheme && (
-                        <div className="flex items-start gap-2 ml-2 min-w-0">
-                            <span className="text-xs text-slate-400 mt-0.5">•</span>
-                            <Tooltip content={`Active: ${activeTheme.name}`} delay={300}>
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onSelectTheme(activeTheme.id);
-                                    }}
-                                    className="text-xs text-slate-300 hover:text-white line-clamp-2 min-w-[10ch] text-left"
-                                    style={{ wordBreak: 'break-word' }}
-                                >
-                                    {activeTheme.name}
-                                </button>
-                            </Tooltip>
-                        </div>
-                    )}
-                    {effectivelyCollapsed && !activeTheme && (
-                        <div className="flex items-center gap-2 ml-2 min-w-0">
-                            <span className="text-xs text-slate-400">•</span>
-                            <span className="text-xs text-slate-400 italic">
-                                No theme enabled
-                            </span>
-                        </div>
-                    )}
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDomainClick(e);
+                                }}
+                                className="flex items-center gap-1.5 shrink-0 max-w-[120px] hover:bg-slate-700/50 px-1.5 py-1 rounded transition-colors cursor-pointer text-left min-w-0"
+                                onPointerDown={e => e.stopPropagation()}
+                            >
+                                <Globe size={12} className="text-slate-400 shrink-0" />
+                                <span className="text-[10px] font-bold uppercase tracking-tight text-slate-300 truncate">
+                                    {domainPatterns.includes('<all_urls>')
+                                        ? 'All URLs'
+                                        : domainPatterns.length > 1
+                                            ? `${domainPatterns.length} Domains`
+                                            : domainPatterns.length === 1
+                                                ? domainPatterns[0]
+                                                : 'No domains'
+                                    }
+                                </span>
+                            </button>
+                        </Tooltip>
+                        
+                        {effectivelyCollapsed && activeTheme && (
+                            <div className="flex items-center gap-2 min-w-0">
+                                <span className="text-xs text-slate-500 shrink-0">•</span>
+                                <Tooltip content={`Active: ${activeTheme.name}`} delay={300}>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onSelectTheme(activeTheme.id);
+                                        }}
+                                        className="text-xs text-slate-300 hover:text-white truncate text-left font-medium"
+                                        onPointerDown={e => e.stopPropagation()}
+                                    >
+                                        {activeTheme.name}
+                                    </button>
+                                </Tooltip>
+                            </div>
+                        )}
+                        {effectivelyCollapsed && !activeTheme && (
+                            <div className="flex items-center gap-2 min-w-0">
+                                <span className="text-xs text-slate-500 shrink-0">•</span>
+                                <span className="text-xs text-slate-500 italic truncate">
+                                    No theme enabled
+                                </span>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
-                <div className="flex items-center gap-2 ml-2">
+                <div className="flex items-center gap-2 ml-auto shrink-0">
                     {!isSelectionMode && (
                         <>
                             {effectivelyCollapsed && activeTheme && (

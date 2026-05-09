@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.11] - 2026-04-28
 
 ### Changed
-- **Removed "Active on this tab" label**: Removed the redundant text label from theme list items, groups, and the theme detail header to simplify the UI. Subtle visual indicators (green borders and pulsing dots) remain to provide feedback.
+- **UI Simplification**: Removed the "Active on this tab" text label from the UI to reduce clutter, relying on pulsing dots and green border indicators for match feedback.
+- **Responsive Theme/Domain Layout**: Optimized for long names; themes now take priority, and domain lists switch to a compact count label (e.g., "3 Domains") when space is limited. Full domain lists are accessible via tooltips.
 
 ## [0.1.10] - 2026-04-28
 
@@ -31,8 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed a conflict where double-clicking a theme name to rename it would also toggle the theme's enabled state.
 - Fixed an issue where pressing the spacebar while renaming a theme would trigger unwanted behaviors.
 - Resolved a major memory leak caused by large state logging and un-cleared internal timeouts.
-- Fixed tooltip clipping and animation artifacts.
-- Fixed vertical alignment and name truncation in the theme header.
+- 2026-05-09 09:00:00 UTC - Fixed version mismatch: updated `public/manifest.json` to `0.1.11` to match `package.json`.
+- 2026-05-09 09:07:00 UTC - Fixed responsiveness for long theme and domain names. Implemented prioritized name layout and compact domain count labels with full-list tooltips in `ThemeItem`, `ThemeGroup`, and `ThemeHeader`.
 
 ## [0.1.9] - 2026-03-09
 

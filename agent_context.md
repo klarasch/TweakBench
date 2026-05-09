@@ -31,6 +31,7 @@ ThemeBench is a browser extension tool (built with Vite, React, TypeScript) for 
 - **Expanded Drop Zone**: The file drag-and-drop area in the ThemeList now covers the full UI height, especially improved for the zero-state experience.
 - **System Off Confirmation Modal**: When the global system is off, enabling a theme prompts a modal asking whether to re-enable the entire system or only that specific theme.
 - **UI Simplification**: Removed the "Active on this tab" text label from the UI to reduce clutter, relying on pulsing dots and green border indicators for match feedback.
+- **Responsive Theme/Domain Layout**: Optimized for long names; themes now take priority, and domain lists switch to a compact count label (e.g., "3 Domains") when space is limited. Full domain lists are accessible via tooltips.
 
 
 ## Performance Bottlenecks to Investigate

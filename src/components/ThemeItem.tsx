@@ -125,73 +125,99 @@ export const ThemeItem: React.FC<ThemeItemProps> = ({
                             </div>
                         </div>
                     )}
-                    {isRenaming ? (
-                        <input
-                            autoFocus
-                            className="bg-slate-950 text-white text-sm font-medium border border-blue-500 rounded px-1.5 py-0.5 outline-none flex-1 min-w-0 w-full"
-                            defaultValue={theme.name}
-                            onKeyDown={(e) => {
-                                e.stopPropagation();
-                                if (e.key === 'Enter') {
-                                    onRename?.(e.currentTarget.value);
-                                } else if (e.key === 'Escape') {
-                                    onRenameCancel?.();
-                                }
-                            }}
-                            onKeyUp={(e) => e.stopPropagation()}
-                            onKeyPress={(e) => e.stopPropagation()}
-                            onBlur={(e) => {
-                                onRename?.(e.target.value);
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                            onPointerDown={(e) => e.stopPropagation()}
-                        />
-                    ) : (
-                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                            <span
-                                className={`text-sm font-medium line-clamp-2 min-w-[10ch] ${isActiveOnTab ? 'text-green-400' : 'text-slate-200'} ${isSelected ? 'text-white' : ''}`}
-                                style={{ wordBreak: 'break-word' }}
-                                onClick={handleNameClick}
-                                onDoubleClick={(e) => {
-                                    if (isSelectionMode) return;
+                    <div className="grid grid-cols-[1fr_auto] items-center gap-2 flex-1 min-w-0">
+                        {isRenaming ? (
+                            <input
+                                autoFocus
+                                className="bg-slate-950 text-white text-sm font-medium border border-blue-500 rounded px-1.5 py-0.5 outline-none w-full"
+                                defaultValue={theme.name}
+                                onKeyDown={(e) => {
                                     e.stopPropagation();
-                                    onRenameStart?.();
+                                    if (e.key === 'Enter') {
+                                        onRename?.(e.currentTarget.value);
+                                    } else if (e.key === 'Escape') {
+                                        onRenameCancel?.();
+                                    }
                                 }}
-                            >
-                                {theme.name}
-                            </span>
-                            {theme.description && (
-                                <Tooltip content={theme.description} delay={0}>
-                                    <div className="text-slate-400 hover:text-slate-200 transition-colors cursor-help shrink-0" onClick={e => e.stopPropagation()}>
-                                        <Info size={14} />
-                                    </div>
-                                </Tooltip>
-                            )}
-                        </div>
-                    )}
-                    {!theme.groupId && onDomainClick && !isRenaming && (
-                        <Tooltip content="Configure domains" delay={300}>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onDomainClick(e);
+                                onKeyUp={(e) => e.stopPropagation()}
+                                onKeyPress={(e) => e.stopPropagation()}
+                                onBlur={(e) => {
+                                    onRename?.(e.target.value);
                                 }}
-                                onPointerDown={e => e.stopPropagation()}
-                                className="flex items-start gap-1.5 min-w-0 hover:bg-slate-700/50 px-1.5 py-0.5 rounded transition-colors cursor-pointer text-left"
-                            >
-                                <Globe size={12} className="text-slate-400 shrink-0 mt-0.5" />
-                                <span 
-                                    className={`text-xs font-semibold line-clamp-2 min-w-[10ch] max-w-[150px] ${theme.domainPatterns.length === 0 ? 'text-slate-400 italic' : 'text-slate-300'}`}
+                                onClick={(e) => e.stopPropagation()}
+                                onPointerDown={(e) => e.stopPropagation()}
+                            />
+                        ) : (
+                            <div className="flex items-center gap-1.5 min-w-0">
+                                <span
+                                    className={`text-sm font-medium line-clamp-2 min-w-[5ch] ${isActiveOnTab ? 'text-green-400' : 'text-slate-200'} ${isSelected ? 'text-white' : ''}`}
                                     style={{ wordBreak: 'break-word' }}
+                                    onClick={handleNameClick}
+                                    onDoubleClick={(e) => {
+                                        if (isSelectionMode) return;
+                                        e.stopPropagation();
+                                        onRenameStart?.();
+                                    }}
                                 >
-                                    {theme.domainPatterns.length === 0 ? 'No domains configured' : theme.domainPatterns.join(', ')}
+                                    {theme.name}
                                 </span>
-                            </button>
-                        </Tooltip>
-                    )}
+                                {theme.description && (
+                                    <Tooltip content={theme.description} delay={0}>
+                                        <div className="text-slate-400 hover:text-slate-200 transition-colors cursor-help shrink-0" onClick={e => e.stopPropagation()}>
+                                            <Info size={14} />
+                                        </div>
+                                    </Tooltip>
+                                )}
+                            </div>
+                        )}
+                        {!theme.groupId && onDomainClick && !isRenaming && (
+                            <Tooltip 
+                                content={
+                                    <div className="flex flex-col gap-1">
+                                        <div className="font-semibold border-b border-slate-700 pb-1 mb-1">Configured domains</div>
+                                        {theme.domainPatterns.length === 0 ? (
+                                            <div className="text-slate-400 italic">No domains configured</div>
+                                        ) : (
+                                            <div className="flex flex-col gap-0.5">
+                                                {theme.domainPatterns.map((p, i) => (
+                                                    <div key={i} className="flex items-center gap-1.5">
+                                                        <Globe size={10} className="text-slate-500" />
+                                                        <span>{p === '<all_urls>' ? 'All websites' : p}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                } 
+                                delay={300}
+                            >
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onDomainClick(e);
+                                    }}
+                                    onPointerDown={e => e.stopPropagation()}
+                                    className="flex items-center gap-1.5 shrink-0 max-w-[120px] hover:bg-slate-700/50 px-1.5 py-0.5 rounded transition-colors cursor-pointer text-left min-w-0"
+                                >
+                                    <Globe size={12} className="text-slate-400 shrink-0" />
+                                    <span 
+                                        className={`text-[10px] font-bold uppercase tracking-tight truncate ${theme.domainPatterns.length === 0 ? 'text-slate-400 italic' : 'text-slate-300'}`}
+                                    >
+                                        {theme.domainPatterns.includes('<all_urls>')
+                                            ? 'All URLs'
+                                            : theme.domainPatterns.length > 1
+                                                ? `${theme.domainPatterns.length} Domains`
+                                                : theme.domainPatterns.length === 1
+                                                    ? theme.domainPatterns[0]
+                                                    : 'No domains'
+                                        }
+                                    </span>
+                                </button>
+                            </Tooltip>
+                        )}
+                    </div>
                 </div>
-                <div className="flex gap-1 items-center">
-
+                <div className="flex gap-1 items-center shrink-0 ml-auto">
                     <div className="flex gap-2 items-center ml-2">
                         <Toggle
                             checked={theme.isActive}
