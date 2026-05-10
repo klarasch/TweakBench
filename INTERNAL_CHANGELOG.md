@@ -71,3 +71,5 @@
 - 2026-05-09 09:07:00 UTC - Fixed responsiveness for long theme and domain names. Implemented prioritized name layout and compact domain count labels with full-list tooltips in `ThemeItem`, `ThemeGroup`, and `ThemeHeader`.
 - 2026-05-09 10:28:00 UTC - Standardized `Toggle` width using a grid-stack technique (invisible labels + centered visible label) to ensure consistent alignment in lists regardless of ON/OFF state.
 - Added ability to name domain groups for better organization, including double-click renaming and context menu support.
+- Fixed vertical alignment of the Themes header in ThemeList component across browsers
+- Fixed Chrome vertical misalignment of + button in ThemeList compact header (block div was causing inline-flex Tooltip baseline issue)

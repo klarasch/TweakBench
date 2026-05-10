@@ -967,7 +967,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
             )}
             <div className="flex flex-col flex-1 relative min-h-0 p-4 pt-0">
                 <div className="sticky top-0 bg-slate-900/95 backdrop-blur-md z-30 py-4 -mx-4 px-4 border-b border-slate-800/60 flex justify-between items-center shadow-sm mb-4">
-                    <h2 className="text-lg font-bold text-slate-100 tracking-tight">Themes</h2>
+                    <h2 className="text-lg font-bold text-slate-100 tracking-tight m-0 leading-none flex items-center">Themes</h2>
                     <div className="flex items-center gap-1">
                         {!isSelectionMode ? (
                             <>
@@ -994,14 +994,14 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                 <div className="divider-v h-4 mx-1" />
 
                                 {/* Compact view for narrow screens */}
-                                <div className="md:hidden">
+                                <div className="md:hidden flex items-center">
                                     <Tooltip content="Create" delay={300}>
                                         <button
                                             onClick={(e) => {
                                                 const rect = e.currentTarget.getBoundingClientRect();
                                                 setMenuState({ x: rect.left, y: rect.bottom, themeId: 'CREATE_MENU' });
                                             }}
-                                            className="p-1.5 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                                            className="p-2 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center justify-center"
                                         >
                                             <Plus size={16} />
                                         </button>
