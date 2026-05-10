@@ -40,6 +40,7 @@ export interface Theme {
     items: ThemeItem[]; // Reverted to required
     isActive: boolean;
     groupId?: string; // If set, only one theme in this group can be active at a time
+    groupName?: string; // Name for the domain group
     createdAt: number;
     updatedAt: number;
 }

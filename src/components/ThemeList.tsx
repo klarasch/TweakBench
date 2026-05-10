@@ -83,6 +83,8 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
     const [themeToDelete, setThemeToDelete] = useState<string | null>(null);
     const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
     const [confirmBulkExport, setConfirmBulkExport] = useState<'json' | 'css' | null>(null);
+    const [renamingThemeId, setRenamingThemeId] = useState<string | null>(null);
+    const [renamingGroupId, setRenamingGroupId] = useState<string | null>(null);
     const [groupToDelete, setGroupToDelete] = useState<string | null>(null);
     const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
     const [importMode, setImportMode] = useState<'merge' | 'replace' | 'skip-duplicates'>('merge');
@@ -166,8 +168,7 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
     // Snapshot of themes before a DnD mutation, used for undo
     const dndSnapshotRef = useRef<Theme[] | null>(null);
 
-    // Renaming State
-    const [renamingThemeId, setRenamingThemeId] = useState<string | null>(null);
+    // Responsive State
 
     // Responsive State
     const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
@@ -753,6 +754,11 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                 },
                 { separator: true },
                 {
+                    label: 'Rename group',
+                    icon: <Pencil size={14} />,
+                    onClick: () => setRenamingGroupId(groupId)
+                },
+                {
                     label: 'Configure domains',
                     icon: <Globe size={14} />,
                     onClick: () => setEditingDomainGroup(groupId)
@@ -1250,6 +1256,16 @@ export const ThemeList: React.FC<ThemeListProps> = ({ onSelectTheme, activeUrl }
                                                             setRenamingThemeId(null);
                                                         }}
                                                         onRenameCancel={() => setRenamingThemeId(null)}
+                                                        renamingGroupId={renamingGroupId}
+                                                        onRenameGroupStart={setRenamingGroupId}
+                                                        onRenameGroup={(_, newName) => {
+                                                            const themeInGroup = item.themes[0];
+                                                            if (themeInGroup) {
+                                                                updateTheme(themeInGroup.id, { groupName: newName || undefined });
+                                                            }
+                                                            setRenamingGroupId(null);
+                                                        }}
+                                                        onRenameGroupCancel={() => setRenamingGroupId(null)}
                                                         isDropTarget={dragOverGroupId === item.id}
                                                     />
                                                 ) : (

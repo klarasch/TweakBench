@@ -40,7 +40,7 @@ interface Store extends AppState {
 
     createThemeGroup: (themeIds: string[]) => void;
     ungroupThemes: (themeIds: string[]) => void;
-    createEmptyGroup: (domainPatterns: string[]) => string;
+    createEmptyGroup: (domainPatterns: string[], groupName?: string) => string;
     loadExampleData: () => Promise<void>;
     wipeAllData: () => void;
 
@@ -196,6 +196,14 @@ export const useStore = create<Store>((set, get) => ({
                     finalThemes = finalThemes.map(t =>
                         (t.groupId === theme.groupId && t.id !== id)
                             ? { ...t, domainPatterns: updates.domainPatterns!, updatedAt: Date.now() }
+                            : t
+                    );
+                }
+                // 3. Name Sync: If groupName changed, sync to group
+                if (updates.groupName !== undefined) {
+                    finalThemes = finalThemes.map(t =>
+                        (t.groupId === theme.groupId && t.id !== id)
+                            ? { ...t, groupName: updates.groupName, updatedAt: Date.now() }
                             : t
                     );
                 }
@@ -788,7 +796,7 @@ export const useStore = create<Store>((set, get) => ({
         });
     },
 
-    createEmptyGroup: (domainPatterns: string[]) => {
+    createEmptyGroup: (domainPatterns: string[], groupName?: string) => {
         const groupId = uuidv4();
         const themeId = uuidv4();
 
@@ -799,6 +807,7 @@ export const useStore = create<Store>((set, get) => ({
             items: [],
             isActive: false,
             groupId,
+            groupName: groupName || undefined,
             createdAt: Date.now(),
             updatedAt: Date.now(),
         };

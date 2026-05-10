@@ -30,6 +30,10 @@ interface ThemeGroupProps {
     onRenameStart?: (id: string) => void;
     onRename?: (id: string, newName: string) => void;
     onRenameCancel?: () => void;
+    renamingGroupId?: string | null;
+    onRenameGroupStart?: (id: string) => void;
+    onRenameGroup?: (id: string, newName: string) => void;
+    onRenameGroupCancel?: () => void;
     // Drop target highlight
     isDropTarget?: boolean;
 }
@@ -55,6 +59,10 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
     onRenameStart,
     onRename,
     onRenameCancel,
+    renamingGroupId,
+    onRenameGroupStart,
+    onRenameGroup,
+    onRenameGroupCancel,
     isDropTarget
 }) => {
     // Sortable logic for the GROUP container
@@ -91,6 +99,8 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
 
     // Find active theme in group
     const activeTheme = themes.find(t => t.isActive);
+    const groupName = themes[0]?.groupName;
+    const isRenamingThisGroup = renamingGroupId === id;
 
     // Check if active theme matches current URL
     const isMatch = activeUrl && activeTheme ? isDomainMatch(activeTheme.domainPatterns, activeUrl) : false;
@@ -181,47 +191,96 @@ export const ThemeGroup: React.FC<ThemeGroupProps> = ({
                     </Tooltip>
 
                     <div className="grid grid-cols-[auto_1fr] items-center gap-2 min-w-0 flex-1">
-                        <Tooltip 
-                            content={
-                                <div className="flex flex-col gap-1">
-                                    <div className="font-semibold border-b border-slate-700 pb-1 mb-1">Group domains</div>
-                                    {domainPatterns.length === 0 ? (
-                                        <div className="text-slate-400 italic">No domains configured</div>
-                                    ) : (
-                                        <div className="flex flex-col gap-0.5">
-                                            {domainPatterns.map((p, i) => (
-                                                <div key={i} className="flex items-center gap-1.5">
-                                                    <Globe size={10} className="text-slate-500" />
-                                                    <span>{p === '<all_urls>' ? 'All websites' : p}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            } 
-                            delay={300}
-                        >
-                            <button
-                                onClick={(e) => {
+                        {isRenamingThisGroup ? (
+                            <input
+                                autoFocus
+                                className="bg-slate-950 text-white text-sm font-medium border border-blue-500 rounded px-1.5 py-0.5 outline-none w-full"
+                                defaultValue={groupName || ''}
+                                placeholder="Group name..."
+                                onKeyDown={(e) => {
                                     e.stopPropagation();
-                                    onDomainClick(e);
-                                }}
-                                className="flex items-center gap-1.5 shrink-0 max-w-[120px] hover:bg-slate-700/50 px-1.5 py-1 rounded transition-colors cursor-pointer text-left min-w-0"
-                                onPointerDown={e => e.stopPropagation()}
-                            >
-                                <Globe size={12} className="text-slate-400 shrink-0" />
-                                <span className="text-[10px] font-bold uppercase tracking-tight text-slate-300 truncate">
-                                    {domainPatterns.includes('<all_urls>')
-                                        ? 'All URLs'
-                                        : domainPatterns.length > 1
-                                            ? `${domainPatterns.length} Domains`
-                                            : domainPatterns.length === 1
-                                                ? domainPatterns[0]
-                                                : 'No domains'
+                                    if (e.key === 'Enter') {
+                                        onRenameGroup?.(id, e.currentTarget.value);
+                                    } else if (e.key === 'Escape') {
+                                        onRenameGroupCancel?.();
                                     }
-                                </span>
-                            </button>
-                        </Tooltip>
+                                }}
+                                onKeyUp={(e) => e.stopPropagation()}
+                                onKeyPress={(e) => e.stopPropagation()}
+                                onBlur={(e) => {
+                                    onRenameGroup?.(id, e.target.value);
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                                onPointerDown={(e) => e.stopPropagation()}
+                            />
+                        ) : (
+                            <div className="flex items-center gap-1.5 min-w-0">
+                                {groupName && (
+                                    <span 
+                                        className="text-sm font-medium text-slate-200 truncate cursor-text hover:text-white transition-colors" 
+                                        title="Double click to rename"
+                                        onDoubleClick={(e) => {
+                                            if (isSelectionMode) return;
+                                            e.stopPropagation();
+                                            onRenameGroupStart?.(id);
+                                        }}
+                                    >
+                                        {groupName}
+                                    </span>
+                                )}
+                                <Tooltip 
+                                    content={
+                                        <div className="flex flex-col gap-1">
+                                            <div className="font-semibold border-b border-slate-700 pb-1 mb-1">Group domains</div>
+                                            {domainPatterns.length === 0 ? (
+                                                <div className="text-slate-400 italic">No domains configured</div>
+                                            ) : (
+                                                <div className="flex flex-col gap-0.5">
+                                                    {domainPatterns.map((p, i) => (
+                                                        <div key={i} className="flex items-center gap-1.5">
+                                                            <Globe size={10} className="text-slate-500" />
+                                                            <span>{p === '<all_urls>' ? 'All websites' : p}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            {!groupName && (
+                                                <div className="text-xs text-slate-400 mt-1 pt-1 border-t border-slate-700/50">Double-click to name this group</div>
+                                            )}
+                                        </div>
+                                    } 
+                                    delay={300}
+                                >
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onDomainClick(e);
+                                        }}
+                                        onDoubleClick={(e) => {
+                                            if (isSelectionMode) return;
+                                            e.stopPropagation();
+                                            onRenameGroupStart?.(id);
+                                        }}
+                                        className="flex items-center gap-1.5 shrink-0 max-w-[120px] hover:bg-slate-700/50 px-1.5 py-1 rounded transition-colors cursor-pointer text-left min-w-0"
+                                        onPointerDown={e => e.stopPropagation()}
+                                    >
+                                        <Globe size={12} className="text-slate-400 shrink-0" />
+                                        {!groupName && (
+                                            <span className="text-[10px] font-bold uppercase tracking-tight text-slate-300 truncate">
+                                                {domainPatterns.includes('<all_urls>')
+                                                    ? 'All URLs'
+                                                    : domainPatterns.length > 1
+                                                        ? `${domainPatterns.length} Domains`
+                                                        : domainPatterns.length === 1
+                                                            ? domainPatterns[0]
+                                                            : 'No domains'
+                                                }
+                                            </span>
+                                        )}
+                                    </button>
+                                </Tooltip>
+                            </div>
+                        )}
                         
                         {effectivelyCollapsed && activeTheme && (
                             <div className="flex items-center gap-2 min-w-0">
