@@ -119,7 +119,6 @@ export const CodeEditor = React.memo(React.forwardRef<CodeEditorRef, CodeEditorP
             const isSaveShortcut = (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's';
 
             if (isCmdShiftF || isOptShiftF || isSaveShortcut) {
-                console.log(`Formatting triggered via native capture! (Shortcut: ${isCmdShiftF ? 'Cmd+Shift+F' : isOptShiftF ? 'Opt+Shift+F' : 'Cmd+S'})`);
                 e.preventDefault();
                 e.stopPropagation();
                 e.stopImmediatePropagation(); // REALLY stop it

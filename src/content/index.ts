@@ -1,4 +1,4 @@
-console.log('ThemeBench: Content Script Loaded');
+// ThemeBench: Content Script
 
 import type { AppState } from '../types.ts';
 
@@ -57,18 +57,15 @@ function startTransition() {
 // Message Listener for State Updates
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message.type === 'PING') {
-        console.log('ThemeBench: PING received');
         sendResponse('PONG');
     }
 
     if (message.type === 'STATE_UPDATED') {
-        console.log('ThemeBench: State Updated via messaging (Direct)');
         // Direct updates from panel/active tab bypass debounce for maximum snappiness
         updateStyles(message.state);
     }
 
     if (message.type === 'SCAN_CSS_VARIABLES') {
-        console.log('ThemeBench: Scanning CSS Variables');
         const variables: Record<string, Record<string, string>> = {};
 
         // Helper to add variable

@@ -73,3 +73,5 @@
 - Added ability to name domain groups for better organization, including double-click renaming and context menu support.
 - Fixed vertical alignment of the Themes header in ThemeList component across browsers
 - Fixed Chrome vertical misalignment of + button in ThemeList compact header (block div was causing inline-flex Tooltip baseline issue)
+- 2026-05-12 18:09:00 UTC - Removed unused `scripting` permission from manifest (CWS rejection fix, Violation: Purple Potassium). Confirmed via full codebase grep that `chrome.scripting` is never called. Bumped version to 0.1.12.
+- 2026-05-12 21:33:00 UTC - CWS audit: Restricted `web_accessible_resources` matches from `<all_urls>` to `chrome-extension://*/*`. Removed all development debug console.log statements from content/index.ts, store.ts, CodeEditor.tsx, and ThemeDetail.tsx.

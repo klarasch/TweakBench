@@ -412,8 +412,6 @@ export const useStore = create<Store>((set, get) => ({
         let skippedCount = 0;
 
         set((state: Store) => {
-            console.log('ImportAllData: Starting mode', mode, 'themes count in state', state.themes.length);
-            console.log('ImportAllData: incoming data', { themes: data.themes?.length, snippets: data.snippets?.length });
             let newThemes: Theme[] = [];
             let newSnippets: Snippet[] = [];
             let activeThemeId = state.activeThemeId;

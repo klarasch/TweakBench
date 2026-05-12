@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.12] - 2026-05-12
+
+### Fixed
+- **Chrome Web Store compliance**: Removed unused `scripting` permission from `manifest.json`. The extension never called `chrome.scripting` APIs; the permission was a leftover from early development.
+- **Security hardening**: Restricted `web_accessible_resources` matches from `<all_urls>` to `chrome-extension://*/*` — `starter_kit.json` only needs to be accessible to the extension's own panel, not to arbitrary websites.
+- **Code cleanliness**: Removed all development-only `console.log` statements from the content script, store, `CodeEditor`, and `ThemeDetail` that would be visible to users in production DevTools.
+
 ## [0.1.11] - 2026-04-28
 
 ### Added

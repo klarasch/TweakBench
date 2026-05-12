@@ -1169,7 +1169,6 @@ export const ThemeDetail: React.FC<ThemeDetailProps> = ({ themeId, onBack, onSel
 
                                             // Restore cursor position if we have one saved
                                             const savedPos = cursorPositionsRef.current[id];
-                                            console.log('[CURSOR DEBUG] Restoring cursor position for', id, ':', savedPos);
                                             if (savedPos) {
                                                 editorRefs.current[id]?.setCursorPosition?.(savedPos.from, savedPos.to);
                                             }
